@@ -1,6 +1,0 @@
-==== Alias ID
-
-The alias ID of a configuration is a human friendly alternative referencing method to the hash based configuration ID. One configurations can have multiple alias IDs, and one alias ID can point to many configurations. In the second case, the newest (submitted) configuration is considered to be referenced by the alias ID. 
-
-WARNING: This means, that you might get two different configurations -- intendedly or unintendedly -- if you are using the same alias ID for two subsequent requests.  
-
