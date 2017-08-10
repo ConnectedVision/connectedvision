@@ -48,7 +48,7 @@ class ConnectedVision(ConanFile):
 		
 		installDir = os.path.abspath(os.path.join(os.getcwd(), "install"))
 		
-		sourceDir = os.path.join(os.getcwd(), self.name, "Cpp", "build_env", "cmake")
+		sourceDir = os.path.join(os.getcwd(), self.name, "build_env", "cmake")
 		buildDir = os.path.join(os.getcwd(), "build", "core")
 		
 		if not os.path.exists(buildDir):
@@ -84,13 +84,13 @@ class ConnectedVision(ConanFile):
 		installDir = os.path.join(os.getcwd(), "install")
 		
 		self.copy("*", src=os.path.join(installDir, "include"), dst="include")
-		self.copy("common.cmake", src=os.path.join(self.build_folder, self.name, "Cpp", "build_env", "cmake"), dst="include")
+		self.copy("common.cmake", src=os.path.join(self.build_folder, self.name, "build_env", "cmake"), dst="include")
 		self.copy("*", src=os.path.join(installDir, "lib"), dst="lib")
 		
 		# copy the Module Generator including the required schemata
-		self.copy("*", src=os.path.join(self.build_folder, self.name, "Cpp", "tools", "CodeFromTemplate"), dst=os.path.join("bin", "tools", "CodeFromTemplate"))
+		self.copy("*", src=os.path.join(self.build_folder, self.name, "tools", "CodeFromTemplate"), dst=os.path.join("bin", "tools", "CodeFromTemplate"))
 		shutil.rmtree(os.path.join(self.package_folder, "bin", "tools", "CodeFromTemplate", "test"))
-		self.copy("*", src=os.path.join(self.build_folder, self.name, "Cpp", "core", "def"), dst=os.path.join("bin", "core", "def"))
+		self.copy("*", src=os.path.join(self.build_folder, self.name, "core", "def"), dst=os.path.join("bin", "core", "def"))
 
 
 
