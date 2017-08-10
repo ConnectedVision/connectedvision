@@ -1,0 +1,64 @@
+{
+	"name": "Thumbnail Generator",
+	"description": "This module provides image manipulation functions. 1.: It can crop the input image according to the defined rectangular region. 2.: It can overlay the input image with bounding boxes.",
+	"version": 0.2,
+	"moduleID": "ThumbnailGenerator",
+	"moduleURI" : "",
+	"moduleLogoURI": "ThumbnailGenerator.png",	
+	"author": "Stephan Veigl",
+	"params": {
+		"type": "object",
+		"required": true,
+		"properties": { 
+			"imageFormat": {
+				"type": "string",
+				"description": "image format",
+				"enum": ["JPEG", "PNG"],
+				"required": false,
+				"default": "JPEG"
+			},
+			"lineWidth": {
+				"type": "integer",
+				"description": "line width",
+				"unit": "pixel",
+				"default": 3.0,
+				"required": false
+			},
+			"lineColor": {
+				"description": "line color",
+				"type": "object",
+				"exttype": "color",
+				"required": false,
+				"properties": {
+					"R": {
+						"type":"number",
+						"description": "red component",
+						"unit": "normalized value",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"default": 0.0,
+						"required": false
+					},
+					"G": {
+						"type":"number",
+						"description": "green component",
+						"unit": "normalized value",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"default": 0.0,
+						"required": false
+					},
+					"B": {
+						"type":"number",
+						"description": "blue component",
+						"unit": "normalized value",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"default": 0.0,
+						"required": false
+					}
+				}
+			}
+		}
+	}
+}

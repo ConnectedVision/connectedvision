@@ -1,0 +1,13 @@
+{
+	"name": "file_not_found",									
+	"description": "wrong file name", 		
+	"version": 1, 										
+	"id" : "",
+	"moduleURI" : "http://localhost:2020/VideoImporter",
+	"moduleID" : "VideoImporter",
+	"params":
+	{
+		"filename": "not_found.avi"
+	},
+	"chain": []
+}

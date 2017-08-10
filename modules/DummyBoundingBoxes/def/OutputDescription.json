@@ -1,0 +1,226 @@
+[
+	{
+		"name": "Detections",
+		"id": "Detections",
+		"description": "bounding box",
+		"static": false,
+		"type": "application/json",
+		"properties": {
+			"configID": {
+				"description": "ID of config chain",
+				"type": "string",
+				"exttype": "id",
+				"required": true
+			},
+			"id": {
+				"description": "detection ID",
+				"type": "string",
+				"exttype": "id",
+				"required": true
+			},
+			"timestamp": {
+				"description": "timestamp in milliseconds since 1970-01-01 00:00:00.000 UTC",
+				"type": "integer",
+				"exttype": "timestamp",
+				"required": true
+			},
+			"objectID": {
+				"description": "object ID",
+				"type": "string",
+				"exttype": "id",
+				"unit": "md5",
+				"required": true
+			},
+			"boundingBox": {
+				"description": "bounding box",
+				"type": "object",
+				"exttype": "rectangle",
+				"required": true,
+				"properties": {
+					"left": {
+						"description": "x position of top left point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"right": {
+						"description": "x position of bottom right point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"top": {
+						"description": "y position of top left point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"bottom": {
+						"description": "y position of bottom right point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					}
+				}
+			},
+			"basePoint": {
+				"description": "base point",
+				"type": "object",
+				"exttype": "point",
+				"required": true,
+				"properties": {
+					"x": {
+						"description": "x position of point",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"y": {
+						"description": "y position of point",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					}
+				}
+			}
+		}
+	},
+	{
+		"name": "ObjectData",
+		"id": "ObjectData",
+		"description": "object meta data",
+		"static": false,
+		"type": "application/json",
+		"properties": {
+			"configID": {
+				"description": "ID of config chain",
+				"type": "string",
+				"exttype": "id",
+				"required": true
+			},
+			"id": {
+				"description": "object ID",
+				"type": "string",
+				"exttype": "id",
+				"required": true
+			},
+			"timestamp": {
+				"description": "timestamp in milliseconds since 1970-01-01 00:00:00.000 UTC",
+				"type": "integer",
+				"exttype": "timestamp",
+				"required": true
+			},
+			"objectID": {
+				"description": "object ID",
+				"type": "string",
+				"exttype": "id",
+				"unit": "md5",
+				"required": true
+			},
+			"detections": {
+				"description": "list of detections of event",
+				"type": "array",
+				"required": true,
+				"items": {
+					"description": "detection",
+					"type": "object",
+					"required": true,
+					"properties": {
+						"timestamp": {
+							"description": "timestamp in milliseconds since 1970-01-01 00:00:00.000 UTC",
+							"type": "integer",
+							"exttype": "timestamp",
+							"unit": "ms",
+							"required": true
+						},
+						"confidence": {
+							"description": "confidence of detection [0-1]",
+							"type": "number",
+							"unit": "percentage",
+							"required": false,
+							"default": 1,
+							"minimum": 0,
+							"maximum": 1							
+						},
+						"boundingBox": {
+							"description": "bounding box",
+							"type": "object",
+							"exttype": "rectangle",
+							"required": true,
+							"properties": {
+								"left": {
+									"description": "x position of top left point of the rectangle",
+									"type": "number",
+									"unit": "fractional position",
+									"required": true,
+									"minimum": 0,
+									"maximum": 1
+								},
+								"right": {
+									"description": "x position of bottom right point of the rectangle",
+									"type": "number",
+									"unit": "fractional position",
+									"required": true,
+									"minimum": 0,
+									"maximum": 1
+								},
+								"top": {
+									"description": "y position of top left point of the rectangle",
+									"type": "number",
+									"unit": "fractional position",
+									"required": true,
+									"minimum": 0,
+									"maximum": 1
+								},
+								"bottom": {
+									"description": "y position of bottom right point of the rectangle",
+									"type": "number",
+									"unit": "fractional position",
+									"required": true,
+									"minimum": 0,
+									"maximum": 1
+								}
+							}
+						},
+						"basePoint": {
+							"description": "base point",
+							"type": "object",
+							"exttype": "point",
+							"required": true,
+							"properties": {
+								"x": {
+									"description": "x position of point",
+									"type": "number",
+									"unit": "fractional position",
+									"required": true,
+									"minimum": 0,
+									"maximum": 1
+								},
+								"y": {
+									"description": "y position of point",
+									"type": "number",
+									"unit": "fractional position",
+									"required": true,
+									"minimum": 0,
+									"maximum": 1
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+]

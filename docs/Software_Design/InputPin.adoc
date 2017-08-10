@@ -1,0 +1,45 @@
+= Optional InputPin / InputPin Array
+
+[[definition]]
+== Definition
+
+[[optional-input-pin]]
+=== Optional Input Pin
+
+The Input Pin does not need to be connected to an Output Pin. If it is not connected, it is up to the Module to correctly handle this setup.
+
+[[input-pin-array]]
+=== Input Pin Array
+
+An InputPin of one type can have multiple instances (i.e. is connected to more than one OutputPin / previouse modules). An example for an InputPin Array would be a graph plotting module that collects the Data from its Input Pins, where each line in the diagram represents the data from one Input Pin.
+
+[[proposed-design]]
+== (Proposed) Design
+
+All Input Pins are viewed as Input Pin Arrays. So a normal / standard Input Pin and an optional Input Pin are just special cases of an Input Pin Array with multiplicity 1 or 0 to 1, respectively.
+
+Each Input Pin has a minimal and maximal multiplicity defined in the Input Pin description. The default values are 1 for both min and max multiplicity.
+
+The Input Pin ID in the Input-Output Pin connection (as part of the config) is extended by a dot and an index number. If no index extension is given, the connection is made to the first Input Pin of this type. (implicit ‘.0’ index extension)
+
+e.g.
+
+[source, JSON]
+....
+"connections":
+[
+    { "inputPinID": "PNG-Image", "outputPinID": "PNG-Image" },
+    // === { "inputPinID": "PNG-Image.0", "outputPinID": "PNG-Image" },
+    { "inputPinID": "Data.0", "outputPinID": "PositionX" },
+    { "inputPinID": "Data.1", "outputPinID": “PositionY" }
+]
+....
+
+[[proposed-implementation]]
+== (Proposed) Implementation
+
+The `getInputPin(configID, inputPinID, index = 0)` function will be extended by the Input Pin index, with a default value of 0.
+
+A new function `getInputPinCount(configID, inputPinID)` is added to the interface to get the actual number of connections for a Input Pin with a given ID.
+
+Access to an Input Pin that is not connected (within a config) or an out-of-bound index number will throw an exception.

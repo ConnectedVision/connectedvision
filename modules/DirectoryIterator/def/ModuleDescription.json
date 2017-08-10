@@ -1,0 +1,35 @@
+{
+	"name": "Directory Iterator",
+	"description": "Iterates a directory and returns the files with the extensions specified in the config." ,
+	"version": 1.0,
+	"moduleID": "DirectoryIterator",
+	"moduleURI" : "http://localhost:2020/DirectoryIterator",
+	"author": "Connected Vision",
+	"params":
+	{
+		"type": "object",
+		"properties":
+		{
+			"rootDirectory":
+			{
+				"description": "root directory",
+				"type": "string",
+				"required": false,
+				"default": "."
+			},
+			"fileTypes":
+			{
+				"description": "file types to process",
+				"type": "array",
+				"required": false,
+ 				"default": [],
+				"items":
+				{
+					"type": "string",
+					"required": false,
+					"default": ""
+				}
+			}
+		}
+	}
+}

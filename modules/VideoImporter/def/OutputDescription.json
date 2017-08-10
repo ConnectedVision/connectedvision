@@ -1,0 +1,147 @@
+[
+	{
+		"name": "Video Metadata",
+		"id": "VideoMetadata",
+		"description": "video meta data",
+		"static": true,
+		"type": "application/json",
+		"properties": {
+			"id": {
+				"description": "Object ID",
+				"type": "string",
+				"exttype":"id",			
+				"required":true,
+				"unit": "md5"
+			},
+			"configID": {
+				"description": "job / config ID",
+				"type": "string",
+				"exttype":"id",		
+				"required":true,
+				"unit": "md5"
+			},
+			"filename": {
+				"description": "filename",
+				"required": true,
+				"type": "string",
+				"exttype":"filepath",
+				"unit": ""		
+			},
+			"timestamp": {
+				"description": "start time",
+				"required": true,
+				"type": "integer",
+				"exttype":"timestamp",
+				"unit":"ms"
+			},
+			"lasttimestamp": {
+				"description": "end time",
+				"required": true,
+				"type": "integer",
+				"exttype":"timestamp",
+				"unit":"ms"
+			},
+			"width": {
+				"description": "width of video in pixels",
+				"required": true,
+				"unit": "pixel",
+				"type": "integer"
+			},
+			"height": {
+				"description": "height of video in pixels",
+				"required": true,
+				"unit": "pixel",
+				"type": "integer"
+			},
+			"numberofframes": {
+				"description": "number of frames in video",
+				"required": true,
+				"unit": "",
+				"type": "integer"
+			},
+			"fps": {
+				"description": "number of frames per second",
+				"required": true,
+				"unit": "frames/sec",
+				"type": "number"
+			}
+		}	
+	},
+	{
+		"name": "Frame Metadata",
+		"id": "FrameMetadata",
+		"description": "frame meta data",
+		"static": false,
+		"type": "application/json",
+		"properties": {
+			"id": {
+				"description": "Object ID",
+				"type": "string",
+				"exttype":"id",
+				"unit": "md5"
+			},
+			"configID": {
+				"description": "job / config ID",
+				"type": "string",
+				"exttype":"id",
+				"unit": "md5"
+			},
+			"timestamp": {
+				"description": "frame time",
+				"type": "integer",
+				"exttype":"timestamp",
+				"unit":"ms"
+			},
+			"framenumber": {
+				"description": "frame number",
+				"required": true,
+				"unit": "",
+				"type": "integer"
+			},
+			"width": {
+				"description": "width of frame in pixels",
+				"required": true,
+				"unit": "pixel",
+				"type": "integer"
+			},
+			"height": {
+				"description": "height of frame in pixels",
+				"required": true,
+				"unit": "pixel",
+				"type": "integer"
+			}
+		}			
+	},
+	{
+		"name": "RAW YUV420 Image",
+		"id": "RAWYUV420-Image",
+		"description": "yuv420 binary image data",
+		"static": false,
+		"type": "image/rawyuv420",
+		"properties": {}
+	},
+	{
+		"name": "RAW BGR24 Image",
+		"id": "RAWBGR24-Image",
+		"description": "bgr24 binary image data",
+		"static": false,
+		"type": "image/rawbgr24",
+		"properties": {}
+	},
+	{
+		"name": "RAW RGB24 Image",
+		"id": "RAWRGB24-Image",
+		"description": "rgb24 binary image data",
+		"static": false,
+		"type": "image/rawrgb24",
+		"properties": {}
+	},
+	{
+		"name": "PNG Image",
+		"id": "PNG-Image",
+		"description": "png image",
+		"static": false,
+		"type": "image/png",
+		"properties": {}
+	}
+]

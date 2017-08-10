@@ -1,0 +1,15 @@
+{
+	"name": "rtsp://:8554/video (VLC stream)",						
+	"description": "", 
+	"version": 1, 						
+	"id" : "",
+	"aliasID": [{"id": "cube"}],
+	"profileID": 0, 					
+	"moduleID": "",
+	"moduleURI" : "http://localhost:2020/RTPImporter",
+	"params":
+	{
+		"url": "rtsp://user1:password1@172.30.33.36:8554/cube?startdate=0&duration=60"
+	},
+	"chain": []
+}

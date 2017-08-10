@@ -1,0 +1,26 @@
+= Ring-buffer as Store
+
+[[requirements]]
+== Requirements
+
+* When an element is added / saved to the ring-buffer, the complete responsibility of the element is transferred to the ring-buffer. The calling function cannot edit the element afterwards. (Only with explicit notification)
+* A Connected Vision optimized data structure / container is needed to store and retrieve data elements.
+
+[[implementation]]
+== Implementation
+
+[[element-handling]]
+=== Element handling
+
+1.  There is a pool of available elements. This pool is shared over all ring buffers, so the available elements pool is a member of the ring buffer map.
+2.  When a new element is requested it is taken from the available elements pool and moved to the pending elements list. +
+If no free element is available the pending element list is searched for orphan elements. +
+If still no elements are found, one element is taken from the ring buffers in use. The strategy to find an appropriate element to be removed can be:
+* The oldest element over all.
+* The oldest element from the current ring buffer.
+* The least accessed element -> Cache
+3.  The “new” element is populated with data and saved to the ring buffer.
+4.  When saving an element, the internal state is frozen, so that it cannot be modified any more as long as it belongs to at least one ring buffer.
+
+[[connected-vision-access-table]]
+=== Connected Vision access table

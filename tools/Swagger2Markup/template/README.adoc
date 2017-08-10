@@ -1,0 +1,46 @@
+= Swagger2Markup Gradle template project
+
+This is a Swagger2Markup Gradle template project which uses the swagger2markup-gradle-plugin to convert a contract-first Swagger specification into an AsciiDoctor-based HTML documentation.
+
+== Usage guide
+
+=== Swagger Specification
+
+Copy your Swagger Specification (JSON or YAML) file into the folder `src/docs/swagger`.
+
+=== Add hand-written content
+
+Add hand-written AsciiDoc content into the folder `src/docs/asciidoc` and include the files in `src/docs/asciidoc/index.adoc`.
+
+```
+\include::{generated}/overview.adoc[]
+\include::manual_content1.adoc[]
+\include::manual_content2.adoc[]
+\include::{generated}/paths.adoc[]
+\include::{generated}/definitions.adoc[]
+```
+
+The Asciidoctor attribute `{generated}` is set by the Gradle script to `build/asciidoc`. By default the Swagger2Markup Gradle plugin creates the the generated AsciiDoc files into the `build/asciidoc` folder.
+
+
+=== Convert AsciiDoc to HTML
+
+[source]
+----
+gradlew asciidoctor
+----
+
+Check `build/asciidoc/html5/index.html` to see the generated HTML report.
+
+=== Watch AsciiDoc files
+
+[source]
+----
+gradlew watch
+----
+
+=== Start LiveReload
+[source]
+----
+gradlew liveReload
+----

@@ -1,0 +1,3 @@
+== Operation begin hook
+
+Dummy text in operation begin hook

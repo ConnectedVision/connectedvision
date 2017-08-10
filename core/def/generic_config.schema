@@ -1,0 +1,154 @@
+{
+    "description": "config chain",
+    "required": true,
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "config ID",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": "md5"
+		},
+        "timestamp": {
+            "description": "time of modification",
+            "required": false,
+            "unit": "ms",
+			"type":"integer",
+			"exttype":"timestamp",
+			"default": 0
+        },		
+        "name": {
+            "description": "config name",
+            "required": true,
+            "unit": "",
+            "type": "string"
+        },
+        "description": {
+            "description": "config description",
+            "required": true,
+            "unit": "",
+            "type": "string"
+        },
+		"aliasID": {
+            "description": "a list of (new) aliasIDs to be assigned to this config",
+            "required": false,
+            "unit": "",
+            "type": "array",
+            "items": {
+				"type": "object",
+				"properties": {			
+					"id": {
+						"description": "an aliasID to be assigned to this config",
+						"type": "string",
+						"required":true
+					},
+					"timestamp": {
+						"description": "creation timestamp of aliasID for this config",
+						"unit": "ms",
+						"type":"integer",
+						"exttype":"timestamp",
+						"required":false
+					}
+				}
+			}
+		},
+        "version": {
+            "description": "config version",
+            "required": true,
+            "unit": "",
+            "type": "integer"
+        },
+        "moduleID": {
+            "description": "",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": "md5"
+		},
+        "moduleURI": {
+            "description": "URI of module instance",
+            "required": true,
+			"type": "string",
+			"exttype":"url",
+			"unit": "URL"	
+		},
+        "configFeatures": {
+            "description": "JSON schema of features of the config",
+            "required": false,
+            "type": "object",
+			"properties": {
+				"allowDynamicParameters": {
+					"description": "the config does support dynamic parameters",
+					"required": false,
+					"type": "boolean",
+					"default" : false
+				}
+			}
+		},
+		"callback": {
+			"description": "register a callback for live mode",
+			"required": false,
+			"type": "object",
+			"properties": {
+				"moduleID": {
+					"description": "",
+					"type": "string",
+					"exttype":"id",
+					"required":true,
+					"unit": "md5"
+				},
+				"moduleURI": {
+					"description": "URI of module instance",
+					"required": true,
+					"type": "string",
+					"exttype":"url",
+					"unit": "URL"	
+				}
+			}
+		},
+		"params": {
+			"type": "any"
+        },
+		"initialParams": {
+			"type": "any"
+        },
+        "chain": {
+            "description": "",
+            "required": true,
+            "unit": "",
+            "type": "array",
+            "items": {
+				"type": "object",
+				"properties": {
+					"connections": {
+						"description": "connection between input pin of consumer module and output pin of producer module",
+						"required": true,
+						"type": "array",
+						"items": {
+							"required": false,
+							"type": "object",
+							"properties": {
+								"inputPinID": {
+									"description": "id of input pin",
+									"type": "string",
+									"required":true
+								},			
+								"outputPinID": {
+									"description": "id of output pin",
+									"type": "string",
+									"required":true
+								}
+							}
+						}
+					},
+					"config": {
+						"description": "config of sub module",
+						"type": "any",
+						"required":true
+					}
+				}
+            }
+        }
+    }
+}

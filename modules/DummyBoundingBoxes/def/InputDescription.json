@@ -1,0 +1,35 @@
+[
+	{
+		"name": "Trigger",
+		"id": "Trigger",
+		"description": "Trigger pulse used as signal for the generation of a bounding box.",
+		"static": false,
+		"type": "application/json",
+		"minPinCount": 0,
+		"properties": {
+			"id": {
+				"description": "ID",
+				"type": "string",
+				"exttype": "id",
+				"description": "",
+				"required":true,
+				"unit": "md5"
+			},
+			"configID": {
+				"description": "config ID",
+				"type": "string",
+				"exttype": "id",
+				"description": "",
+				"required":true,
+				"unit": "md5"
+			},
+			"timestamp": {
+				"description": "timestamp in milliseconds since 1970-01-01 00:00:00.000 UTC",
+				"type": "integer",
+				"exttype": "timestamp",
+				"required": true,
+				"unit": "ms"
+			}
+		}
+	}
+]

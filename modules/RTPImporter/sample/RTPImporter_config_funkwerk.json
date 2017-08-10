@@ -1,0 +1,16 @@
+{
+	"name": "test",						
+	"description": "", 
+	"version": 1, 						
+	"id" : "",			
+	"profileID": 0, 					
+	"moduleID": "",
+	"moduleURI" : "http://localhost:2020/RTPImporter",
+	"params":
+	{
+		"url": "239.255.100.2:5004",
+		"bufferElements": 6,
+		"bufferReserve": 3
+	},
+	"chain": []
+}

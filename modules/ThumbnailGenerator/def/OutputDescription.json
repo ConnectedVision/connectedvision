@@ -1,0 +1,34 @@
+[
+	{
+		"name": "Bounding Box Overlay",
+		"id": "BoundingBoxOverlay",
+		"description": "The input image with overlayed bounding boxes. The data is indexed by the IDs, indices and timestamps of the images.",
+		"static": false,
+		"type": "image/jpeg",
+		"properties": {}
+	},
+	{
+		"name": "Bounding Box Overlay Thumbnail",
+		"id": "BoundingBoxOverlayThumbnail",
+		"description": "The input image thumbnail with overlayed bounding boxes. The data is indexed by the IDs, indices and timestamps of the images.",
+		"static": false,
+		"type": "image/jpeg",
+		"properties": {}
+	},
+	{
+		"name": "Cropped Image",
+		"id": "CroppedImage",
+		"description": "The cropped image. The data is indexed by the IDs, indices and timestamps of the bounding boxes.",
+		"static": false,
+		"type": "image/jpeg",
+		"properties": {}
+	},
+	{
+		"name": "Cropped Image Thumbnail",
+		"id": "CroppedImageThumbnail",
+		"description": "The cropped image thumbnail. The data is indexed by the IDs, indices and timestamps of the bounding boxes.",
+		"static": false,
+		"type": "image/jpeg",
+		"properties": {}
+	}
+]

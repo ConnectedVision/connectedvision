@@ -1,0 +1,114 @@
+[
+	{
+		"name": "PNG Image",
+		"id": "PNG-Image",
+		"description": "image data encoded as PNG",
+		"type": "image/png",
+		"static": false,
+		"properties": {}
+	},
+	{
+		"name": "Image Metadata",
+		"id": "ImageMetadata",
+		"description": "image metadata",
+		"type": "application/json",
+		"static": false,
+		"properties": {
+			"id": {
+				"description": "ID",
+				"type": "string",
+				"exttype": "id",
+				"required": true,
+				"unit": "md5"
+			},
+			"configID": {
+				"description": "job / config ID",
+				"type": "string",
+				"exttype": "id",
+				"required": true,
+				"unit": "md5"
+			},
+			"timestamp": {
+				"type": "integer",
+				"exttype": "timestamp",
+				"description": "timestamp in milliseconds since 1970-01-01 00:00:00.000 UTC",
+				"required": true,
+				"unit": "ms"
+			}
+		}
+	},
+	{
+		"name": "Bounding Box",
+		"id": "BoundingBox",
+		"description": "rectangular region which is used for the cropping or for overlaying bounding boxes",
+		"type": "application/json",
+		"static": false,
+		"properties": {
+			"id": {
+				"description": "ID",
+				"type": "string",
+				"exttype": "id",
+				"required": true,
+				"unit": "md5"
+			},
+			"configID": {
+				"description": "job / config ID",
+				"type": "string",
+				"exttype": "id",
+				"required": true,
+				"unit": "md5"
+			},
+			"timestamp": {
+				"type": "integer",
+				"exttype": "timestamp",
+				"description": "timestamp in milliseconds since 1970-01-01 00:00:00.000 UTC",
+				"required": true,
+				"unit": "ms"
+			},
+			"boundingBox": {
+				"description": "bounding box",
+				"type": "object",
+				"exttype": "rectangle",
+				"required": true,
+				"properties": {
+					"left": {
+						"type":"number",
+						"description": "x position of left side",
+						"unit": "fractional position",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"default": 0.0,
+						"required": true
+					},
+					"right": {
+						"type":"number",
+						"description": "x position of right side",
+						"unit": "fractional position",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"default": 1.0,
+						"required": true
+					},
+					"bottom": {
+						"type":"number",
+						"description": "y position of bottom side",
+						"unit": "fractional position",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"default": 1.0,
+						"required": true
+					},
+					"top": {
+						"type":"number",
+						"description": "y position of top side",
+						"unit": "fractional position",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"default": 0.0,
+						"required": true
+					}
+				}
+			}
+		}
+	}
+]

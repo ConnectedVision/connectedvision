@@ -1,0 +1,50 @@
+[
+	{
+		"name": "File Metadata",
+		"id": "FileMetadata",
+		"description": "The file metadata.",
+		"static": false,
+		"type": "application/json",
+		"properties":
+		{
+			"id":
+			{
+				"description": "file ID",
+				"type": "string",
+				"exttype": "id",
+				"required": true,
+				"unit": "md5"
+			},
+			"configID":
+			{
+				"description": "job / config ID",
+				"type": "string",
+				"exttype": "id",
+				"required": true,
+				"unit": "md5"
+			},
+			"timestamp":
+			{
+				"description": "timestamp",
+				"type": "integer",
+				"exttype": "timestamp",
+				"required": true,
+				"unit": "time in ms since 1.1.1970"
+			},
+			"filePath":
+			{
+				"description": "absolute file path",
+				"type": "string",
+				"required": true
+			}
+		}
+	},
+	{
+		"name": "Binary Data",
+		"id": "BinaryData",
+		"description": "binary data",
+		"static": false,
+		"type": "application/binary",
+		"properties": {}
+	}
+]

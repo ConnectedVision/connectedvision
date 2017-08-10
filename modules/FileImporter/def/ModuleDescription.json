@@ -1,0 +1,26 @@
+{
+	"name": "FileImporter",
+	"description": "sends a static file" ,
+	"version": 0.1,
+	"moduleID": "FileImporter",
+	"moduleURI" : "http://localhost:2020/FileImporter/",	
+	"moduleLogoURI": "FileImporter.png",
+	"author": "Stephan Veigl",
+	"params":
+	{
+		"type": "object",
+		"properties": {
+			"filename": {
+				"description": "network path to file",
+				"type": "string",
+				"exttype":"filepath",
+				"unit": ""				
+			},
+			"mimeType": {
+				"description": "mime type of file",
+				"unit": "mime type",
+				"type": "string"
+			}
+		}
+	}
+}

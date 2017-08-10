@@ -1,0 +1,31 @@
+{
+    "id": "",
+    "name": "delay",
+    "description": "simple bounding box with 10s processing delay",
+    "version": 1,
+    "profileID": 0,
+    "moduleID": "",
+    "moduleURI": "http://localhost:2020/DummyBoundingBoxes",
+    "moduleLogoURI": "",
+    "params": {
+		"count": 5,
+		"timestampStart": 0,		
+        "boundingBoxStart": {
+			"timestamp": 0,
+			"top": 0.4,
+			"left": 0.4,
+			"bottom": 0.6,
+			"right": 0.6
+        },
+		"timestampEnd": 1000,		
+        "boundingBoxEnd": {
+			"timestamp": 1000,
+			"top": 0.4,
+			"left": 0.4,
+			"bottom": 0.6,
+			"right": 0.6
+        },
+		"delay": 10
+    },
+    "chain": []
+}

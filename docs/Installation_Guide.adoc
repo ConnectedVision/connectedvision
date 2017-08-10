@@ -1,0 +1,102 @@
+[[connected-vision-installation-guide]]
+= Connected Vision Installation Guide
+
+This document describes the steps required to build Connected Vision. It covers the installation of the required 3^rd^ party tools/prerequisites as well as the required build steps to build the Connected Vision Core, Unit Test and Demo Server application.
+
+It is assumed that the Connected Vision folder structure is already present on your system (if not clone the repository from git)
+
+[[supportedtested-operating-systems-and-compiler-combinations]]
+== Supported/Tested operating systems and compiler combinations
+
+This is the list of tested and supported operating system and compilers combinations:
+
+* Microsoft Windows operating system and Visual Studio 2010 compiler
+* Ubuntu 14.04.5 lts 64-bit with gcc compiler
+* Ubuntu 16.04.2 lts 64-bit with gcc compiler
+* Linux Mint 17.3 64-bit Cinnamon with gcc compiler
+
+[[installing-the-3rd-party-prerequisites]]
+== Installing the 3^rd^ party prerequisites
+
+To be able to build Connected Vision you need to install several 3^rd^ party software prerequisites must be installed on your system.
+
+[[cmake]]
+=== CMake
+
+Connected Vision uses CMake as build tool. Download it from https://cmake.org/ and install it.
+
+[[python]]
+=== Python
+
+If not already installed on your system get Python from https://www.python.org/ and install it. +
+Make sure Python is installed correctly (e.g. type _“python –version”_ in a console window).
+
+Python is a prerequisite for Conan which should be installed next.
+
+[[conan]]
+=== Conan
+
+Once python is installed correctly the Conan package manager needs to be installed:
+
+Open a console window with admin rights, in there:
+
+1.  execute command _“pip install conan”_
+2.  execute command _“conan search”_ which will do an initial config (user directory gets ‘.conan’ folder and files)
+3.  switch to the Connected Vision Root Directory and inside of it into ./build_env/Conan and execute command _“install.py”_
+4.  optional: execute command _“conan search”_ (to see installed conan recipes)
+
+[[building-connected-vision]]
+== Building Connected Vision
+
+It is recommended to use CMake as build tool
+
+There are 4 separate cmake projects
+
+* Connected Vision Core
+* Connected Vision Unit Test
+* Connected Vision System Test (requires Connected Vision Core to be built and installed first)
+* Connected Vision Demo Host (requires Connected Vision Core to be built and installed first)
+
+[[building-connected-vision-core-with-cmake]]
+=== Building Connected Vision Core with CMake
+
+These are the required steps:
+
+1.  cmake with file CMakeLists.txt in folder ./build_env/cmake/ (inside Connected Vision Root directory)
+2.  cmake configure (can take considerable time on first run since all conan dependencies need to be built)
+3.  cmake generate
+4.  build with development environment
+5.  cmake install
+
+[[building-connected-vision-unit-test-with-cmake]]
+=== Building Connected Vision Unit Test with CMake
+
+These are the required steps:
+
+1.  cmake with file CMakeLists.txt in folder ./build_env/cmake/ConnectedVision/ConnectedVisionUnitTest/ (inside Connected Vision Root directory)
+2.  cmake configure (can take considerable time on first run since all conan dependencies need to be built)
+3.  cmake generate
+4.  build with development environment
+5.  cmake install
+
+[[building-connected-vision-system-test-with-cmake]]
+=== Building Connected Vision System Test with CMake
+
+These are the required steps:
+
+1.  cmake with file CMakeLists.txt in folder ./test/SystemTestServer/build/cmake/ (inside Connected Vision Root directory)
+2.  cmake configure (can take considerable time on first run since all conan dependencies need to be built)
+3.  cmake generate
+4.  build with development environment
+5.  cmake install
+
+[[building-the-demo-server-with-cmake]]
+=== Building the Demo Server with CMake
+
+These are the required steps:
+
+1.  cmake with file CMakeLists.txt in folder ./apps/DemoServer/build/cmake/ (inside Connected Vision Root directory)
+2.  cmake configure (can take considerable time on first run since all conan dependencies need to be built)
+3.  cmake generate
+4.  build with development environment
+5.  cmake install

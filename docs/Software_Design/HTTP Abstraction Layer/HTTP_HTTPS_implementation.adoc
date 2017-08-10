@@ -1,0 +1,187 @@
+[[httphttps-implementation]]
+= HTTP/HTTPS implementation
+
+_Michael Rauter, 2015_
+
+This is an overview of the implementation details of the HTTP/HTTPS server and client classes after Poco library integration/extension and Abstraction Layer introduction for the old existing HTTP implementation both server as well as client side.
+
+Everything is encapsulated inside namespace ConnectedVision::HTTP
+
+[[server]]
+== Server
+
+Every server implementation (mongoose, poco) inherits from interface IHTTPServer and must implement the interface.
+
+Function
+
+[source, C/C++]
+....
+virtual void setImplementationCallbackInterface (ConnectedVision::HTTP::IHTTPAbstractionCallback *pCallbackObject) = 0;
+....
+
+needs to be overridden to register a callback class object which defines a
+
+[source, C/C++]
+....
+virtual bool handleRequest(const HTTPServerRequest &request, HTTPResponse &response) = 0;
+....
+
+function, which handles requests to the server.
+
+`HTTPServerRequest` is the class with all the information belonging to the current request.
+
+`HTTPResponse` is the class with the result/response for a request.
+
+There are two HTTP-server implementations: `HTTPServerMongoose` and `HTTPServerPoco` which are interchangeable.
+
+The implementation is selected by the `ModuleDispatcher` class.
+
+[[client]]
+== Client
+
+Every client implementation inherits from interface `IHTTPClient` and must implement the function
+
+[source, C/C++]
+....
+virtual void performRequest(const HTTPClientRequest &request, HTTPResponse &response) = 0;
+....
+
+`HTTPClientRequest` is the class with all the information belonging to the request to be issued.
+
+`HTTPResponse` is the class with the result/response for the request.
+
+There are two HTTP-client implementations: `HTTPcurl` and `HTTPClientPoco` which are interchangeable.
+
+In the file `HTTPXClient.h` the client implementation is selected (by a typedef):
+
+[source, C/C++]
+....
+typedef HTTPClientPoco HTTPClient;
+....
+
+or
+
+[source, C/C++]
+....
+typedef HTTPcurl HTTPClient;
+....
+
+[[https]]
+== HTTPS
+
+HTTPS implementations do only exist for Poco library!
+
+[[server-1]]
+=== Server
+
+`HTTPSServerPoco` inherits from `HTTPServerPoco` class.
+
+Its constructor must be invoked with a `HttpsParams` struct which must hold correct parameters (locations of certificate files, etc.)
+
+It creates a secure server socket which is used for HTTPS requests.
+
+This socket is created in function
+
+[source, C/C++]
+....
+Poco::Net::ServerSocket createServerSocket(int port);
+....
+
+which overrides the corresponding virtual function in `HTTPServerPoco` (the standard http server implementation creates just a normal socket by default). The `HTTPServerPoco` class invokes
+
+[source, C/C++]
+....
+Poco::Net::ServerSocket socket = this->createServerSocket(port);
+....
+
+In its `start()` function to create the socket. So the HTTPS server implementation which inherits from the HTTP base class uses the overriden `createServerSocket` function to create a secure socket.
+
+It is important that the HTTPS-server params are correctly set by the host application, see this invocation pattern (given that the certificates are in the application directory with the given names and that the password is “abc”):
+
+[source, C/C++]
+....
+ModuleDispatcher::HttpsServerParams httpsServerParams;
+
+httpsServerParams.listeningPort = 2021;
+
+httpsServerParams.numThreads = 20;
+
+httpsServerParams.privateKeyFile = "./certificate-key.pem";
+
+httpsServerParams.certificateFile = "./certificate-pub.pem";
+
+httpsServerParams.caLocation = "./ca-root.pem";
+
+httpsServerParams.password = "abc";
+....
+
+[[client-1]]
+=== Client
+
+The `HTTPSClientPoco` class is an implementation of the `IHTTPClient` interface.
+
+It must be constructed by passing a Params struct with the necessary HTTPS parameters (caLocation and an optional caPassword).
+
+It establishes a secure HTTPS client connection to perform a request in function
+
+[source, C/C++]
+....
+void performRequest(const HTTPClientRequest &request, HTTPResponse &response);
+....
+
+Its instance is created in file `HTTPXclient.h` as typedef:
+
+[source, C/C++]
+....
+typedef HTTPSClientPoco HTTPSClient;
+....
+
+[[httphttps-client-requests-throughout-the-code-in-the-connected-vision-framework]]
+== HTTP/HTTPS client requests throughout the code in the Connected Vision Framework
+
+Client requests can happen everywhere in the Connected Vision framework.
+
+Therefor `HTTPXClient` class with static member functions is used:
+
+[source, C/C++]
+....
+static void performHttpxRequest( +
+const ConnectedVision::HTTP::HTTPClientRequest &request, ConnectedVision::HTTP::HTTPResponse &response);
+....
+
+is the function used to perform a client request. This function will perform a HTTP or HTTPS request depending on the request URI (a uri starting with http:// will result in a HTTP request, a uri starting with https:// will result in a HTTPS request) )
+
+the usual invocation pattern is (example is a HTTP_GET request with uri from string restURL):
+
+[source, C/C++]
+....
+ConnectedVision::HTTP::HTTPClientRequest request;
+
+request.setUri(restURL.str());
+
+request.setMethod(ConnectedVision::HTTP::HTTP_Method_GET);
+
+ConnectedVision::HTTP::HTTPResponse response;
+
+HTTPXClient::performHttpxRequest(request, response);
+....
+
+It is important that the HTTPS-client params are correctly set by the host application, see this invocation pattern (given that the ca root certificate is in the application directory and its name is `ca-root.pem` and that the password is “abc”):
+
+[source, C/C++]
+....
+HTTPXClient::HttpsClientParams httpsClientParams;
+
+httpsClientParams.caLocation = "./ca-root.pem";
+
+httpsClientParams.caPassword = "abc";
+
+HTTPXClient::setHttpsClientParams(httpsClientParams);
+....
+
+[[certificate-creation]]
+== Certificate creation
+
+See this link for information about how to create certificates:
+
+https://thomas-leister.de/internet/eine-eigene-openssl-ca-erstellen-und-zertifikate-ausstellen/

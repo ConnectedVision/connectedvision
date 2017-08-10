@@ -1,0 +1,10 @@
+[
+	{
+		"name": "data",
+		"description": "data elements to be exported into file(s)",
+		"id": "data",
+		"static": false,
+		"type": "*",
+		"properties": {}
+	}
+]

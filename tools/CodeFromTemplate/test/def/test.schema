@@ -1,0 +1,77 @@
+{
+    "description": "Pin Description Schema",
+	"name": "PinDescription",
+	"type": "array",
+	"items": {
+		"type": "object",
+		"properties": {
+			"name": {
+				"description": "name of pin",
+				"required": true,
+				"type": "string"
+			},
+			"id": {
+				"description": "unique ID of pin (can be an number, name or uid) important: has to be URL friendly!",
+				"required": true,
+				"type": "string"
+			},
+			"description": {
+				"description": "long description of pin",
+				"required": true,
+				"type": "string"
+			},
+			"type": {
+				"description": "MIME type of pin",
+				"required": true,
+				"type": "string",
+				"default": "text/javascript"
+			},
+			"minPinCount": {
+				"description": "minimal number of this type of pin (set to 0 for optional input pin)",
+				"required": false,
+				"type": "integer",
+				"default": 1				
+			},
+			"maxPinCount": {
+				"description": "maximal number of this type of pin (use this if you want multiple input pins of the same type)",
+				"required": false,
+				"type": "integer",
+				"default": 1				
+			},
+			"properties": {
+				"description": "JSON schema of data returned by pin (if MIME is text/javascript)",
+				"type": "object",
+				"additionalProperties": {
+					"type": "object",
+					"properties": {
+						"description" : {
+							"type" : "string",
+							"required": true
+						},
+						"type" : {
+							"type": "string",
+							"enum": ["string", "number", "integer", "boolean", "object", "array", "null", "any", "timestamp", "id"],
+							"required": true
+						},
+						"unit" : {
+							"type" : "string",
+							"required": false,
+							"default": "n.a."
+						},
+						"required" : {
+							"type" : "boolean",
+							"default" : false
+						},
+						"properties" : {
+							"type" : "object",
+							"additionalProperties" : {
+								"$ref": "#/items/properties/properties/additionalProperties"
+							},
+							"default" : {}
+						}
+					}
+				}
+			}
+		}
+	}
+}

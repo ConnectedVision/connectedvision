@@ -1,0 +1,138 @@
+{
+	"name": "SyntheticVideo",
+	"description": "This module produces synthetic video frames as well as synthetic video meta data. It has 2 metadata output pins and 3 raw frame output pins and a png output pin." ,
+	"version": 0.1,
+	"moduleID": "SyntheticVideo",
+	"moduleURI" : "",	
+	"moduleLogoURI": "SyntheticVideo.png",	
+	"author": "Connected Vision",
+	"params": 	{
+					"type": "object",
+					"properties": 	{
+										"recordingDateTime": {
+															"description": "recording date (start time of video)",
+															"required": false,
+															"type": "integer",
+															"exttype":"timestamp",
+															"unit":"ms",
+															"default": 0
+														},
+										"numberOfFrames": 
+														{
+															"description": "number of frames in synthetic video",
+															"required": true,
+															"unit": "",
+															"type": "number"
+														},
+										"height": 
+														{
+															"description": "height of frames",
+															"required": true,
+															"unit": "pixel",
+															"type": "number"
+														},
+										"width": 		{
+															"description": "width of frames",
+															"required": true,
+															"unit": "pixel",
+															"type": "number"
+														},
+										"fps": 			{
+															"description": "number of frames per second",
+															"required": true,
+															"unit": "frames/sec",
+															"type": "number"
+														},
+										"sizeOfObject": {
+															"description": "size of object in synthetic video",
+															"required": true,
+															"unit": "pixel",
+															"type": "number"
+														},
+										"bgColor":		{
+															"description": "background color",
+															"unit": "RGB value",
+															"type": "object",
+															"properties":	{		
+																				"R":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "R value",
+																							"type": "number",
+																							"default": 0
+																						},
+																				"G":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "G value",
+																							"type": "number",
+																							"default": 0
+																						},
+																				"B":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "B value",
+																							"type": "number",
+																							"default": 0
+																						}
+																			}
+														},
+										"fgColor":		{
+															"description": "foreground color",
+															"unit": "RGB value",
+															"type": "object",
+															"properties":	{		
+																				"R":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "R value",
+																							"type": "number",
+																							"default": 0
+																						},
+																				"G":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "G value",
+																							"type": "number",
+																							"default": 0
+																						},
+																				"B":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "B value",
+																							"type": "number",
+																							"default": 0
+																						}
+																			}
+														},
+										"osdTextColor":	{
+															"description": "OSD text color",
+															"unit": "RGB value",
+															"type": "object",
+															"properties":	{		
+																				"R":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "R value",
+																							"type": "number",
+																							"default": 0
+																						},
+																				"G":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "G value",
+																							"type": "number",
+																							"default": 0
+																						},
+																				"B":	{
+																							"description": "",
+																							"required": true,
+																							"unit": "B value",
+																							"type": "number",
+																							"default": 0
+																						}
+																			}
+														}
+									}
+				}
+}

@@ -1,0 +1,12 @@
+{
+	"Paths": {
+		"moduleDescriptionPath": "./def/",
+		"sqlPath": "./sql/",
+		"srcPath": "./src/",
+		"stubPath": "./src/stubs/",
+		"cmake": {
+			"projectPath": 	  "./build/cmake/"
+		}		
+	},
+	"namespace": ["ConnectedVision", "Module", "Skeleton"]
+}

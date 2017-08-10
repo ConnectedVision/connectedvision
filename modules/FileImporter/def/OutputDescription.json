@@ -1,0 +1,10 @@
+[
+	{
+		"name": "File Output",
+		"id": "FileOutput",
+		"description": "static file",
+		"static": true,
+		"type": "application",
+		"properties": {}
+	}
+]

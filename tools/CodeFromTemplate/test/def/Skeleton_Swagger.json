@@ -1,0 +1,1235 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is the API definition of the Skeleton Module.",
+        "version": "0.1",
+        "title": "Swagger Skeleton",
+        "termsOfService": "http://termsOfService/",
+        "contact": {
+            "name": "???"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "host": "localhost:2020",
+    "basePath": "/",
+    "tags": [
+        {
+            "name": "Host",
+            "description": "Host specific things.",
+            "externalDocs": {
+                "description": "Find out more",
+                "url": "http://swagger.io"
+            }
+        },
+        {
+            "name": "Module",
+            "description": "Module specific things.",
+            "externalDocs": {
+                "description": "Find out more",
+                "url": "http://swagger.io"
+            }
+        },
+        {
+            "name": "OutputPin",
+            "description": "OutputPin specific things.",
+            "externalDocs": {
+                "description": "Find out more",
+                "url": "http://swagger.io"
+            }
+        }
+    ],
+    "schemes": [
+        "http"
+    ],
+    "paths": {
+        "/_hostStatus_": {
+            "get": {
+                "summary": "",
+                "description": "",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Host"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/HostStatus"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/moduleDescription": {
+            "get": {
+                "summary": "",
+                "description": "",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Module"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_ModuleDescription"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/inputDescription": {
+            "get": {
+                "summary": "",
+                "description": "",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Module"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_InputDescription"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/outputDescription": {
+            "get": {
+                "summary": "",
+                "description": "",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Module"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputDescription"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/status": {
+            "get": {
+                "summary": "",
+                "description": "",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Module"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_ModuleStatus"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/init": {
+            "get": {
+                "summary": "",
+                "description": "",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Module"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_ModuleStatus"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/release": {
+            "get": {
+                "summary": "",
+                "description": "",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Module"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_ModuleStatus"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+"/Skeleton/{configId}/Average/id/{id}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_Average_ById",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_Average"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/Average/index/{index}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_Average_ByIndex",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "index",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_Average"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/Average/index/{startIndex}/{endIndex}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_Average_ByIndexRange",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "startIndex",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "in": "path",
+                        "name": "endIndex",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Skeleton_OutputPin_Average"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/Average/time/{time}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_Average_ByTime",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "time",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_Average"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/Average/beforetime/{time}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_Average_ByBeforeTime",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "time",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_Average"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/Average/aftertime/{time}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_Average_ByAfterTime",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "time",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_Average"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/Average/newest": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_Average_Newest",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_Average"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/Average/time/{startTime}/{endTime}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_Average_ByTimeRange",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "startTime",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "in": "path",
+                        "name": "endTime",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Skeleton_OutputPin_Average"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },"/Skeleton/{configId}/AverageTWO/id/{id}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_AverageTWO_ById",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_AverageTWO"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/AverageTWO/index/{index}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_AverageTWO_ByIndex",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "index",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_AverageTWO"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/AverageTWO/index/{startIndex}/{endIndex}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_AverageTWO_ByIndexRange",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "startIndex",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "in": "path",
+                        "name": "endIndex",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Skeleton_OutputPin_AverageTWO"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/AverageTWO/time/{time}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_AverageTWO_ByTime",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "time",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_AverageTWO"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/AverageTWO/beforetime/{time}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_AverageTWO_ByBeforeTime",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "time",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_AverageTWO"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/AverageTWO/aftertime/{time}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_AverageTWO_ByAfterTime",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "time",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_AverageTWO"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/AverageTWO/newest": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_AverageTWO_Newest",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/Skeleton_OutputPin_AverageTWO"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/Skeleton/{configId}/AverageTWO/time/{startTime}/{endTime}": {
+            "get": {
+                "tags": [
+                    "OutputPin"
+                ],
+                "summary": "",
+                "description": "",
+                "operationId": "get_Skeleton_OutputPin_AverageTWO_ByTimeRange",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "configId",
+                        "description": "",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "startTime",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "in": "path",
+                        "name": "endTime",
+                        "description": "",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Skeleton_OutputPin_AverageTWO"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        }    },
+    "definitions": {
+        "HostStatus": {
+	"description": "host status",
+	"type": "object",
+	"properties": {
+		"hostID": {
+			"description": "host id",
+			"type": "string"
+		},
+		"systemID": {
+			"description": "system ID",
+			"type": "string"
+		}
+	}
+},        "Skeleton_ModuleDescription": {
+	"description": "Module Description Schema",
+	"type": "object",
+	"properties": {
+		"description": {
+			"description": "long description of module",
+			"type": "string"
+		},
+		"version": {
+			"description": "version of module",
+			"type": "number"
+		},
+		"moduleID": {
+			"description": "unique ID of module",
+			"type": "string"
+		},
+		"moduleURI": {
+			"description": "URL of module instance. Will be updated by the module server.",
+			"type": "string"
+		},
+		"APIVersion": {
+			"description": "version of supported Connected Vision version",
+			"type": "number"
+		},
+		"moduleFeatures": {
+			"description": "JSON schema of module features",
+			"type": "object",
+			"properties": {
+				"supportsLive": {
+					"description": "The module does support live configurations.",
+					"type": "boolean"
+				},
+				"supportsResume": {
+					"description": "The module does support resuming of stopped configurations.",
+					"type": "boolean"
+				},
+				"supportsDynamicParameters": {
+					"description": "The module does support dynamic parameters.",
+					"type": "boolean"
+				}
+			}
+		},
+		"configFeatures": {
+			"description": "JSON schema of features of the config",
+			"type": "object",
+			"properties": {
+				"allowDynamicParameters": {
+					"description": "the config does support dynamic parameters",
+					"type": "boolean"
+				}
+			}
+		},
+		"author": {
+			"description": "author names of email address",
+			"type": "string"
+		},
+		"params": {
+			"description": "Skeleton Dummy Parameter",
+			"type": "object",
+			"properties": {
+				"dummy": {
+					"description": "just a place holder",
+					"type": "integer"
+				},
+				"dummy_dynamic_parameter": {
+					"description": "just a place holder for a dynamic parameter",
+					"type": "integer"
+				}
+			}
+		}
+	}
+},        "Skeleton_InputDescription": {
+	"description": "Pin Description Schema",
+	"type": "array",
+	"items": {
+		"type": "object",
+		"properties": {
+			"id": {
+				"description": "unique ID of pin (can be an number, name or uid) important: has to be URL friendly!",
+				"type": "string"
+			},
+			"description": {
+				"description": "long description of pin",
+				"type": "string"
+			},
+			"type": {
+				"description": "MIME type of pin",
+				"type": "string"
+			},
+			"minPinCount": {
+				"description": "minimal number of this type of pin (set to 0 for optional input pin)",
+				"type": "integer"
+			},
+			"maxPinCount": {
+				"description": "maximal number of this type of pin (use this if you want multiple input pins of the same type)",
+				"type": "integer"
+			},
+			"properties": {
+				"description": "JSON schema of data returned by pin (if MIME is application/json)",
+				"type": "object"
+			}
+		}
+	}
+},        "Skeleton_OutputDescription": {
+	"description": "Pin Description Schema",
+	"type": "array",
+	"items": {
+		"type": "object",
+		"properties": {
+			"id": {
+				"description": "unique ID of pin (can be an number, name or uid) important: has to be URL friendly!",
+				"type": "string"
+			},
+			"description": {
+				"description": "long description of pin",
+				"type": "string"
+			},
+			"type": {
+				"description": "MIME type of pin",
+				"type": "string"
+			},
+			"minPinCount": {
+				"description": "minimal number of this type of pin (set to 0 for optional input pin)",
+				"type": "integer"
+			},
+			"maxPinCount": {
+				"description": "maximal number of this type of pin (use this if you want multiple input pins of the same type)",
+				"type": "integer"
+			},
+			"properties": {
+				"description": "JSON schema of data returned by pin (if MIME is application/json)",
+				"type": "object"
+			}
+		}
+	}
+},        "Skeleton_ModuleStatus": {
+	"description": "Module Status Schema",
+	"type": "object",
+	"properties": {
+		"moduleID": {
+			"description": "ID of module",
+			"type": "string"
+		},
+		"moduleStatus": {
+			"description": "current status of module",
+			"enum": [
+				"n/a",
+				"up",
+				"down"
+			],
+			"type": "string"
+		},
+		"configsRunning": {
+			"description": "list of currently processed configs / jobs",
+			"type": "array",
+			"items": {
+				"description": "config ID",
+				"type": "string"
+			}
+		},
+		"configsWaiting": {
+			"description": "list of configs / jobs waiting to be processed",
+			"type": "array",
+			"items": {
+				"description": "config ID",
+				"type": "string"
+			}
+		}
+	}
+},        "Skeleton_OutputPin_Average": {
+	"description": "This is a completely senseless output pin providing the average color of the area in the bounding box.",
+	"type": "object",
+	"properties": {
+		"configID": {
+			"description": "",
+			"type": "string"
+		},
+		"timestamp": {
+			"description": "first detection",
+			"type": "integer"
+		},
+		"color": {
+			"description": "average color of bounding box",
+			"type": "object",
+			"properties": {
+				"R": {
+					"description": "red",
+					"type": "integer"
+				},
+				"G": {
+					"description": "green",
+					"type": "integer"
+				},
+				"B": {
+					"description": "blue",
+					"type": "integer"
+				}
+			}
+		}
+	}
+},        "Skeleton_OutputPin_AverageTWO": {
+	"description": "This is a completely senseless output pin providing the average color of the area in the bounding box.",
+	"type": "object",
+	"properties": {
+		"configID": {
+			"description": "",
+			"type": "string"
+		},
+		"timestamp": {
+			"description": "first detection",
+			"type": "integer"
+		},
+		"color": {
+			"description": "average color of bounding box",
+			"type": "object",
+			"properties": {
+				"R": {
+					"description": "red",
+					"type": "integer"
+				},
+				"G": {
+					"description": "green",
+					"type": "integer"
+				},
+				"B": {
+					"description": "blue",
+					"type": "integer"
+				}
+			}
+		}
+	}
+},
+        "Error": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

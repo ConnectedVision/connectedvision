@@ -1,0 +1,148 @@
+{
+    "description": "test object to check generator",
+    "type": "object",
+    "properties": {
+        "configID": {
+            "description": "config id",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": "md5"
+		},
+        "id": {
+            "description": "object id",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": "md5"
+		},
+		"timestamp": {
+            "description": "timestamp of object",
+            "required": true,
+            "unit": "ms",
+			"type":"integer",
+			"exttype":"timestamp",			
+			"default": 0
+        },
+		"boolVal": {
+            "description": "simple boolean value",
+			"type":"boolean"
+        },
+		"intVal": {
+            "description": "simple integer value",
+			"type":"integer"
+        },
+		"numberVal": {
+            "description": "simple float value",
+			"type":"number"
+        },
+		"stringVal": {
+            "description": "simple string value",
+			"type":"string"
+        },
+		"anyVal": {
+            "description": "a generic type should be handled as plan text",
+			"type":"any"
+        },
+        "simpleArray": {
+            "description": "1 dimensional array of integer",
+            "type": "array",
+            "items": {
+				"type": "integer"
+			}
+		},
+        "stringArray": {
+            "description": "1 dimensional array of string",
+            "type": "array",
+            "items": {
+				"type": "string"
+			}
+		},			
+        "intArray": {
+            "description": "3 dimensional array of integer",
+            "type": "array",
+            "items": {
+				"type": "array",
+				"items": {
+					"type": "array",
+					"items": {
+						"description": "actual value",
+						"type":"integer"			
+					}
+				}
+			}
+		},
+        "floatArray": {
+            "description": "3 dimensional array of float",
+            "type": "array",
+            "items": {
+				"type": "array",
+				"items": {
+					"type": "array",
+					"items": {
+						"description": "actual value",
+						"type":"number"			
+					}
+				}
+			}
+		},		
+        "objArray": {
+            "description": "array of objects",
+            "type": "array",
+            "items": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					},			
+					"index": {
+						"type":"integer"
+					},
+					"subArray": {
+						"type": "array",
+						"items": {
+							"type":"string"
+						}
+					}					
+				}
+			}
+		},		
+		"simpleObject": {
+            "description": "simple object with basic types",
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},			
+				"value": {
+					"type":"integer"
+				}
+			}
+		},
+		"complexObject": {
+            "description": "simple object with basic types",
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"subObjectArray": {
+					"description": "array of sub objects",
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"description": "sub object",
+							"type": "object",
+							"properties": {
+								"sub": {
+									"type": "string"
+								}		
+							}
+						}
+					}
+				}
+			}
+		}
+    }
+}

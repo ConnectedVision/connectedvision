@@ -1,0 +1,17 @@
+,
+	{
+		"name": "Polyline Overlay",
+		"id": "PolylineOverlay",
+		"description": "The input image with overlayed polylines. The data is indexed by the IDs, indices and timestamps of the images.",
+		"static": false,
+		"type": "image/<format_determined_in_module_configuration>",
+		"properties": {}
+	},
+	{
+		"name": "Polyline Overlay Thumbnail",
+		"id": "PolylineOverlayThumbnail",
+		"description": "The input image thumbnail with overlayed polylines. The data is indexed by the IDs, indices and timestamps of the images.",
+		"static": false,
+		"type": "image/<format_determined_in_module_configuration>",
+		"properties": {}
+	}

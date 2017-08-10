@@ -1,0 +1,26 @@
+{
+	"id": "",
+	"version": 1,
+	"name": "left to right",
+	"description": "move bounding box from left to right",
+	"moduleID": "DummyBoundingBoxes",
+	"moduleURI": "http://localhost:2020/DummyBoundingBoxes",
+	"params": {
+		"count": 100,
+		"timestampStart": 0,
+		"boundingBoxStart": {
+			"top": 0.4,
+			"left": 0.0,
+			"bottom": 0.6,
+			"right": 0.2
+		},
+		"timestampEnd": 1000,
+		"boundingBoxEnd": {
+			"top": 0.4,
+			"left": 0.8,
+			"bottom": 0.6,
+			"right": 1.0
+		}
+	},
+	"chain": []
+}

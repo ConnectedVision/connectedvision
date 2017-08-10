@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+{% for d in VS2010.uniqueSections %}    <Filter Include="{{d.name|replace('/', '\ ', 'g')|replace(' ', '', 'g')}}">
+      <UniqueIdentifier>{{d.guid}}</UniqueIdentifier>
+    </Filter>
+{% endfor %}
+  </ItemGroup>
+  <ItemGroup>
+{% for d in VS2010.files %}{% if d.compileable %}    <ClCompile Include="{{d.path|replace('/', '\ ', 'g')|replace(' ', '', 'g')}}">
+      <Filter>{{d.section|replace('/', '\ ', 'g')|replace(' ', '', 'g')}}</Filter>
+    </ClCompile>
+{% endif %}{% endfor %}
+  </ItemGroup>
+  <ItemGroup>
+{% for d in VS2010.files %}{% if not d.compileable %}    <ClInclude Include="{{d.path|replace('/', '\ ', 'g')|replace(' ', '', 'g')}}">
+      <Filter>{{d.section|replace('/', '\ ', 'g')|replace(' ', '', 'g')}}</Filter>
+    </ClInclude>
+{% endif %}{% endfor %}
+  </ItemGroup>
+</Project>

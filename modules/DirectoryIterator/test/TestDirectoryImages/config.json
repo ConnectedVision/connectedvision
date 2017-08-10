@@ -1,0 +1,14 @@
+{
+	"name": "DLLs of the current working directory",
+	"description": "" ,
+	"version": 1,
+	"id": "",
+	"moduleID": "DirectoryIterator",
+	"moduleURI" : "http://localhost:2020/DirectoryIterator",
+	"params":
+	{
+		"rootDirectory": "../../../../test/data/images",
+		"fileTypes": [ ".jpg", ".png" ]
+	},
+	"chain": []
+}

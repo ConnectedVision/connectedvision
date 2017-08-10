@@ -1,0 +1,30 @@
+{
+	"name": "test - file export",						
+	"description": "", 
+	"version": 1, 						
+	"id" : "",			
+	"profileID": 0, 					
+	"moduleID": "FileExport",
+	"moduleURI" : "http://192.168.0.187:2020/FileExport",
+	"params": {
+		"filepath_format": "./data/export/img_[[output-ImagePNG]]_[timestamp]_test.png"
+	},
+	"chain": [
+		{
+			"connections": [{ "inputPinID": "data", "outputPinID": "PNG-Image" }],
+			"config": {
+				"name": "cube test video",
+				"description": "",
+				"version": 1,
+				"id" : "",
+				"moduleURI" : "http://localhost:2020/VideoImporter",
+				"moduleID" : "",
+				"params":
+				{
+					"filename": "../../../../../../../test/data/videos/VirtualDubH264Test.avi"
+				},
+				"chain": []
+			}
+		}
+	]
+}

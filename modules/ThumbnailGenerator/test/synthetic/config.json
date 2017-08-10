@@ -1,0 +1,93 @@
+{
+	"id" : "",
+	"name": "synthetic video & dummy bounding boxes",
+	"description": "The config deliberately generates exactly 101 instead of 100 objects for the DummyBoundingBoxes and the SyntheticVideo modules because with 100 objects the timestamps would not match.",
+	"version": 1,
+	"moduleID": "ThumbnailGenerator",
+	"moduleURI" : "http://localhost:2020/ThumbnailGenerator",
+	"params":
+	{
+		"imageFormat": "JPEG",
+		"lineWidth": 5,
+		"lineColor":
+		{
+			"R": 1.0,
+			"G": 0.0,
+			"B": 0.0
+		}
+	},
+	"chain":
+	[
+		{
+			"connections":
+			[
+				{ "inputPinID": "PNG-Image", "outputPinID": "PNG-Image" },
+				{ "inputPinID": "ImageMetadata", "outputPinID": "FrameMetadata" }
+			],
+			"config":
+			{
+				"name": "rectangle",
+				"description": "A colored rectangle is moving from left to right",
+				"version": 1,
+				"id" : "",
+				"profileID": 0,
+				"moduleID": "SyntheticVideo",
+				"moduleURI" : "http://localhost:2020/SyntheticVideo",
+				"params":
+				{
+					"recordingDateTime": 0,
+					"numberOfFrames": 101,
+					"height": 480,
+					"width": 640,
+					"fps": 10,
+					"sizeOfObject": 50,
+					"bgColor":		{
+										"R": 100,"G": 200,"B": 255
+									},
+					"fgColor":		{
+										"R": 100,"G": 200,"B": 0
+									},
+					"osdTextColor":	{
+										"R": 0,"G": 0,"B": 0
+									}
+				},
+				"chain": []
+			}
+		},
+		{
+			"connections": [ { "inputPinID": "BoundingBox", "outputPinID": "Detections" } ],
+			"config":
+			{
+				"id": "",
+				"name": "left to right",
+				"description": "move bounding box from left to right",
+				"version": 1,
+				"profileID": 0,
+				"moduleID": "",
+				"moduleURI": "http://localhost:2020/DummyBoundingBoxes",
+				"moduleLogoURI": "",
+				"params":
+				{
+					"count": 101,
+					"timestampStart": 0,
+					"boundingBoxStart":
+					{
+						"top": 0.4,
+						"left": 0.0,
+						"bottom": 0.6,
+						"right": 0.2
+					},
+					"timestampEnd": 10000,
+					"boundingBoxEnd":
+					{
+						"top": 0.4,
+						"left": 0.8,
+						"bottom": 0.6,
+						"right": 1.0
+					}
+				},
+				"chain": []
+			}
+		}
+	]
+}

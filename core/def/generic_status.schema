@@ -1,0 +1,154 @@
+{
+    "description": "config status",
+    "required": true,
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "config id",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": "md5"
+		},
+        "timestamp": {
+            "description": "time of modification",
+            "required": false,
+            "unit": "ms",
+			"type":"integer",
+			"exttype":"timestamp",
+			"default": 0
+        },
+        "moduleID": {
+            "description": "ID of module",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": ""
+		},
+        "moduleURI": {
+            "description": "URI of module instance",
+            "required": true,
+			"type": "string",
+			"exttype":"url",
+			"unit": "URL"
+		},
+        "status": {
+            "description": "current status of config / job",
+            "required": true,
+			"enum": ["n/a", "init", "startup", "running", "stopping", "stopped", "finished", "error", "reset", "cleanup"],
+            "unit": "",
+            "type": "string",
+			"default": "n/a"
+        },
+        "message": {
+            "description": "general message (e.g. description of last error)",
+            "required": false,
+            "unit": "",
+            "type": "string",
+			"default": ""
+        },
+        "progress": {
+            "description": "processing progress (0.0 - 1.0)",
+            "required": true,
+            "unit": "",
+            "type": "number",
+			"default": 0,
+			"minimum": 0,
+			"maximum": 1
+        },
+        "startTime": {
+            "description": "System time when the config was started.",
+            "required": true,
+            "unit": "ms",
+			"type":"integer",
+			"exttype":"timestamp",
+			"default": -1
+        },
+        "systemTimeProcessing": {
+            "description": "System time when the config was / is processed. This time is updated only during processing the config (i.e. status='running').",
+            "required": true,
+            "unit": "ms",
+			"type":"integer",
+			"exttype":"timestamp",
+			"default": -1
+        },
+        "estimatedFinishTime": {
+            "description": "estimated time to finish processing of this configChain",
+            "required": false,
+            "unit": "ms",
+			"type":"integer",
+			"exttype":"timestamp",
+			"default": -1
+        },
+		"qualityOfService": {
+			"description": "quality of service (QoS) parameters",
+			"type": "object",
+			"required": true,
+			"properties": {
+				"compuationDuration": {
+					"description": "computation duration based on the elapsed time between updates of the systemTimeProcessing parameter",
+					"required": true,
+					"unit": "ms",
+					"type":"integer",
+					"exttype":"timestamp",
+					"default": -1
+				},
+				"compuationDurationAverage": {
+					"description": "average of the computation duration of 10 preceding iterations based on the elapsed time between updates of the systemTimeProcessing parameter computed using the simple moving average method",
+					"required": true,
+					"unit": "ms",
+					"type":"integer",
+					"exttype":"timestamp",
+					"default": -1
+				}
+			}
+		},
+        "stableResults": {
+            "description": "Index and timestamp range of available and stable (non-changing) results. One entry for each output pin.",
+            "required": true,
+            "unit": "",
+            "type": "array",
+            "items": {
+				"type": "object",
+				"properties": {
+					"pinID": {
+						"description": "id of output pin",
+						"type": "string",
+						"required":true
+					},
+					"indexStart": {
+						"required": false,
+						"type":"integer",
+						"default": 0
+					},
+					"indexEnd": {
+						"required": true,
+						"type":"integer"
+					},
+					"timestampStart": {
+						"required": false,
+						"unit": "ms",
+						"type":"integer",
+						"exttype":"timestamp",
+						"default": 0
+					},
+					"timestampEnd": {
+						"required": true,
+						"unit": "ms",
+						"type":"integer",
+						"exttype":"timestamp"
+					}
+				}
+			}
+        },
+        "chain": {
+            "description": "Status of previous modules.",
+            "required": true,
+            "unit": "",
+            "type": "array",
+            "items": {
+                 "type": "any"
+            }
+         }
+    }
+}

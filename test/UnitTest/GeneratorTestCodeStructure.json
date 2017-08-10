@@ -1,0 +1,9 @@
+{
+	"Paths": {
+		"moduleDescriptionPath": "./",
+		"sqlPath": "./generated/sql/",
+		"srcPath": "./generated/",
+		"stubPath": "./generated/stubs/"
+	},
+	"namespace": ["ConnectedVision", "UnitTest"]
+}

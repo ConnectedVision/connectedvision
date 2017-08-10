@@ -1,0 +1,14 @@
+{
+	"name": "rtsp://:8554/video (VLC stream)",						
+	"description": "", 
+	"version": 1, 						
+	"id" : "",			
+	"aliasID": [ {"id": "VLC" } ],	
+	"moduleID": "RTPImporter",
+	"moduleURI" : "http://localhost:2020/RTPImporter",
+	"params":
+	{
+		"url": "rtsp://:8554/video"
+	},
+	"chain": []
+}

@@ -1,0 +1,76 @@
+{
+	"serverUrl": "http://localhost:2020",
+	"modulesDir": "<rootdir>/modules",
+	"startupDir": "<rootdir>/bin/VS2010/<architecture>/<buildconfig>",
+	"serverExeFile": "<rootdir>/bin/VS2010/<architecture>/<buildconfig>/SystemTestServer.exe",
+	"serverOutputDisplayFlag": true,
+	"tests": [
+		{ "load_config" : {} },
+		{ "send_config" : {} },
+		{ "check_config" : {} },
+		{ "reset_config" : {} },
+		{ "check_status" : { "status": "init" } },
+		{ "start_config" : {} },
+		{ "stop_config" : {} },
+		{ "reset_config" : {} },
+		{ "start_config" : {} },
+		{ "check_stableResults": {} },
+		{ "wait" : { "time": 2000} },
+		{ "check_stableResults": {} },
+		{ "request_last_stableResult": {} },
+		{ "verify_output_data_type": {} },
+		{ "check_configList" : {} },
+		{ "delete_config" : {} },
+		
+		{ "setup": {} },
+		{ "startConfig": { } },
+		{ "checkConfigExecution": { "criteria": { "status": "finished" } } },
+		{ "checkLastStableResults": {} },
+		{ "verifyOutputDataType": {} },
+		{ "processReferenceOutput": {} },
+		{ "outputPinBenchmark": { "requests": 10 } },
+		{ "stopConfig": {} },
+		{ "deleteConfig": {} }
+	],
+	"exampleTests": [
+		{ "load_config" : {} },
+		{ "send_config" : { "TODO": { "attemps": 10 }, "expectedResponse": { "statusCode": 500 } } },
+		{ "check_config" : {} },
+		{ "reset_config" : {} },
+		{ "check_status" : {
+			"status": "init",
+			"TODO_1": { "status": ["startup", "running"] },
+			"TODO_2": { "attemps": 10 }
+			}
+		},
+		{ "start_config" : {} },
+		{ "wait" : { "time": 1000} },
+		{ "stop_config" : {} },
+		{ "reset_config" : {} },
+		{ "start_config" : {} },
+		{ "check_stableResults": {} },
+		{ "wait_for_status" : { "status": "finished", "timeout": 10000, "interval": 100 } },
+		{ "check_stableResults": {} },
+		{ "request_last_stableResult": {} },
+		{ "verify_output_data_type": {} },
+		{ "process_reference_output": {
+			"TODO_1": { "attemps": 10 },
+			"TODO_2": "getOutputPinAccessorValueRange has a certain complexity since it covers a range of possible types of runtime behavior (offline vs live config, slow vs fast, etc.) which have to be considered",
+			"customTests": { "SamplePin": { "compareFunction": "compareOK", "compareParams": {} } }
+			}
+		},
+		{ "check_configList" : {} },
+		{ "benchmark": { "name": "benchmark: reset_config", "test": "reset_config", "repeat": 10 } },
+		{ "benchmark": { "test": "check_status", "testParams": { "status": "init" }, "repeat": 100, "avgRuntime": 50 } },
+		{ "benchmark": { "test": "start_config", "repeat": 1 } },
+		{ "benchmark": { "test": "start_config", "repeat": 10 } },
+		{ "outputPin_benchmark": {
+			"TODO": "accessor: index + *timestamp* als Abfrage, ",
+			"repeat": 10,
+			"avgRuntime": {
+				"PinID": 10
+			}}
+		},
+		{ "delete_config" : {} }
+	]
+}

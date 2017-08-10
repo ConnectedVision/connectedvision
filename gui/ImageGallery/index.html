@@ -1,0 +1,887 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<title>Connected Vision Thumbnail Viewer</title>
+		<link type="text/css" href="js/jquery-ui/1.12.1/jquery-ui.min.css" rel="stylesheet" />
+		<link type="text/css" href="js/jQuery-ui-Slider-Pips/1.7.2/jquery-ui-slider-pips.css" rel="stylesheet" />
+		<script type="text/javascript" src="js/jquery-ui/1.12.1/external/jquery/jquery.js"></script>
+		<script type="text/javascript" src="js/jquery-ui/1.12.1/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="js/jQuery-ui-Slider-Pips/1.7.2/jquery-ui-slider-pips.min.js"></script>
+		<script type="text/javascript" src="js/knockout/3.0.0/knockout-3.0.0.js"></script>
+		<style>
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	margin: 0;
+	padding: 20px 0px 0px 40px;
+}
+
+a {
+	text-decoration: underline;
+}
+
+a:hover {
+	text-decoration: none;
+}
+
+body {
+	font-family: sans-serif;
+}
+
+hr {
+	margin: 24px 0;
+	_margin: 0; /*IE Sucks*/
+	clear: both;
+}
+
+h1 {
+	font-size: 140%;
+	font-family: sans-serif;
+}
+
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+#canvas {
+	margin-top: 50px;
+}
+
+#canvas:after {
+	clear: both;
+	content: ".";
+	display: block;
+	height: 0;
+	visibility: hidden;
+}
+
+#canvas a {
+	color: black;
+	display: inline-block;
+	margin: 5px;
+	position: relative;
+}
+
+#canvas a:hover {
+	font-size: 100%;
+	z-index: 2;
+}
+
+#canvas a img.thumbnail {
+	border: solid 1px black;
+/*
+	transition: 0.5s ease;
+	-webkit-transition: 0.5s ease;
+	-moz-transition: 0.5s ease;
+*/
+	position: absolute;
+}
+
+#canvas a:hover img.thumbnail {
+	/*
+	-webkit-transform: scale(1.5,1.5);
+	-moz-transform:scale(1.5,1.5);
+	*/
+	pointer-events: none;
+	z-index: 2;
+}
+
+#canvas a div.indexOverlay {
+	border: solid 1px black;
+	background-color: lightgray;
+	left: 3%;
+	padding: 0 5%;
+	position: absolute;
+	opacity: 100%;
+	top: 82%;
+	z-index: 1;
+}
+
+.loadingImage {
+	border: dotted 1px gray;
+	padding: 1ex;
+	display: inline-block;
+}
+
+		</style>
+		<script type="text/javascript">
+/**
+* Event handler for the slider. It updates the slider when the observable changes and vice versa.
+*/
+ko.bindingHandlers.selectionRangeSlider =
+{
+    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext)
+	{
+		var options = allBindingsAccessor().sliderOptions || {};
+
+		options.change = function(e, ui)
+		{
+			var sliderValues = ko.utils.unwrapObservable(valueAccessor());
+
+			if(bindingContext.$data.stableResultsCount() > 0)
+			{
+				sliderValues.min(ui.values[0]);
+				sliderValues.max(ui.values[1]);
+			}
+		};
+
+		ko.utils.domNodeDisposal.addDisposeCallback(element, function ()
+		{
+			$(element).slider("destroy");
+		});
+
+		$(element).slider(options);
+		//$(element).hide();
+	},
+	update: function (element, valueAccessor, allBindingsAccessor)
+	{
+		// assign the options to the slider
+		var options = allBindingsAccessor().sliderOptions || {};
+		$(element).slider("option", options);
+		
+		// set the values of the slider to the view model variables
+		var sliderValues = ko.toJS(valueAccessor());
+		$(element).slider("values", [sliderValues.min, sliderValues.max]);
+		
+		/*
+		if(sliderValues.max - sliderValues.min > 0)
+		{		
+			$(element).show();
+		}
+		*/
+		
+		$(element).slider("pips");
+		$(element).slider("float", { pips: true });
+	}
+};
+
+
+
+/**
+* Returns the URL parameters.
+*/
+var getUrlParams = function()
+{
+	var urlParams = {};
+	var match,
+		pl     = /\+/g,  // Regex for replacing addition symbol with a space
+		search = /([^&=]+)=?([^&]*)/g,
+		decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+		query  = window.location.search.substring(1);
+	
+	while (match = search.exec(query))
+		urlParams[decode(match[1])] = decode(match[2]);
+	
+	return urlParams;
+};
+
+
+
+/**
+* The gallery image stores all parameters which are related to a single image from one of the output pins. Upon successful loading or in case of a loading error, it calls The view model's method for loading other images.
+*/
+var GalleryImage = function(imageUrl, thumbnailUrl, imageIndex)
+{
+	var self = this;
+
+	self.imageUrl = imageUrl;
+	self.thumbnailUrlSrc = thumbnailUrl;
+	// actual image URL is assigned to the observable within the Gallery.loadImages() function because of efficiency / performance reasons
+	self.thumbnailUrl = ko.observable();
+	self.imageIndex = imageIndex;
+	self.width = ko.observable();
+	self.height = ko.observable();
+	self.left = ko.observable();
+	self.top = ko.observable();
+	self.widthSrc = ko.observable();
+	self.heightSrc = ko.observable();
+	self.widthLink = ko.observable();
+	self.heightLink = ko.observable(150);
+	
+	self.StatusEnum = 
+	{
+		NEW: 1,
+		LOADING: 2,
+		LOADED: 3,
+		ERROR: 4,
+		UNKNOWN: 5
+	};
+	
+	self.status = ko.observable(self.StatusEnum.NEW);
+		
+	/**
+	* Assigns the actual thumbnail URL to the observable variable in order to update the view (limit concurrent connections).
+	*/
+	self.loadImage = function()
+	{
+		if(!self.thumbnailUrl() && self.status() != self.StatusEnum.LOADING)
+		{
+			self.status(self.StatusEnum.LOADING);
+			self.thumbnailUrl(self.thumbnailUrlSrc);
+		}
+	};
+	
+	
+	
+	/**
+	* Initializes the image observable properties with the value obtained from the actual DOM image object.
+	*/
+	self.onImageLoad = function(item, event, parent)
+	{
+		self.status(self.StatusEnum.LOADED);
+		
+		self.widthSrc(event.target.width);
+		self.heightSrc(event.target.height);
+		
+		self.widthLink((self.heightLink() / self.heightSrc()) * self.widthSrc())
+		
+		self.width(self.widthLink());
+		self.height(self.heightLink());
+		
+		parent.loadImages();
+	};
+	
+	
+	
+	/**
+	* Handles errors during loading of the image.
+	*/
+	self.onImageLoadError = function(item, event, parent)
+	{
+		self.status(self.StatusEnum.ERROR);
+		parent.loadImages();
+	};
+	
+	
+	
+	/**
+	* Magnifies the image upon mouse enter.
+	*/
+	self.onImageMouseEnter = function(item, event)
+	{
+		self.width(self.widthSrc());
+		self.height(self.heightSrc());
+		self.left(-0.25 * self.width());
+		self.top(-0.25 * self.height());
+	};
+	
+	
+
+	/**
+	* Resets the image size to its default value upon mouse leave.
+	*/
+	self.onImageMouseLeave = function(item, event)
+	{
+		self.width(self.widthLink());
+		self.height(self.heightLink());
+		self.left(0);
+		self.top(0);
+	};
+};
+	
+
+
+/**
+* The gallery view model.
+*/
+var GalleryViewModel = function()
+{
+	var self = this;
+	
+	self.selectionCountUrlParam = null;
+	self.selectionCountDefault = 4;
+	self.selectionStartUrlParam = null;
+	self.selectionEndUrlParam = null;
+	
+	// self.updateTimestampPrev = -1;
+	self.updateIntervalTimeoutId = null;
+	self.updateInterval = ko.observable();
+	
+	self.updateInterval.subscribe(function()
+	{
+		if(!self.updateInterval())
+		{
+			return;
+		}
+		
+		clearTimeout(self.updateIntervalTimeoutId);
+		
+		self.updateIntervalTimeoutId = setInterval(function() 
+		{
+			self.updateStatusChain();
+		}, self.updateInterval() * 1000);
+	});
+	
+	self.params = ko.observable();
+	
+	self.params.subscribe(function()
+	{
+		if(self.params().hasOwnProperty("indexCount"))
+		{
+			self.selectionCountUrlParam = self.params()["indexCount"];
+		}
+		else
+		{
+			if(self.params().hasOwnProperty("indexStart"))
+			{
+				self.selectionStartUrlParam = self.params()["indexStart"];
+			}
+			
+			if(self.params().hasOwnProperty("indexEnd"))
+			{
+				self.selectionEndUrlParam = self.params()["indexEnd"];
+			}
+		}
+	});
+
+	self.configUrl = ko.observable();
+	
+	self.configUrl.subscribe(function()
+	{
+		var str = self.configUrl();
+		
+		if(str[str.length - 1] == "/")
+		{
+			str = str.substring(0, str.length-1);
+			self.configUrl(str);
+			return;
+		}
+
+		// make some initializations
+		self.updateOutputPinList();
+		self.updateConfigChain();
+	});
+	
+	self.pin = ko.observable();
+	
+	self.pin.subscribe(function()
+	{
+		if(!self.pin())
+		{
+			return;
+		}
+		
+		self.updateStatusChain();
+		self.updateImages();
+	});
+	
+	self.pins = ko.observableArray([]);
+	
+	self.configChain = ko.observable();
+	
+	self.statusChain = ko.observable();
+	
+	self.resultsStart = ko.observable();
+	self.resultsEnd = ko.observable();
+	self.resultsEnd.subscribe(function()
+	{
+		self.updateSelection();
+	});
+	
+	self.selectLatestResultsFlag = ko.observable(true);
+	
+	// the user selection start of the range of images to display
+	self.selectionStart = ko.observable();
+	self.selectionStart.subscribe(function()
+	{
+		self.updateImages();
+	});
+	
+	// the user selection end of the range of images to display
+	self.selectionEnd = ko.observable();
+	self.selectionEnd.subscribe(function()
+	{
+		self.updateImages();
+	});
+	
+	self.images = ko.observableArray([]);
+	
+	self.nConnectionsMax = ko.observable(8);
+	
+	// update the stable results count, the results start and end indices
+	self.stableResultsCount = ko.computed(function()
+	{
+		if(self.statusChain() && self.statusChain().stableResults && self.statusChain().stableResults.length > 0)
+		{
+			var index = -1;
+			
+			for(var i = 0; i < self.statusChain().stableResults.length; i++)
+			{
+				if(self.statusChain().stableResults[i].pinID === self.pin().id)
+				{
+					index = i;
+					break;
+				}
+			}
+			
+			if(index == -1)
+			{
+				return -1;
+			}
+	
+			self.resultsStart(self.statusChain().stableResults[index].indexStart);
+			self.resultsEnd(self.statusChain().stableResults[index].indexEnd);
+			
+			var n = (self.resultsEnd() - self.resultsStart()) + 1;
+			
+			return n;
+		}
+		else
+		{
+			return -1;
+		}
+	});
+
+	
+	
+	/**
+	* Updates the user selection data.
+	*/
+	self.updateSelection = function()
+	{
+		var selectionInitializedFlag = self.selectionStart() !== undefined && self.resultsEnd() !== undefined;
+		
+		// check which selection method should be used
+		if((self.selectionStartUrlParam || self.selectionEndUrlParam) && !self.selectionCountUrlParam)
+		{
+			self.selectLatestResultsFlag(false);
+		}
+		else if(self.selectionCountUrlParam)
+		{
+			self.selectLatestResultsFlag(true);
+		}
+		
+		// select by count
+		if(self.selectLatestResultsFlag())
+		{
+			if(self.selectionCountUrlParam)
+			{
+				if
+				(
+					!isNaN(self.selectionCountUrlParam)
+					&& self.selectionCountUrlParam > 0
+					&& self.selectionCountUrlParam <= (self.resultsEnd() - self.resultsStart() + 1)
+				)
+				{
+					self.selectionStart(self.resultsEnd() - self.selectionCountUrlParam + 1);
+				}
+				else
+				{
+					self.selectionStart(self.resultsStart());
+				}
+				
+				// check the URL parameter only at startup and set it to null for the following updates
+				self.selectionCountUrlParam = null;
+			}
+			else
+			{
+				if(self.selectionStart())
+				{
+					self.selectionStart(self.resultsEnd() - (self.selectionEnd() - self.selectionStart()));
+				}
+				else
+				{
+					self.selectionStart(Math.max(self.resultsStart(), self.resultsEnd() - self.selectionCountDefault + 1));
+				}
+			}
+			
+			self.selectionEnd(self.resultsEnd());
+		}
+		/* select by start and/or end */
+		else
+		{
+			var prevCount = null;
+			
+			if(self.selectionStart() && self.selectionEnd())
+			{
+				prevCount = self.selectionEnd() - self.selectionStart() + 1;
+			}
+			
+			if(!self.selectionStart())
+			{
+				if(self.selectionStartUrlParam)
+				{
+					if
+					(
+						!isNaN(self.selectionStartUrlParam)
+						&& self.resultsStart() <= self.selectionStartUrlParam
+						&& self.selectionStartUrlParam <= self.resultsEnd()
+					)
+					{
+						self.selectionStart(self.selectionStartUrlParam);
+					}
+					else
+					{
+						self.selectionStart(self.resultsStart());
+					}
+				
+					// use the URL parameter only at startup and set it to null for the following updates
+					self.selectionStartUrlParam = null;
+				}
+				else
+				{
+					self.selectionStart(self.resultsStart());
+				}
+			}
+			else if(self.selectionStart() < self.resultsStart())
+			{
+				self.selectionStart(self.resultsStart());
+			}
+
+			if(!self.selectionEnd())
+			{
+				if(self.selectionEndUrlParam)
+				{
+					if
+					(
+						!isNaN(self.selectionEndUrlParam)
+						&& self.selectionStart() <= self.selectionEndUrlParam
+						&& self.selectionEndUrlParam <= self.resultsEnd()
+					)
+					{
+						self.selectionEnd(self.selectionEndUrlParam);
+					}
+					else
+					{
+						self.selectionEnd(self.resultsEnd());
+					}
+				
+					// use the URL parameter only at startup and set it to null for the following updates
+					self.selectionEndUrlParam = null;
+				}
+				else if(prevCount)
+				{
+					self.selectionEnd(Math.min(self.selectionStart() + prevCount - 1, self.resultsEnd()));
+				}
+				else
+				{
+					self.selectionEnd(Math.min(self.resultsEnd(), self.selectionStart() + 10 * self.selectionCountDefault - 1));
+				}
+			}
+			else if(self.selectionEnd() < self.selectionStart())
+			{
+				self.selectionEnd(Math.min(self.selectionStart() + prevCount - 1, self.resultsEnd()));
+			}
+		}
+		
+		// if the selection was not initialized at the beginning of the method, then it is assumed that this is the first call and a hopefully reasonable estimated for the update interval should be set
+		if(!selectionInitializedFlag)
+		{
+			self.updateInterval(Math.max(1, Math.round((self.selectionEnd() - self.selectionStart() + 1) * 0.2)));
+		}
+	};
+	
+	
+	
+	/**
+	* Returns the number of images which are currently being loaded (loading flag set to true).
+	*/
+	self.getNumImagesLoading = function()
+	{
+		var n = 0;
+	
+		for(var i = 0; i < self.images().length; i++)
+		{
+			if(self.images()[i].status() == self.images()[i].StatusEnum.LOADING)
+			{
+				n++;
+			}
+		}
+		
+		return n;
+	};
+	
+	
+	
+	/**
+	* Returns an array of images which have not been loaded and are not processed yet (status: NEW).
+	*/
+	self.getUninitializedImages = function()
+	{
+		var imgs = [];
+		
+		for(var i = 0; i < self.images().length; i++)
+		{
+			if(self.images()[i].status() == self.images()[i].StatusEnum.NEW)
+			{
+				imgs.push(self.images()[i]);
+			}
+		}
+	
+		return imgs;
+	};
+	
+	
+	
+	/**
+	* Loads as many images as there are available connection slots.
+	* This is done because the number of concurrent connections is deliberately limited in order to avoid a high server load.
+	* If all queries are issued at the beginning, then the user may select a different pin or subset while the server is still processing. The server does not know that it could actually cancel the outdated requests, still processes them, returns the result to the client and who then simply ignores or throws away the returned data.
+	*/
+	self.loadImages = function()
+	{
+		var nLoading = self.getNumImagesLoading();
+		
+		// if the number of concurrent connections is below the maximum, then load additional images
+		if(nLoading < self.nConnectionsMax())
+		{
+			var imgs = self.getUninitializedImages();
+			
+			for(var i = 0; i < Math.min(self.nConnectionsMax() - nLoading, imgs.length); i++)
+			{
+				imgs[i].loadImage();
+			}
+		}	
+	};
+	
+	
+	
+	/**
+	* Updates the config chain.
+	*/
+	self.updateConfigChain = function()
+	{
+		if(!self.configUrl())
+		{
+			return;
+		}
+		
+		var configChainUrl = self.configUrl() + "/config";
+		
+		$.ajax
+		({ 
+			url: configChainUrl,
+			dataType: "jsonp",
+			success: function(data)
+			{
+				self.configChain(data);
+			}
+		});
+	};	
+	
+	
+	
+	/**
+	* Updates the status chain.
+	*/
+	self.updateStatusChain = function()
+	{
+		if(!self.configUrl())
+		{
+			return;
+		}
+		
+		var statusUrl = self.configUrl() + "/status";
+		
+		$.ajax
+		({ 
+			url: statusUrl,
+			dataType: "jsonp",
+			success: function(data)
+			{
+				self.statusChain(data);
+			}
+		});
+	};
+	
+	
+	
+	/**
+	* Updates the image containers whereas the actual DOM element img.src data, which is based on an observable, is queried in the loadImages function.
+	*/
+	self.updateImages = function()
+	{
+		self.images([]);
+		var imagesTemp = [];
+		
+		var iStart = self.selectionStart();
+		var iEnd = self.selectionEnd();
+		
+		if(iStart === undefined || iEnd === undefined)
+		{
+			return;
+		}
+		
+		for(var i = iStart; i <= iEnd; i++)
+		{
+			if(self.configUrl() && self.pin())
+			{
+				var imageUrl = self.pin().imageUrl + "/index/" + i;
+				var thumbnailUrl = self.pin().thumbnailUrl + "/index/" + i;
+				var img = new GalleryImage(imageUrl, thumbnailUrl, i);
+				imagesTemp.push(img);
+			}
+		}
+		
+		self.images(imagesTemp);
+		
+		// trigger loading of actual image data by loading the first nConnectionsMax images which themselves trigger the loading of the remaining images when their individual load event fires
+		for(var i = 0; i < Math.min(self.nConnectionsMax(), self.images().length); i++)
+		{
+			imagesTemp[i].loadImage();
+		}
+	};
+	
+	
+	
+	/**
+	* Updates the output pin list, i.e. queries the Connected Vision output pin description and calls the method for populating the pin list with values.
+	*/
+	self.updateOutputPinList = function()
+	{
+		var regex = /(.*)\/[^\/]*(\/?)$/;
+		var configUrl = self.configUrl();
+		if(configUrl.match(regex))
+		{
+			var pinListUrl = configUrl.replace(regex, "$1" + "/outputDescription");
+			
+			$.ajax
+			({
+				url: pinListUrl,
+				dataType: "jsonp",
+				success: function(data)
+				{
+					self.updateOutputPinListValues(data);
+				}
+			});
+		}
+		else
+		{
+			alert("Failed to extract output pin list url from config url: " + self.configUrl());
+		}
+	};
+	
+	
+	
+	/**
+	* Updates the output pin list values.
+	*
+	* @param data The Connected Vision output pin description returned by the server.
+	*/
+	self.updateOutputPinListValues = function(data)
+	{
+		// clear pin list
+		var pins = [];
+	
+		for(var i = 0; i < data.length; i++)
+		{
+			var item = data[i];
+			var pinId = item.id;
+			var pinType = data[i].type;
+			
+			// pins with the string "Thumbnail" at the end of their name are the thumbnail version of the ones without this string
+			var regex = /(.*)Thumbnail$/;
+			
+			// skip the thumbnail pin and proceed to the next full size image pin
+			if(pinId.match(regex) || !(pinType === "image/jpeg" || pinType === "image/png"))
+			{
+				continue;
+			}
+			
+			item.imageUrl = self.configUrl() + "/" + item.id;
+			
+			// try to find the corresponding thumbnail pin
+			for(var j = 0; j < data.length; j++)
+			{
+				if(data[j].id == (item.id + "Thumbnail"))
+				{
+					item.thumbnailUrl = self.configUrl() + "/" + data[j].id
+					continue;
+				}
+			}
+			
+			// if no corresponding thumbnail pin exists, then assign the full size pin instead
+			if(!item.thumbnailUrl)
+			{
+				item.thumbnailUrl = item.imageUrl;
+			}
+			
+			pins.push(item);
+		}
+
+		self.pins(pins);
+		
+		// check if the pin URL params has been specified
+		if(self.params().hasOwnProperty("pin"))
+		{
+			// search for a pin that matches the specified pin URL param
+			for(var i = 0; i < self.pins().length; i++)
+			{
+				// if the specified pin matches an entry in the list, then select the corresponding list item
+				if(self.pins()[i].id === self.params()["pin"])
+				{
+					self.pin(self.pins()[i]);
+				}
+			}
+		}
+	};
+};
+
+
+
+$(document).ready
+(
+	function()
+	{
+		$("#overview").dialog({ autoOpen: false, height: "auto", width: "auto" });
+		
+		vm = new GalleryViewModel();
+		ko.applyBindings(vm);
+		
+		vm.params(getUrlParams());
+		
+		vm.configUrl(vm.params()["url"]);
+	}
+);
+		</script>
+	</head>
+	<body>
+		<h1 data-bind="text: configChain() ? (configChain().name + ' (' + configChain().id + ')') : 'Connected Vision Image Gallery' " style="margin-bottom: 1em"></h1>
+		
+		<div style="clear: both">
+			<label for="url" style="float: left">Config URL:</label>
+			<input id="url" data-bind="value: configUrl" placeholder="http://localhost:2020/SyntheticVideo/6c46c8492000dc65ce2ee7d4e7cf7145" style="float: left; margin-left: 1em; width: 50em"></input>
+		</div>
+		
+		<div id="settings">
+			<div>
+				<label for="updateInterval" style="float: left; margin-right: 0.5em">update interval (seconds):</label>
+				<input id="updateInterval" type="number" min="1" data-bind="value: updateInterval" style="float: left; margin-right: 2em; width: 5ex"></input>
+			</div>
+			
+			<div>
+				<label for="nConnectionsMax" style="float: left; margin-right: 0.5em">parallel connections:</label>
+				<input id="nConnectionsMax" type="number" min="1" data-bind="value: nConnectionsMax" style="float: left; margin-right: 2em; width: 5ex"></input>
+			</div>
+			
+			<div data-bind="visible: pins().length > 0">
+				<label for="pinIdList" style="float: left; margin-right: 0.5em">pin:</label>
+				<select id="pinIdList" style="float: left; margin-right: 2em" data-bind="options: pins, optionsText: 'id', optionsValue: $data, value: pin"></select>
+				
+				<div>
+					<label for="selectionRangeSlider" style="float: left; margin-right: 1em">index:</label>
+					<div id="selectionRangeSlider" data-bind="selectionRangeSlider: { min: selectionStart, max: selectionEnd }, sliderOptions: {min: resultsStart(), max: resultsEnd(), step: 1, range: true}" style="float: left; margin-right: 2em; width: 200px"></div>
+				</div>
+				
+				<div>
+					<label for="selectLatestResultsFlag" style="float: left; margin-right: 0.5em">latest:</label>
+					<input type="checkbox" id="selectLatestResultsFlag" style="float: left; margin-right: 2em" data-bind="checked: selectLatestResultsFlag"></select>
+				</div>
+			</div>
+		</div>
+		
+		<div id="canvas" data-bind="foreach: images, visible: pins().length > 0" style="clear: both; margin-top: 4.5em;">
+			<a data-bind="attr: { href: imageUrl }, event: { mouseenter: onImageMouseEnter, mouseleave: onImageMouseLeave }, style: { width: widthLink() + 'px', height: heightLink() + 'px' }, visible: status() == StatusEnum.LOADED">
+				<img class="thumbnail" data-bind="attr: { src: thumbnailUrl }, event: { load: function(data, event) { onImageLoad(data, event, $parent) }, error: function(data, event) { onImageLoadError(data, event, $parent) } }, style: { left: left() + 'px', height: height() + 'px', top: top() + 'px', width: width() + 'px' }" />
+ 				<div class="indexOverlay" data-bind="text: imageIndex"></div>
+			</a>
+			<div class="loadingImage" data-bind="visible: (status() == StatusEnum.LOADING || status() == StatusEnum.ERROR)">
+				<span data-bind="text: imageIndex"></span>
+			</div>
+		</div>
+	</body>
+</html>

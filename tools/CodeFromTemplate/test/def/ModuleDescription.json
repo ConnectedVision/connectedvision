@@ -1,0 +1,38 @@
+{
+	"name": "Skeleton Module",
+	"description": "" ,
+	"version": 0.1,
+	"moduleID": "Skeleton",
+	"moduleURI" : "http://some.host/Skeleton",	
+	"moduleLogoURI": "Skeleton.png",	
+	"APIVersion": 0.5,		
+	"moduleFeatures": {
+		"supportsLive": true,
+		"supportsResume": true,
+		"supportsDynamicParameters": true
+	},
+	"author": "???",
+	"params": 
+	{
+		"description": "Skeleton Dummy Parameter",
+		"required": true,
+		"type": "object",
+		"properties": {	
+			"dummy": {
+				"description": "just a place holder",
+				"required": true,
+				"unit": "count",
+				"type": "integer",
+				"default": 0
+			},
+			"dummy_dynamic_parameter": {
+				"description": "just a place holder for a dynamic parameter",
+				"required": true,
+				"unit": "count",
+				"type": "integer",
+				"default": 0,
+				"dynamic": true
+			}
+		}	
+	}
+}

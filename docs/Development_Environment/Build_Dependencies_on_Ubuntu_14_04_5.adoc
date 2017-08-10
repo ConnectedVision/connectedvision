@@ -1,0 +1,261 @@
+[[build-dependencies-on-ubuntu-14.04.5]]
+= Build Dependencies on Ubuntu 14.04.5
+
+....
+$ sudo apt-get install build-essential
+
+$ sudo apt-get install apt-file
+
+$ sudo apt-file find odbc*
+....
+
+[[poco-1.6.1]]
+== POCO 1.6.1
+
+....
+$ sudo apt-get install openssl libssl-dev
+
+$ sudo apt-get install libiodbc2 libiodbc2-dev
+
+$ sudo apt-get install unixodbc-dev
+....
+
+
+Install MySQL client via ubuntu software center
+
+....
+$ sudo apt-get install libmysqlclient-dev
+....
+
+Update ODBC and MySQL paths in Makefile
+
+....
+$ gunzip poco-1.6.1-all.tar.gz
+
+$ tar -xf poco-1.6.1-all.tar
+
+$ cd poco-1.6.1-all
+
+$ ./configure --static
+
+$ make –s
+
+$ sudo make install
+....
+
+[[boost-1.57.0]]
+== Boost 1.57.0
+
+Download boost_1_57_0-all.tar.gz
+
+....
+$ gunzip boost_1_57_0.tar.gz
+
+$ tar -xf boost_1_57_0.tar
+
+$ cd boost_1_57_0
+
+$ sudo apt-get install libboost-python-dev
+
+$ sudo apt-get install libbz2-dev
+....
+
+Not
+
+....
+$ sudo apt-get install libboost-all-dev
+....
+
+Issue the following commands in the shell (don't type `$`; that represents the shell's prompt):
+
+....
+$ sudo ./bootstrap.sh
+....
+
+Select your configuration options and invoke `./bootstrap.sh` again without the `--help` option. Unless you have write permission in your system's `/usr/local/` directory, you'll probably want to at least use
+
+[subs=+quotes]
+....
+$ sudo ./bootstrap.sh *--prefix*=__./install/__
+....
+
+to install somewhere else. Also, consider using the `--show-libraries` and `--with-libraries=__library-name-list__` options to limit the long wait you'll experience if you build everything. Finally,
+
+....
+$ sudo ./b2 install
+....
+
+will leave Boost binaries in the `lib/` subdirectory of your installation prefix. You will also find a copy of the Boost headers in the `include/` subdirectory of the installation prefix, so you can henceforth use that directory as an `#include` path in place of the Boost root directory.
+
+[[sqlite-3.15.1]]
+== SQLite 3.15.1
+
+Download sqlite-autoconf-3150100.tar.gz
+
+....
+$ gunzip sqlite-autoconf-3150100.tar.gz
+
+$ tar -xf sqlite-autoconf-3150100.tar
+
+$ cd SQLite-3.15.1
+
+$ ./configure
+
+sudo $ make install
+....
+
+[[opencv-3.1.0]]
+== OpenCV 3.1.0
+
+Download opencv-3.1.0.tar.tar.gz
+
+....
+$ gunzip opencv-3.1.0.tar.gz
+
+$ tar -xf opencv-3.1.0.tar
+
+$ cd opencv-3.1.0
+
+$ sudo apt-get install cmake
+
+$ sudo apt-get install cmake-qt-gui
+....
+
+configure with cmake
+
+....
+$ make
+
+$ sudo make install
+
+$ sudo apt-get install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
+
+$ sudo apt-get install zlib1g-dev
+....
+
+[[rapidjson-1.0.2]]
+== rapidjson 1.0.2
+
+Download rapidjson-1.0.2.tar.gz
+
+....
+$ gunzip rapidjson-1.0.2.tar.gz
+
+$ tar -xf rapidjson-1.0.2.tar
+
+$ cd rapidjson-1.0.2
+....
+
+configure with cmake
+
+....
+$ make
+
+$ sudo make install
+....
+
+[[ffmpeg-2.5]]
+== ffmpeg 2.5
+
+Download ffmpeg version 2.5
+
+....
+$ gunzip ffmpeg-2.5.tar.gz
+
+$ tar -xf ffmpeg-2.5.tar
+
+$ cd ffmpeg-2.5
+
+$ sudo apt-get install yasm
+
+$ ./configure
+
+$ make
+
+$ sudo make install
+....
+
+[[ffmpeg-3.2.4]]
+== ffmpeg 3.2.4
+
+Download ffmpeg version 3.2.4
+
+....
+$ gunzip ffmpeg-3.2.4.tar.gz
+
+$ tar -xf ffmpeg-3.2.4.tar
+
+$ cd ffmpeg-3.2.4
+
+$ sudo apt-get install yasm
+
+$ ./configure
+
+$ make
+
+$ sudo make install
+....
+
+[[libzip-0.11.2]]
+== libzip 0.11.2
+
+Download libzip_0.11.2.orig.tar.gz
+
+....
+$ gunzip libzip_0.11.2.orig.tar.gz
+
+$ tar -xf libzip_0.11.2.orig.tar
+
+$ cd libzip_0.11.2.orig
+
+$ ./configure
+
+$ make
+
+$ sudo make install
+....
+
+[[openssl-1.0.2e]]
+== OpenSSL 1.0.2e
+
+Download openssl-1.0.2e.tar.gz
+
+....
+$ gunzip openssl-1.0.2e.tar.gz
+
+$ tar -xf openssl-1.0.2e.tar
+
+$ cd openssl-1.0.2e
+
+$ ./config
+
+$ make
+
+$ sudo make install
+....
+
+[[libcurl-7.24.0]]
+== Libcurl-7.24.0
+
+Build from ConnectedVision repo
+
+Cmake (with static-lib option)
+
+....
+$ make
+
+$ sudo make install
+....
+
+[[cpputest-3.6-exp]]
+== cpputest-3.6-exp
+
+Build from ConnectedVision repo
+
+....
+cmake
+
+$ make
+
+$ sudo make install
+....

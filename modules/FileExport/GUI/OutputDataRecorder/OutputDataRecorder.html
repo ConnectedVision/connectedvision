@@ -1,0 +1,332 @@
+<!-- 
+***************************************************************
+** Output Data Recorder GUI
+**
+** written by Michael Rauter in 2014
+** 
+** file: OutputDataRecorder.html
+**
+***************************************************************
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+	<title>Output Data Recorder</title>
+	<link rel="stylesheet" href="css/start/jquery-ui-1.10.4.custom.min.css">
+
+	<style>
+		.setup {
+			// display: none;
+			border: 1px dotted grey;
+			border-radius: 1ex;
+			padding: 2ex;
+			background: #EEE;
+			margin: 1em;
+		}
+		
+		.setup label {
+			display: inline-block;
+			min-width: 5em;
+			margin: 1ex;
+		}		
+
+
+		body {
+			position: relative;
+			padding: 1ex;
+		}		
+		
+		.container {
+			position: relative;
+			display: inline-block;		
+		}
+		.left {
+			display: inline-block;		
+			left: 2ex;
+			padding: 1ex;
+		}		
+		.right {
+			display: inline-block;		
+			position: absolute;
+			padding: 1ex;
+			right: 2ex;
+		}
+			
+		/*
+		.ui-tabs-nav {
+		  display: table;
+		  width: 100%;
+		}
+		*/
+		
+		.ui-tabs-nav li {
+			float: none;
+		 	display: table-cell;
+			padding-left: 1ex;
+			padding-right: 1ex;
+		}
+		
+		.tab-content {
+			padding-left: 2ex;
+			padding-right: 2ex;
+			padding-top: 1ex;
+			padding-bottom: 1ex;
+		}
+		
+		.outputPinTable {
+			padding-left: 4ex;
+			padding-right: 4ex;
+			padding-top: 2ex;
+			padding-bottom: 1ex;
+		}
+
+		.outputPinTable td {
+			padding: 2ex;
+			padding-top: 0.2ex;
+			padding-bottom: 0.2ex;
+		}
+
+		
+		input.url {
+			width: 80ex;
+		}
+		input.config {
+			width: 80ex;
+		}
+		input.small-text {
+			width: 90ex;
+			font-size: 90%;
+		}		
+		input.pin {
+			width: 80ex;
+		}
+		input.small-number  {
+			width: 10ex;
+		}
+		input[readonly="true"] {
+			color: grey;
+		}
+		
+		.config-line {
+			margin: 1em;
+		}
+		.description {
+			color: grey;
+			font-style: italic; 
+		}
+		
+		.status-idle {
+//			border: 1ex solid grey;
+			background: lightgrey;
+		}
+		.status-ok {
+//			border: 1ex solid green;
+			background: lightgreen;
+		}
+		.status-warning {
+//			border: 1ex solid orange;
+			background: orange
+		}
+		.status-recording {
+//			border: 1ex solid red;
+			background: red
+		}	
+		
+		.tools {
+			display: none;
+			border: 1px dotted grey;
+			border-radius: 1ex;
+			padding: 2ex;
+			background: #EEE;
+			margin: 1em;
+		}
+		
+		#showTools {
+//			position: absolute;
+//			right: 2ex;
+			cursor: pointer;
+			height: 2em;
+			margin: 1ex;
+		}
+		
+		.no-close .ui-dialog-titlebar-close {
+			display: none;
+		}
+	</style>
+
+	<!-- jQuery and jQuery Mobile -->
+	<script type="text/javascript" src="../dependencies/jquery-ui-1.10.4/js/jquery-1.10.2.js"></script>
+	<script type="text/javascript" src="../dependencies/jquery-ui-1.10.4/js/jquery-ui-1.10.4.min.js"></script>
+
+	 <script>
+	$(function() {
+	$( "#tabs" ).tabs();
+	});
+	</script>
+	
+	 <script>
+	$(function() {
+	var spinnerLiveRecordingRateInHz = $( "#spinner" ).spinner();
+	});
+	</script>
+
+	<!-- Knockout.js MVVM -->
+	<script type="text/javascript" src="../dependencies/knockout/knockout-3.0.0.js"></script>
+	<script type="text/javascript" src="../dependencies/knockout/knockout.mapping-2.4.1.js"></script>
+	<script type="text/javascript" src="../dependencies/knockout/knockout-ConnectedVision.js"></script>
+
+	<!-- Q.js (for futures) -->
+	<script type="text/javascript" src="../dependencies/q-1/q.js"></script>
+
+	<!-- SVG -->
+	<script type="text/javascript" src="../dependencies/svg/svg.min.js"></script> 
+
+	
+	<script type="text/javascript" src="../dependencies/utils/tools.js"></script>
+	<script type="text/javascript" src="js/OutputDataRecorder_configFileExport.js"></script>
+	<script type="text/javascript" src="js/OutputDataRecorder.js"></script>
+
+</head>
+<body>
+
+	<!-- 
+		Show message while waiting for JavaScript App to load and start.
+		This message is hidden when the App is running.
+	-->
+	<div id="loading">
+		<h1>Loading JavaScript . . .</h1>
+	</div>
+	
+	
+	
+	<!-- 
+		Main GUI element of application. 
+		Hidden by default, will be shown when App is running.
+		Important: Use 'visibility: hidden' to render the content but hide it (instead of 'display: none' which does not render the content).
+		This is required by svg.js which can only be used on rendered elements. 
+	-->
+	<div id="app" style="visibility: hidden">
+
+		<div>
+			<div class="right">
+				<img id="showTools" src="img/tools.png" alt="tools" title="show tools"></img>
+			</div>
+			
+			<!-- App title -->
+			<h1>Output Data Recorder</h1>
+			
+			<div id="tools" class="tools">
+				<button data-bind="click: deleteAllFileExportConfigs" >delete all file export configs</button> &nbsp; <br/>
+			</div>
+			
+			<!--
+				This block contains the global settings for the application
+				 - config of the meta-data-module (-> Module of interest)
+				 - config of the video-module (-> Camera of File Module)
+				 	This data are retrieved from the meta-data-module config.
+				 - visualization settings     
+			-->
+			<div id="settings" class="setup">
+				<label>host URL:</label> <input type="text" class="url" data-bind="value: hostUrl" ></input>
+				<button data-bind="click: useSpecifiedHostURL" >use</button> &nbsp; <br/>
+					
+				<!-- this element (error message) is only presented when no File Export Module is present -->
+				<div id="settings" class="setup" data-bind="visible: !isPresentFileExportModule()">
+					<b> no File Export Module is running </b>
+				</div>
+				<!-- ------------------------------------------------------------------------------------ -->
+				
+				<div data-bind="visible: isPresentFileExportModule">
+					<!-- module list -->
+					<label>module:</label> <select data-bind="options: moduleList, optionsText: 'name', value: selectedModuleOfInterest.obj"></select> &nbsp; &nbsp;
+					<label>module URL:</label> <input type="text" class="url" data-bind="value: selectedModuleOfInterest.url" readonly="true"></input> <br/>
+					<label>config:</label> <select data-bind="options: selectedModuleOfInterest.configList, optionsText: 'displayName', value: selectedModuleOfInterest.selectedConfig.obj"></select>
+					<!-- <label>test:</label> <select data-bind="options: selectedModuleOfInterest.availableOutputpinList, optionsText: 'name', value: selectedModuleOfInterest.tmp"></select> <br/> -->
+					
+					<table class="outputPinTable" style="table-layout:fixed" data-bind="foreach: selectedModuleOfInterest.availableOutputpinList, visible: selectedModuleOfInterest.availableOutputpinList().length > 0">
+	 					<tr> 					
+	 					  	<td>
+	 					  		<div>
+					        		<input type="checkbox" data-bind="checked: isChecked"></input>
+					        		<span data-bind="text: name, click: function() { clickedOnCheckboxLabel($data) }" style="cursor: pointer"> </span>
+					   			</div>
+	 					  	</td>
+							<td>
+								<input type="text" style="width:80em" data-bind="enable: isChecked, value: filepathFormatString"></input>
+							</td>
+						</tr>
+					</table>
+	
+					<div> <br/> </div>
+					<!-- <label>recording mode:</label> -->
+					<div id="tabs" class="ui-tabs ui-widget ui-widget-content ui-corner-all">
+						<ul>
+							<li id="tab-id-recordingLiveMode"><a href="#tab-recordingLiveMode">Live Recording Mode (recording at constant rate)</a></li>
+							<li id="tab-id-recordingOfflineMode"><a href="#tab-recordingOfflineMode">Offline Recording Mode (all available results/data)</a></li>
+						</ul>
+						<div id="tab-recordingLiveMode" class="tab-content">
+							<p>In this mode data is recorded at a constant rate. <br/> Furthermore, the data of all selected output pins is exported in a synchronized way (all output pins are queried with the same timestamp or index). <br/> If recording rate is set to 0, data is exported as fast as possible.</p>
+							<label style="min-width: 1em">recording rate:</label> <input id="spinnerLiveRecordingRateInHz" name="value" style="width:2em" data-bind="value: recordingRateInHz"></input> <label>Hz</label>						
+							<div> <br/> </div>
+							<!-- status & control bar -->
+							<div class="row" data-bind="css: 'status-'+recordingStatus()" >
+								<!-- status information -->
+								<div>
+									Status: <span data-bind="text: recordingStatus"></span> <br/>
+								</div>
+								
+								<div id="recordingButton">
+									<button data-bind="click: prepareRecording, visible: !recordingFlag(), enable: numOutputpinsSelected()>0"><img title="start recording" src="img/record.png" alt="startRecording"></img></button>
+									<button data-bind="click: stopRecording, visible: recordingFlag()"><img title="stop recording" src="img/stop.png" alt="stopRecording"></img></button>
+								</div>
+							</div>					
+						</div>
+						<div id="tab-recordingOfflineMode" class="tab-content">
+							<p>In this mode all available data/(stable) results of the selected output pins is/are recorded. <br/> Data of different output pins is exported independently and thus not synchronized.</p>
+							<div class="row" data-bind="css: 'status-'+recordingStatus()" >
+								<!-- status information -->
+								<div>
+									Status: <span data-bind="text: recordingStatus"></span> <br/>
+								</div>
+								
+								<div id="recordingButton">
+									<button data-bind="click: prepareRecording, visible: !recordingFlag(), enable: numOutputpinsSelected()>0"><img title="start recording" src="img/record.png" alt="startRecording"></img></button>
+									<button data-bind="click: stopRecording, visible: recordingFlag()"><img title="stop recording" src="img/stop.png" alt="stopRecording"></img></button>
+								</div>
+							</div>		
+						</div>
+					</div>
+				</div>		
+			</div>
+			
+		</div>
+	</div>
+		
+<!-- ---------------------------------------------------------------------------------------------------------------------------------- -->	
+	<!-- 
+		Hidden section
+		This block is used as preparation space for dialogs, templates, ... all content that is dynamically displayed.
+	-->
+	<div style="display: none">
+	
+		<!-- simple wait message -->	
+		<div id="transferDialog">
+			<b data-bind="text: statusMessage"></b>
+		</div>
+			
+		<!-- workaround to post data to a different server, bypassing same-origin-policy -->
+		<!-- 
+			The form is filled auf and send automatically. 
+			The IFrame is used as target for the response. The data cannot be accessed due-to same-origin-policy, 
+			but we get a notification event when the response was received. This can be used as some kind of minimal feedback to enhance
+			a simple fire-and-forget strategy.   
+		-->
+		<form id="createConfigForm" action="?" method="post" target="createConfigIFrame">
+		  config: <input type="text" class="_payload" name="payload"></input><br>
+		  <input type="submit" class="_submit" value="Submit"></input>
+		</form>
+		<iframe id="createConfigIFrame" name="createConfigIFrame"></iframe>	
+	</div>
+</body>
+</html>

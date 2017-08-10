@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <ConnectedVisionCppRootDir>$(ConnectedVision_CppPath)</ConnectedVisionCppRootDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+	<OutDir>{{VS2010.relativeOutputPath}}$(PlatformName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)\$(PlatformName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <BuildMacro Include="ConnectedVisionCppRootDir">
+      <Value>$(ConnectedVisionCppRootDir)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

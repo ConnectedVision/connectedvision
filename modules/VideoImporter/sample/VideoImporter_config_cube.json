@@ -1,0 +1,13 @@
+{
+	"name": "cube test video",
+	"description": "",
+	"version": 1,
+	"id" : "",
+	"moduleURI" : "http://localhost:2020/VideoImporter",
+	"moduleID" : "",
+	"params":
+	{
+		"filename": "../../../../../../../test/data/videos/VirtualDubH264Test.avi"
+	},
+	"chain": []
+}

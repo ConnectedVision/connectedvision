@@ -1,0 +1,49 @@
+{
+    "description": "Module Status Schema",
+    "type": "object",
+    "properties": {
+        "name": {
+            "description": "module name",
+            "required": true,
+            "type": "string"
+        },
+        "moduleID": {
+            "description": "ID of module",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": ""
+        },
+        "moduleStatus": {
+            "description": "current status of module",
+            "required": true,
+			"enum": ["n/a", "up", "down"],
+            "type": "string"
+        },
+		"configsRunning": {
+            "description": "list of currently processed configs / jobs",
+            "required": true,
+			"type": "array",
+			"items": {
+				"description": "config ID",
+				"type": "string",
+				"exttype":"id",
+				"required":true,
+				"unit": "md5"
+			}
+        },
+		"configsWaiting": {
+            "description": "list of configs / jobs waiting to be processed",
+            "required": false,
+			"type": "array",
+			"items": {
+				"description": "config ID",
+				"type": "string",
+				"exttype":"id",
+				"required":true,
+				"unit": "md5"
+			},
+			"default": []
+        }
+    }
+}

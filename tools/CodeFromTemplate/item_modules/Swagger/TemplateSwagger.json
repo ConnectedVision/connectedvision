@@ -1,0 +1,1450 @@
+{%- autoescape false -%}
+{
+	"swagger": "2.0",
+	"info": {
+		"title": "{{Swagger.moduleID}}",
+		"description": "{{Swagger.description}}",
+		"version": "{{Swagger.version}}"{% if Swagger.author.length %},
+		"contact": {
+			"name": "{{Swagger.author}}"
+		}
+		{% endif %}
+
+	},
+	"host": "localhost:2020",
+	"basePath": "/",
+	"tags": [
+		{
+			"name": "Host",
+			"description": "Host specific things.",
+			"externalDocs": {
+				"description": "Find out more",
+				"url": "http://swagger.io"
+			}
+		},
+		{
+			"name": "Module",
+			"description": "Module specific things.",
+			"externalDocs": {
+				"description": "Find out more",
+				"url": "http://swagger.io"
+			}
+		},
+		{
+			"name": "Configuration",
+			"description": "Configuration specific things.",
+			"externalDocs": {
+				"description": "Find out more",
+				"url": "http://swagger.io"
+			}
+		},
+		{
+			"name": "OutputPin",
+			"description": "OutputPin specific things.",
+			"externalDocs": {
+				"description": "Find out more",
+				"url": "http://swagger.io"
+			}
+		}
+	],
+	"schemes": [
+		"http"
+	],
+	"paths": {
+		"/_hostStatus_": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "hostStatus",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Host"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/HostStatus"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/moduleDescription": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "moduleDescription",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Module"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ModuleDescription"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/inputDescription": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "inputDescription",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Module"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_InputDescription"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/outputDescription": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "outputDescription",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Module"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_OutputDescription"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/status": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "status",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Module"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ModuleStatus"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/init": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "init",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Module"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ModuleStatus"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/release": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "release",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Module"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ModuleStatus"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/configList": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "configList",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Module"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/configListDetailed": {
+			"get": {
+				"summary": "",
+				"description": "",
+				"operationId": "configListDetailed",
+				"produces": [
+					"application/json"
+				],
+				"tags": [
+					"Module"
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"id": {
+										"description": "config ID of this config",
+										"type": "string"
+									},
+									"name": {
+										"description": "config name",
+										"type": "string"
+									},
+									"aliasIDs": {
+										"description": "a list of aliasIDs assigned to this config",
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"id": {
+													"description": "an aliasID assigned to this config",
+													"type": "string"
+												},
+												"timestamp": {
+													"description": "creation timestamp of aliasID for this config",
+													"type": "integer"
+												}
+											}
+										}
+									},
+									"commandList": {
+										"description": "a list of commands to control this config",
+										"type": "object",
+										"properties": {
+											"config": {
+												"description": "",
+												"type": "string"
+											},
+											"status": {
+												"description": "",
+												"type": "string"
+											},
+											"reset": {
+												"description": "",
+												"type": "string"
+											},
+											"resetThis": {
+												"description": "",
+												"type": "string"
+											},
+											"start": {
+												"description": "",
+												"type": "string"
+											},
+											"stop": {
+												"description": "",
+												"type": "string"
+											},
+											"stopThis": {
+												"description": "",
+												"type": "string"
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/0/config?payload={config}&cmd=SET": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "setConfig_GET",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "config",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_Configuration"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/0/config": {
+			"post": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "setConfig_POST",
+				"produces": [
+					"application/json"
+				],
+				"consumes": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "formData",
+						"name": "payload",
+						"required": true,
+						"type": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_Configuration"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/config": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "config",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_Configuration"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/config?cmd=DELETE": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "delete",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_Configuration"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/status": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "configStatus",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ConfigurationStatus"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/params": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "params",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ModuleParams"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/control/start": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "configStart",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ConfigurationStatus"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/control/stop": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "configStop",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ConfigurationStatus"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/control/stopThis": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "configStopThis",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ConfigurationStatus"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/control/reset": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "configReset",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ConfigurationStatus"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/control/resetThis": {
+			"get": {
+				"tags": [
+					"Configuration"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "configResetThis",
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#/definitions/{{Swagger.moduleID}}_ConfigurationStatus"
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		{% for d in Swagger.definitions %} {% if d.type == "outputPin"%}"/{{Swagger.moduleID}}/{configId}/{{d.outputPinId}}/id/{id}": {
+			"get": {
+				"tags": [
+					"OutputPin"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "get_{{d.name}}_ById",
+				"produces": [
+					{% for t in d.mimeTypes %}
+					"{{t}}" {% if not loop.last %},
+					{% endif %}{% endfor %}
+
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							{% if d.pinBinaryFlag %}
+							"type": "file"
+							{% else %}
+							"$ref": "#/definitions/{{d.name}}"
+							{% endif %}
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/{{d.outputPinId}}/index/{index}": {
+			"get": {
+				"tags": [
+					"OutputPin"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "get_{{d.name}}_ByIndex",
+				"produces": [
+					{% for t in d.mimeTypes %}
+					"{{t}}" {% if not loop.last %},
+					{% endif %}{% endfor %}
+
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					},
+					{
+						"in": "path",
+						"name": "index",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							{% if d.pinBinaryFlag %}
+							"type": "file"
+							{% else %}
+							"$ref": "#/definitions/{{d.name}}"
+							{% endif %}
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/{{d.outputPinId}}/index/{startIndex}/{endIndex}": {
+			"get": {
+				"tags": [
+					"OutputPin"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "get_{{d.name}}_ByIndexRange",
+				"produces": [
+					{% for t in d.mimeTypes %}
+					"{{t}}" {% if not loop.last %},
+					{% endif %}{% endfor %}
+
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					},
+					{
+						"in": "path",
+						"name": "startIndex",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					},
+					{
+						"in": "path",
+						"name": "endIndex",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							{% if d.pinBinaryFlag %}
+							"type": "file"
+							{% else %}
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/{{d.name}}"
+							}
+							{% endif %}
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/{{d.outputPinId}}/time/{time}": {
+			"get": {
+				"tags": [
+					"OutputPin"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "get_{{d.name}}_ByTime",
+				"produces": [
+					{% for t in d.mimeTypes %}
+					"{{t}}" {% if not loop.last %},
+					{% endif %}{% endfor %}
+
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					},
+					{
+						"in": "path",
+						"name": "time",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							{% if d.pinBinaryFlag %}
+							"type": "file"
+							{% else %}
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/{{d.name}}"
+							}
+							{% endif %}
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/{{d.outputPinId}}/beforetime/{time}": {
+			"get": {
+				"tags": [
+					"OutputPin"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "get_{{d.name}}_ByBeforeTime",
+				"produces": [
+					{% for t in d.mimeTypes %}
+					"{{t}}" {% if not loop.last %},
+					{% endif %}{% endfor %}
+
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					},
+					{
+						"in": "path",
+						"name": "time",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							{% if d.pinBinaryFlag %}
+							"type": "file"
+							{% else %}
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/{{d.name}}"
+							}
+							{% endif %}
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/{{d.outputPinId}}/aftertime/{time}": {
+			"get": {
+				"tags": [
+					"OutputPin"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "get_{{d.name}}_ByAfterTime",
+				"produces": [
+					{% for t in d.mimeTypes %}
+					"{{t}}" {% if not loop.last %},
+					{% endif %}{% endfor %}
+
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					},
+					{
+						"in": "path",
+						"name": "time",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							{% if d.pinBinaryFlag %}
+							"type": "file"
+							{% else %}
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/{{d.name}}"
+							}
+							{% endif %}
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/{{d.outputPinId}}/newest": {
+			"get": {
+				"tags": [
+					"OutputPin"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "get_{{d.name}}_Newest",
+				"produces": [
+					{% for t in d.mimeTypes %}
+					"{{t}}" {% if not loop.last %},
+					{% endif %}{% endfor %}
+
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							{% if d.pinBinaryFlag %}
+							"type": "file"
+							{% else %}
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/{{d.name}}"
+							}
+							{% endif %}
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		},
+		"/{{Swagger.moduleID}}/{configId}/{{d.outputPinId}}/time/{startTime}/{endTime}": {
+			"get": {
+				"tags": [
+					"OutputPin"
+				],
+				"summary": "",
+				"description": "",
+				"operationId": "get_{{d.name}}_ByTimeRange",
+				"produces": [
+					{% for t in d.mimeTypes %}
+					"{{t}}" {% if not loop.last %},
+					{% endif %}{% endfor %}
+
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "configId",
+						"description": "",
+						"required": true,
+						"type": "string",
+						"format": "string"
+					},
+					{
+						"in": "path",
+						"name": "startTime",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					},
+					{
+						"in": "path",
+						"name": "endTime",
+						"description": "",
+						"required": true,
+						"type": "integer",
+						"format": "int64"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							{% if d.pinBinaryFlag %}
+							"type": "file"
+							{% else %}
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/{{d.name}}"
+							}
+							{% endif %}
+						}
+					},
+					"404": {
+						"description": "not found",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					},
+					"default": {
+						"description": "Unexpected error",
+						"schema": {
+							"$ref": "#/definitions/Error"
+						}
+					}
+				}
+			}
+		}{% if not loop.last %},{% endif %}
+		{% endif %}{% endfor %}
+
+	},
+	"definitions": {
+		{% for d in Swagger.definitions %}{% if not loop.first and not d.pinBinaryFlag %},
+		{% endif %}
+		{% if not d.pinBinaryFlag %}		"{{d.name}}": {{d.schemaString}}{% endif %}
+		{% endfor %},
+		"Error": {
+			"type": "object",
+			"properties": {
+				"status": {
+					"type": "integer"
+				},
+				"error": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}

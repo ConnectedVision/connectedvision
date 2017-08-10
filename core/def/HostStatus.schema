@@ -1,0 +1,21 @@
+{
+    "description": "host status",
+    "required": true,
+    "type": "object",
+    "properties": {
+        "hostID": {
+            "description": "host id",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": ""
+		},
+        "systemID": {
+            "description": "system ID",
+			"type": "string",
+			"exttype":"id",
+			"required":true,
+			"unit": ""
+		}
+    }
+}

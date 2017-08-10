@@ -1,0 +1,26 @@
+{
+	"name": "RTP stream receiver module",
+	"description": "" ,
+	"version": 0.1,
+	"moduleID": "RTPImporter",
+	"moduleURI" : "http://localhost:2020/RTPImporter",	
+	"moduleFeatures": {
+		"supportsLive": true,
+		"supportsResume": false,
+		"supportsDynamicParameters": false
+	},
+	"author": "Connected Vision",
+	"params": 
+	{
+		"description": "RTP Receiver parameters",
+		"required": true,
+		"type": "object",
+		"properties": {	
+			"url": {
+				"description": "RTP multicast/unicast address (URL)",
+				"required": true,
+				"type": "string"
+			}
+		}	
+	}
+}

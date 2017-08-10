@@ -1,0 +1,129 @@
+{
+    "description": "Module Description Schema",
+    "type": "object",
+    "properties": {
+        "name": {
+            "description": "module name",
+            "required": true,
+            "type": "string"
+        },
+        "description": {
+            "description": "long description of module",
+            "required": true,
+            "type": "string"
+        },
+        "version": {
+            "description": "version of module",
+            "required": true,
+            "type": "number"
+        },
+        "moduleID": {
+            "description": "unique ID of module",
+            "required": true,
+            "type": "string"
+        },
+        "moduleURI": {
+            "description": "URL of module instance. Will be updated by the module server.",
+            "required": true,
+            "type": "string"
+        },
+        "APIVersion": {
+            "description": "version of supported Connected Vision version",
+            "required": true,
+            "type": "number"
+        },
+        "moduleFeatures": {
+            "description": "JSON schema of module features",
+            "required": false,
+            "type": "object",
+			"properties": {
+				"supportsLive": {
+					"description": "The module does support live configurations.",
+					"required": false,
+					"type": "boolean",
+					"default" : false
+				},
+				"supportsResume": {
+					"description": "The module does support resuming of stopped configurations.",
+					"required": false,
+					"type": "boolean",
+					"default" : false
+				},
+				"supportsDynamicParameters": {
+					"description": "The module does support dynamic parameters.",
+					"required": false,
+					"type": "boolean",
+					"default" : false
+				}
+			}
+		},
+        "configFeatures": {
+            "description": "JSON schema of features of the config",
+            "required": false,
+            "type": "object",
+			"properties": {
+				"allowDynamicParameters": {
+					"description": "the config does support dynamic parameters",
+					"required": false,
+					"type": "boolean",
+					"default" : false
+				}
+			}
+		},
+        "author": {
+            "description": "author names of email address",
+            "required": true,
+            "type": "string"
+        },
+        "params": {
+            "description": "JSON schema of parameters",
+            "required": false,
+            "type": "object",
+			"properties": {
+				"type": {
+					"type": "string",
+					"required": false,
+					"enum": ["object"]
+				},
+				"properties": {	
+					"description": "algorithmic specific configuration parameters. This is part of the config chain.",
+					"type": "object",
+					"required": true,
+					"additionalProperties": {
+						"type": "object",
+						"properties": {
+							"description" : {
+								"type" : "string",
+								"required": true
+							},
+							"type" : {
+								"type": "string",
+								"enum": ["string", "number", "integer", "boolean", "object", "array", "null", "any", "timestamp", "id"],
+								"required": true
+							},
+							"unit" : {
+								"type" : "string",
+								"required": true
+							},
+							"required" : {
+								"type" : "boolean",
+								"default" : false
+							},
+							"dynamic" : {
+								"type" : "boolean",
+								"default" : false
+							},
+							"properties" : {
+								"type" : "object",
+								"additionalProperties" : {
+									"$ref": "#/properties/params/properties/properties/additionalProperties"
+								},
+								"default" : {}
+							}
+						}
+					}
+				}
+			}
+        }
+    }
+}

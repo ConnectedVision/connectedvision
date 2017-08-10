@@ -1,0 +1,192 @@
+[[design-concept-aliasid]]
+= Design Concept AliasID
+
+_Michael Rauter, 2014, 2015_
+
+This is the design concept document for the concept of an aliasID for Connected Vision configs.
+
+[[definition-and-requirements]]
+== Definition and Requirements
+
+AliasID makes it possible to:
+
+* Use a user-readable ID in the REST-request-URL, e.g.: http://localhost:2020/moduleID/%5baliasID=%5dxyz/status[http://localhost:2020/moduleID/*[aliasID=\]xyz*/status] +
+defined behavior is:
+
+** #“aliasID=” can be omitted for better readability# +
+e.g. http://localhost:2020/moduleID/xyz/status[http://localhost:2020/moduleID/*xyz*/status]
+** “aliasID=xyz”: there are two possibilities:
+*** if only one config with aliasID “xyz” exists for the specified module this config will be used
+*** if there is more than one config that claimed aliasID “xyz”: the request answer will be something like “error: requested aliasID is ambiguous, choose a specific aliasID by…” followed by a list of configIDs claiming this aliasID (+ts)
+** “aliasID=xyz.0”: the most recent config of the module will be used (the “.0” makes this explicit)
+** “aliasID=xyz.1”: the 2^nd^ youngest config that claimed the aliasID will be used
+** “aliasID=xyz.n”: the (n+1)-th youngest config that claimed the aliasID will be used
+* Use this url when:
+** The actual (real) config changes +
+** A third party module/GUI wants to use a well-known url which should be known beforehand and remain the same even if the (sub)config changes
+** Bookmarks for browsers will be handy (e.g. testing/debugging modules in browser)
+* Change the actual config at runtime to which the aliasID refers - will allow to:
+** dynamically and transparently exchange module sources (sub modules) of an external consumer (e.g. GUI)
+
+[[implementation-details]]
+== Implementation Details
+
+The following description is the result of several discussions:
+
+When creating a config for a module, one will have the ability to specify a list of aliasIDs in a designated field “_aliasID” array field_ +
+This field will in an uniform manor like the behavior of the “name” field of a config not influence the hash value (the configID).
+
+Reminder: +
+The answer of the set-config request will return the created config as request answer. +
+You get back the config with updated information like the configID (the created hash-value).
+
+**new additions: +
+**The config will store (and return) a list of assigned aliasIDs and creation timestamps, i.e. this means:
+
+* if the config did not exist beforehand, it should just return the list of aliasIDs provided in the set-config request (with an additional timestamp of aliasID (=config) creation time)
+
+[source, JSON]
+[subs=+quotes]
+....
+*send:* config = { ...
+    "aliasID": [{"id": "xyz"}, {"id": "abc"}]
+... }
+
+*receive:* config = { ...
+    "aliasID": [ {"id": "xyz", "timestamp": 1000},
+        {"id": "abc", "timestamp": 1000} ]
+... }
+....
+
+* if the config already existed, it should return the combined entries of the old aliasID list and the new aliasID list (provided in the set-config request). +
+In this case creation timestamps will be different for aliasIDs previously created with older set-config requests. +
+AliasIDs from the new list, which are also in the existing list, will get a timestamp update!
+
+[source, JSON]
+[subs=+quotes]
+....
+*send:* config = { ...
+    "aliasID": [ {"id": "xyz"}, {"id": "efg"} ]
+... }
+
+*receive:* config = { ...
+    "aliasID": [ {"id": "xyz", "timestamp": 2000},
+        {"id": "efg", "timestamp": 2000},
+        {"id": "abc", "timestamp": 1000} ]
+... }
+....
+
+When querying a config the ModuleDispatcher is responsible for parsing the URL. +
+AliasID handling will be done when parsing the request URL for ConfigIDs in module specific requests (the sub-part of the URL containing the configID will be called ID string here):
+
+configStore is extended by function vector<id_t> getConfigIDsByAliasID(string aliasID): +
+returns list of configIDs with matching aliasID sorted by creation timestamp (most recent) of aliasID +
+note: the returned configIDs belong to configs of the specific module
+
+The parsing will look like this:
+
+* If the ID string does not start with “aliasID=” or “AliasID=” and does not contain “.” configStore is queried for the specific configID
+** If it is found, it is used
+** If it is not found aliasID resolving is done (so “aliasID=” can be omitted)
+* aliasID resolving:
+** if present the leading “aliasID=” will be cut away from string
+** test for post fix “.n”. If present save n and cut away from string
+** configStore function getConfigIDsWithAliasID is invoked with cropped aliasID string
+** there are several possibilities now:
+*** list is empty, no aliasID found, -> error message “no matching configID or aliasID found”
+*** #postfix was omitted -> “.0” is used as default prefix#
+*** postfix was specified and list is not empty -> try to resolve configID
+*** #postfix “.list” -> returns a ordered list of configID associated with this alias#
+
+[[special-caseshandling]]
+=== Special Cases/Handling
+
+* Empty aliasIDs (the string value of the “id” field) will be ignored and not result in a list entry
+* aliasIDs with substrings “aliasID=”, “AliasID=”, “/”, “\\” (escaped backslash) or “.” will be ignored and not result in a list entry +
+(note: a basic (un-escaped) backslash is by definition not supported because it will result in a JSON parse error)
+
+[[unit-tests-implemented-in-test_aliasid.cpp-in-srcconnectedvisionunittest]]
+=== Unit Tests implemented (in Test_AliasID.cpp in src/ConnectedVision/unitTest)
+
+TEST(aliasID_checkConfigCreation, no_aliasID_list) +
+TEST(aliasID_checkConfigCreation, malformed_empty_struct_aliasID_list) +
+TEST(aliasID_checkConfigCreation, empty_aliasID_list) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_empty_ID) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_one_ID) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_two_IDs) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_two_IDs_and_emptyID) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_one_ID_and_two_emptyID) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_invalid_ID_slash) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_invalid_ID_backslash) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_invalid_ID_aliasID_cmd) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_invalid_ID_AliasID_cmd) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_invalid_ID_colon) +
+TEST(aliasID_checkConfigCreation, aliasID_list_with_tricky_but_valid_ID) +
+TEST(aliasID_checkConfigCreation, configs_fighting_for_aliasID) +
+TEST(aliasID_checkConfigCreation, same_config_claims_different_aliasID_sets) +
+TEST(aliasID_checkConfigCreation, same_config_renews_aliasID_timestamp) +
+TEST(aliasID_ checkResolving, correctConfigID) +
+TEST(aliasID_ checkResolving, oneExistingAliasID) +
+TEST(aliasID_checkResolving, twoExistingAliasID) +
+TEST(aliasID_checkResolving, explicitAliasIDcommandWithEmptyArgument) +
+TEST(aliasID_checkResolving, explicitAliasIDcommandWithExistingAliasID) +
+TEST(aliasID_checkResolving, explicitAliasIDcommandWithNonExistingAliasID) +
+TEST(aliasID_checkResolving, explicitAliasIDandCreationOrderCommandsWithExistingAliasID) +
+TEST(aliasID_checkResolving, explicitAliasIDcommandNotStartingAtStringPosition0) +
+TEST(aliasID_checkResolving, explicitCreationOrderIndexCommandsWithExistingAliasID) +
+TEST(aliasID_checkResolving, explicitCreationOrderIndexCommandsWithNonExistingAliasID) +
+TEST(aliasID_checkResolving, explicitCreationOrderIndexCommandsWithTwoConfigsClaimingExistingAliasID) +
+TEST(aliasID_checkResolving, explicitCreationOrderIndexCommandsWithNonExistingIndex) +
+TEST(aliasID_checkResolving, explicitCreationOrderIndexCommandsWithInvalidIndex) +
+TEST(aliasID_checkResolving, explicitCreationOrderIndexCommandsWithEmptyIndex) +
+TEST(aliasID_checkResolving, explicitCreationOrderIndexCommandsWithThreeConfigsClaimingExistingAliasID) +
+TEST(aliasID_checkResolving, explicitCreationOrderIndexCommandsWhenSwitchingConfigsClaimingSameAliasID)
+
+[[old-obsolete-considerations-thoughts]]
+== Old, obsolete considerations, thoughts
+
+The aliasID is implemented as an additional field in the module description. +
+Its field name is defined as “aliasID”.
+
+Contrary to first considerations the aliasID IS NOT THE SAME as the config name! +
+The reason for this is: +
+a newer config might have the same aliasID as an existing one and thus becomes the config assigned to this aliasID. The aliasID of the older config will be updated to “[_aliasID]_replaced_”. +
+So the entry of aliasID field can change, name must not! +
+ +
+Two additional optional fields are defined: “aliasID _replaced_since” with value timestamp and “aliasID _replaced_by with value for a configID (not an aliasID but a real). When creating the config these fields are not provided.
+
+This way one can see from the config if it is still assigned to its original aliasID and if not it can be determined when and by whom it has been replaced as “owner” of this specific aliasID. +
+ +
+Resolution of aliasID is performed by the ModuleDispatcher. It will test the parsed configID from the URL and test for the “aliasID =” substring and resolve it accordingly to refer to the real config.
+
+(we could define that the module dispatcher tests first for real ids and if it does not find one it tests for alias ID matches, though additionally I want to have the “alias-ID =” prefix to 1^st^ make it clear that I requested an alias ID and 2^nd^ that in the rare occasion of an real ID vs. alias ID conflict to be able to get the alias ID instead of the real ID (which is the default))
+
+It would be nice to ensure, that *no* subchain of a config can use an aliasID (to prevent a Connected Vision paradigm to be broken) inside the config chain (this must be a runtime test by definition)
+
+There must be a maintained list of registered aliasIDs (to which real config they refer).
+
+TODO: define who maintains this list, has it to be stored or should it be computed
+
+Will it be possible to have a list of alias IDs assigned to one real ID? (Stephan brought this up)
+
+Stephan wrote:
+
+---------------
+“… +
+e.g. http://localhost:2020/cameraModule/camera_for_consumer1/PNGImage and http://localhost:2020/cameraModule/camera_for_consumer2/PNGImage +
+In our current setup, both links will point to the same config of the same module. -> one configID has 2 VIDs +
+…”
+---------------
+
+*This is much more than originally planned for the aliasID, which makes it much more complicated. +
+I would have preferred to tie the aliasID as close as possible to the config (with the advantage to make the config control itself – not breaking Connected Vision paradigms)*
+
+(kurzer Einwurf auf Deutsch: ohne es zu beabsichtigen war ich also der Kämpfer für die Connected Vision, da ich unbewusst die Ideale und Paradigmen der Connected Vision unterstützt habe!!!)
+
+It could be done (a list of aliasIDs for a config), but I fear that we will eventually have a design where these list is no longer part of the config (at least some managing component/functionality will be necessary)
+
+Maybe the solution would be a two level decoupling, something like:
+
+Config with realID (and aliasID) <- list of bookmarks/aliases <- external GUI
+
+The list of bookmarks/aliases would be managed outside of configs and not interfering with configs except that one can access them via these “links”.

@@ -1,0 +1,14 @@
+{
+	"name": "cube",
+	"description": "cube test video",
+	"version": 1,
+	"id" : "",
+	"aliasID": [{"id": "cube"}],
+	"moduleURI" : "http://localhost:2020/VideoImporter",
+	"moduleID" : "",
+	"params":
+	{
+		"filename": "..\\..\\..\\..\\test\\data\\videos\\VirtualDubH264Test.avi"
+	},
+	"chain": []
+}

@@ -1,0 +1,17 @@
+[cols="^1,10,10",options="header",]
+|=====================================================================================================================================================================================================
+| |*Shared pointer* |*Open / close*
+|1 |Explizites Anlegen und Impl. Freigeben |Explizites Öffnen und Schließen
+|2 |Update aller Stores, Worker + OutputPins notwendig |Update aller Worker
+|3 |Store ist reserviert, unabhängig ob gelesen oder geschrieben wird -> zwei Pointer Arten: für Read/Write a|
+Store ist nur für upgedatete Worker und auch nur zum Schreiben reserviert (gesperrt).
+
+Ansonsten müssten auch alle Worker + OutputPins upgedatet werden (siehe 2)
+
+|4 |Konsistenter Ansatz für DatenObjekte und Stores (alle Daten Ressourcen werden über shared Ptr gelockt & verwaltet) |Unterschiedliche Behandlung / Implementierung des Daten bzw. Store Managements
+|5 |Ringbuffer leicht zu implementieren (direkter Zugriff) |Ringbuffer über Wrapperklasse + Wrapperfunktionen implementierbar
+|6 |SQL DB mittels mehrerer Instanzen einer SQL Store Klasse implementierbar. Anpassen der aktuellen Implementierung notwendig. |Eine SQL Store Klasse für den gesamten Store (so wie jetzt)
+| | |
+| | |
+| | |
+|=====================================================================================================================================================================================================

@@ -1,0 +1,7 @@
+{
+	"tests":
+	[
+		{ "load_config" : {} },	
+		{ "send_config" : { "expectedResponse": { "statusCode": 500 } } }
+	]
+}

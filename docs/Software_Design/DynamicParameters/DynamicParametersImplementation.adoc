@@ -1,0 +1,220 @@
+[[dynamic-parameter-implementation]]
+= Dynamic Parameter Implementation
+
+_Michael Rauter, 2016_
+
+[[idea]]
+== Idea
+
+An extension to the Connected Vision Core should allow making changes to certain config parameters for modules which are intended to support dynamic parameters and for configs that are declared as configs that support it. The implication is that this will have effects on the results of the module and thus not support reproducibility of results. Therefor the default behavior of a module is to not support it until explicitly stated. Same goes for configs!
+
+[[changes-to-module-description-schema-module-description-and-config]]
+== Changes to module description schema, module description and config
+
+Several changes were made to support dynamic parameters.
+
+[[changes-to-module-description-schema-of-connected-vision-core]]
+=== Changes to module description schema of Connected Vision Core
+
+Module Features were packed into an object “moduleFeatures”. Previously already existing fields (“supportsLive”, “supportsResume”) now reside inside “moduleFeatures”. A new field “supportsDynamicParameters” is now also part of the object.
+
+[[changes-to-module-descriptions-of-modules]]
+=== Changes to module-descriptions of modules
+
+The introduced changes also result in changes to the module descriptions of modules, e.g. (excerpt from Skeleton):
+
+[source, JSON]
+[subs=+quotes]
+....
+"moduleFeatures": {
+    "supportsLive": true,
+    "supportsResume": true,
+    #*"supportsDynamicParameters": true*#
+},
+....
+
+If not provided supportsDynamicParamters is set to false.
+
+The parameters of the config look slightly different from before as well:
+
+[source, JSON]
+[subs=+quotes]
+....
+"params":
+{
+    "description": "Skeleton Dummy Parameter",
+    "required": true,
+    "type": "object",
+    "properties": {
+        "dummy": {
+            "description": "just a place holder",
+            "required": true,
+            "unit": "count",
+            "type": "integer",
+            "default": 0
+        },
+        "dummy_dynamic_parameter": {
+            "description": "just a place holder for a dynamic parameter",
+            "required": true,
+            "unit": "count",
+            "type": "integer",
+            "default": 0,
+            #*"dynamic": true*#
+        }
+    }
+}
+....
+
+A new bool-member in the JSON description called “dynamic” defines now if a parameter can be dynamic.
+
+Note: also the module must support dynamic parameters (moduleFeatures/supportsDynamicParameters must be true as well)
+
+Note:
+
+A parameter declared as dynamic means that it is possible for configs to use its dynamic behavior. It does not mean that its dynamic behavior WILL always be “used”. A config may be declared in such way that it does not allow dynamic parameters (see next section).
+
+[[changes-to-configs]]
+=== Changes to configs
+
+The configs are affected as well (excerpt from sample config Skeleton_config_xyz.json):
+
+[source, JSON]
+[subs=+quotes]
+....
+"configFeatures": {
+    #*"allowDynamicParameters": true*#
+},
+....
+
+So – also the config itself must allow dynamic parameters. The configFeatures object is part of the config members that affect the configID. That way it is possible to create configs that are allowed to have dynamic parameters as well as configs which are not allowed to (e.g. archive-configs).
+
+[[summary]]
+=== Summary
+
+To activate dynamic parameters for a module/config this results in these requirements:
+
+* Declare module as module that supports dynamic parameters (via moduleFeatures)
+* Declare parameters of module as dynamic in the module description (restrictions and requirements will be addressed and explained later)
+* As developer make your module indeed support dynamic parameters (by loading the parameters on every iteration in the worker thread (see details later) and ensuring that your module logic can handle changing of values of all the specified dynamic parameters)
+* Declare config as config that allows dynamic parameters (via configFeatures)
+
+[[general-considerations]]
+== General Considerations
+
+Dynamic parameters are *only* available for modules which declared “supportDynamicParameters” set to true in the moduleFeatures object – this means setting “allowDynamicParameters“ to true in configFeatures in a config results in an error message if „supportsDynamicParameters“ is set to false in moduleFeatures in the module description.
+
+For every parameter inside the “params” object of the module description it can be specified if this parameter should be dynamic. If declared as dynamic = false it will be fixed on its initial value (which is the value provided when setting the config).
+
+[[objects]]
+=== Objects
+
+If a parameter is an object and if it is declared as dynamic this requires that all of its object members must be declared as dynamic as well (for convenience the dynamic field can be omitted for sub-objects – it will be deduced from its parent object if omitted). A subobject which is incorrectly declared as non-dynamic will result in an error when the module description is parsed.
+
+[[arrays]]
+=== Arrays
+
+If a parameter is an array and if it is declared as dynamic two things must be distinguished: +
+The dynamic member of the array itself is the dynamic property for the array container. The dynamic member inside the “items” sub-object is the dynamic property for the array items.
+
+If the array container is declared as dynamic also the array items must be declared dynamic! In contrast to this it is possible to declare the container as non-dynamic but the array items as dynamic. Then the number of array items is fixed to the number of the elements in the array provided as initial parameters. The content however may change. +
+If also the container is declared as dynamic also the number of array items may change.
+
+Note: currently it is only possible to change the whole array (and its sub-objects/arrays) with the set-command (see details in the next section).
+
+[[implementation-description]]
+== Implementation description
+
+When a config is first created (when config-set happens) the provided params (or initialParams) are cloned (if the corresponding counterpart is missing) so that the config ends up with two parameter-objects, the “initialParams” and the “params”.
+
+The “initialParams”-object affects the configID, the “params”-object does not.
+
+Note: the “initialParams” take up the role of the former “params” object to a certain degree. But to be more correct: the former role/functionality is splitted up between the two.
+
+As long as there is no dynamic parameter declared the “initialParams” will always match the “params”.
+
+Changes to dynamic parameters are performed in the “params” object – thus they do not change the configID hash.
+
+[[the-params-command]]
+=== The “params”-command
+
+The ModuleDispatcher now knows a new command group called “params”:
+
+With a certain format of the sub-url (the part after the “params” keyword and the consecutive slash (“/”)) it is possible to query and set a single plain parameter, an object, an array, a sub-object or a sub-array.
+
+http://localhost:port/ModulXYZ/configID/params/parameterID -> get request
+
+http://localhost:port/ModulXYZ/configID/params/parameterID -> put/post request
+
+Sub-Objects can be targeted by building their parameterPath with slashes and the parameterIDs:
+
+http://localhost:port/ModulXYZ/configID/params/outer_object/inner_object +
+ +
+Plain-Value-Parameters inside an object can be also targeted:
+
+http://localhost:port/ModulXYZ/configID/params/object/plain_value
+
+a params-set command can be issued via HTTP-PUT or HTTP-POST.
+
+It is also possible to issue a params-set command via HTTP-GET:
+
+http://127.0.0.1:2020/ModulXYZ/configid/params/xyz?cmd=SET&payload=value
+
+Or with this syntax:
+
+http://127.0.0.1:2020/ModulXYZ/configid/params/xyz=value
+
+with value being a well-formated json object/array/value.
+
+Getting the whole params object can be done with this REST-request:
+
+http://127.0.0.1:2020/ModulXYZ/configid/parameter
+
+Setting the whole params object can be done with this REST-request:
+
+http://127.0.0.1:2020/ModulXYZ/configid/parameter/={…}
+
+Note: the curly braces indicate that params is an object.
+
+A request with the parameter command with a module/config that does not support/allow dynamic parameters will result in an error message.
+
+Also trying to set parameters with a parameter-set command on parameters declared as non-dynamic will automatically result in an error message.
+
+The parameter-get command is always allowed regardless of the module/config settings and the dynamic property of a parameter.
+
+Resetting a parameter to its value from initialParams can be done with:
+
+http://127.0.0.1:2020/ModulXYZ/configid/params/xyz=initial
+
+Or for the whole params object with:
+
+http://127.0.0.1:2020/ModulXYZ/configid/params=inital
+
+[[implementation-of-the-get-command]]
+==== Implementation of the get-command
+
+The “params” object of the config is evaluated. Missing parameters according to the module description are added to the object and filled with their default values (if they are missing they must be optional and thus have a default value)
+
+[[implementation-of-the-set-command]]
+==== Implementation of the set-command
+
+The provided json object/array/plain value it is checked if:
+
+* all required members inside object/array are present
+* type of plain value matches or all types inside object/array match the module description
+* in case of arrays: if container/array item rules are not violated according to dynamic state
+
+A successful set-command will return the parameter that has been set – looking the same like if you issued a normal get-command.
+
+Only the provided member/value pairs inside a provided json object parameter are stored to database. Missing optional members will result in their values defaulting to their default value – even if they have been set to a different value before the set-operation. This is intended behavior!
+
+[[module-description-checks-done-when-initializing-the-modulemodule-description]]
+==== Module Description Checks done when initializing the Module/Module Description
+
+If dynamic property of all members inside “params” object is in a valid configuration (no inner objects/arrays are declared non-dynamic if the object/array itself was declared dynamic.
+
+[[checks-inside-of-function-checkconfig-when-set-config-is-done]]
+==== Checks inside of function checkConfig (when set-config is done)
+
+It is recursively checked that all required members inside “params” are indeed provided.
+
+It is recursively checked that all provided members inside “params” have the correct type.

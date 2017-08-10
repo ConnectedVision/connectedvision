@@ -1,0 +1,67 @@
+[
+	{ 
+		"name": "Received image as PNG.", 
+		"id": "PNG-Image",
+		"description": "Decoded image as PNG byte stream.", 
+		"static": false,		
+		"type": "image/png",
+		"properties": {}
+	},
+	{
+		"name": "Frame Metadata",
+		"id": "FrameMetadata",
+		"description": "frame meta data",
+		"static": false,
+		"type": "application/json",
+		"properties": {
+			"id": {
+				"description": "Object ID",
+				"type": "string",
+				"exttype":"id",
+				"unit": "md5"
+			},
+			"configID": {
+				"description": "job / config ID",
+				"type": "string",
+				"exttype":"id",
+				"unit": "md5"
+			},
+			"timestamp": {
+				"description": "frame time",
+				"type": "integer",
+				"exttype":"timestamp",
+				"unit":"ms"
+			},
+			"framenumber": {
+				"description": "frame number",
+				"required": true,
+				"unit": "",
+				"type": "integer"
+			},
+			"width": {
+				"description": "width of frame in pixels",
+				"required": true,
+				"unit": "pixel",
+				"type": "integer"
+			},
+			"height": {
+				"description": "height of frame in pixels",
+				"required": true,
+				"unit": "pixel",
+				"type": "integer"
+			},
+			"framediff": {
+				"description": "difference between current framenumber and last (reflects dropped frames)",
+				"required": false,
+				"unit": "",
+				"type": "integer"
+			},
+			"encerrors": {
+				"description": "number of encoder errors",
+				"required": false,
+				"unit": "",
+				"type": "integer"
+			}
+		}			
+	}
+]

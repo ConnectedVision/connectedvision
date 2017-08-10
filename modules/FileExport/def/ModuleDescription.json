@@ -1,0 +1,26 @@
+{
+	"name": "FileExport",
+	"description": "exports data to file(s)" ,
+	"version": 1.01,
+	"moduleID": "FileExport",
+	"moduleURI" : "http://localhost:2020/FileExport/",	
+	"moduleLogoURI": "FileExport.png",
+	"moduleFeatures": {
+		"supportsLive": true,
+		"supportsResume": false,
+		"supportsDynamicParameters": false
+	},
+	"author": "Connected Vision",
+	"params":
+	{
+		"type": "object",
+		"properties": {
+			"filepath_format": {
+				"description": "specification of filepath (path + filename) of target output file, there are several reserved character sequences defined to allow folders and filenames to change over time and have identifiers in them, these special reserved character sequences are:[timestamp],[index],[identifier],etc.",
+				"type": "string",
+				"required": true,
+				"unit": ""				
+			}
+		}
+	}
+}

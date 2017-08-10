@@ -1,0 +1,199 @@
+[[preprocessor-for-set-config-command-new-separate-command]]
+= Preprocessor for Set-config command (new separate command)
+
+_Michael Rauter, 2017_
+
+In this document the design considerations about a preprocessor applied on the provided config of a set-config command is presented.
+
+Just to make it clear here and to reduce confusement: the place of the preprocessor in the processing would be before the config gets processed by the original Connected Vision set-config function and process the config that is then handed over to the set-config command (see implementation details later in this document).
+
+[[aimpurpose-of-the-preprocessor]]
+== Aim/Purpose of the preprocessor
+
+The preprocessor shall allow for a way to prevent using redundant subconfigs, parameter values or any other replaceable part of a json config to be specified once and then just referenced in a different place inside the same json config. Replaceable in this context means string replacement by a defined replacement string. +
+This is useful especially in more complicated configs that combine several modules and configs in a non-trivial way and e.g. have several modules use the same predecessor module on at least one of their input pins and thus result in their chained configs containing the same submodule config. Till now the submodule config had to be present as a whole json section repeatedly – which is a source of errors/unexpected behavior (e.g. a typo in one of the configs expected to be the same – resulting in the creation of 2 different configs and thus may break the computation chain). +
+Furthermore variables used in 2 different modules as parameters which are the same physical value can be enforced to be defined only once, e.g. a filename of a shared resource or algorithm parameters are a possible example for such variables.
+
+Furthermore it is planned to provide support for c-like comments.
+
+[[why-a-preprocessor]]
+== Why a preprocessor?
+
+In this section it is described where the advantages of a preprocessor approach are seen.
+
+[[implementation-complexity]]
+=== Implementation Complexity
+
+It seems to be an (relatively) easy way to achieve the needed functionality which is still powerful enough to fulfill the requirements and allow for even further usage as long as it falls into the domain of string replacement. +
+*Especially the aim is to have a working functionality in a reasonable short implementation time.*
+
+Therefore no other extra features are planned right now (although it can of course be later added, as well as the whole approach may be replaced by a more powerful later on).
+
+[[no-interfering-with-the-existing-connected-vision-approach]]
+=== No interfering with the existing Connected Vision approach
+
+With the preprocessor it is possible to do the string-replacement before the existing legacy Connected Vision set-config function/handling takes place. All the string replacements and superimposed syntax that is only known to the preprocessor will be already removed/replaced when the legacy functions takes over processing (pro: no changes to existing classes/functionality).
+
+[[users-are-used-to-it-because-of-c-preprocessor]]
+=== Users are used to it because of c-preprocessor
+
+It is kind of familiar since we all know a similar approach from the c-preprocessor.
+
+[[syntax-and-implementation-details-planned]]
+== Syntax and Implementation Details (planned)
+
+All this is subject for discussion.
+
+Preprocessing is done in this order:
+
+1.  comment removal
+2.  reference replacement
+
+There could be a new set-config with preprocessing enabled that is only done when submitting a config via the web-interface. Inter-modul set-config commands would not use this and instead use the original set-config command.
+
+The new command could e.g. be:
+
+http://localhost:2020/moduleID/0/configApplyPreprocessor
+
+*right now every submitted config in the set-config command is preprocessed!*
+
+[[about-comments]]
+=== about comments
+
+there should be single line and multiple line comments.
+
+[[syntax]]
+==== Syntax
+
+Single line comments syntax: double slashes (“//”). +
+Single line comments might be extended to multiple line comments by using a closing backslash (“\”) at the end of the line as it is possible in C.
+
+Multiple line comments syntax: start: slash+asterix (“/\*”), end: asterix+slash (“*/”).
+
+[[implementation]]
+==== Implementation
+
+A state machine is planned for implementation since there are nested patterns possible which will break regex-based solutions. Processing is done by processing char-wise from the beginning of the config / augmented json document to the end of the json document.
+
+[[about-string-replacements-references]]
+=== about string replacements (references)
+
+There should be single line replacement defines and multiple line replacement defines to support single variable replacements as well as section replacements.
+
+[[syntax-1]]
+==== Syntax
+
+Replacement strings can be defined anywhere in the config and can be referenced anywhere except:
+
+* inside the same define = direct loop (which will result in an unresolved (inner) define which will eventually result in an error when Connected Vision will try to parse the JSON).
+* in a cyclic way – cyclic references (ref a is inside ref b and ref b is inside ref a) will lead to an unresolved reference eventually through careful implementation design.
+
+[[replacement-defines-by-a-replacement-identifier]]
+===== Replacement defines by a replacement identifier
+
+Single line replacement define syntax: +
+
+[source, JSON]
+....
+#define identifier replacement
+....
+
+Here “identifier” is the so called replacement identifier. “replacement” is called replacement string (even if it is not a (JSON) string in this case – a string would be in quotes).
+
+A different example would be:
+
+[source, JSON]
+....
+#define sharedString “test123”
+....
+
+or
+
+[source, JSON]
+....
+#define sharedVariable 270.0
+....
+
+Multiple line replacement define syntax (replacement string is marked ##**like this**##): +
+
+[source, JSON]
+[subs="quotes"]
+....
+#startdef myconfig
+##**{
+    “value”: 5
+}**##
+#enddef
+....
+Also these should work:
+
+[source, JSON]
+[subs="quotes"]
+....
+#startdef myconfig ##**{
+    “value”: 5
+}**##
+#enddef
+....
+
+and
+
+[source, JSON]
+[subs="quotes"]
+....
+#startdef myconfig ##**{
+    “value”: 5
+}**## #enddef
+....
+
+Or in combination with a comment:
+
+[source, JSON]
+[subs="quotes"]
+....
+#startdef myconfig
+##**{
+    “value”: 5
+}**##
+#enddef // closing myconfig define
+....
+
+[[referencing-replacement-strings]]
+===== Referencing replacement strings
+
+Referencing is done by using the dollar sign (“$”) before and after the replacement identifier in the JSON: +
+
+[source, JSON]
+[subs="quotes"]
+....
+"aStruct": {
+    “aString”: “test123”,
+    “aValue“: ##**$sharedVariable$**##
+}
+....
+
+[[implementation-1]]
+==== Implementation
+
+Given that all comments have already been removed from the augmented JSON config (now the current augmentation state should only contain replacement defines and references), processing is:
+
+Loop 1. Until the loop requirement is no longer met
+
+1.  the (current because changing while processed) augmented JSON config is processed from the end to the start. For the first found replacement define with its corresponding replacement identifier (the last in the current augmented config), until no more replacement define is found:
+a.  store the replacement string
+b.  removed the define from the (current) augmented config
+c.  replace all occurrences of the current replacement identifier in enclosing “$” chars by the replacement string
+
+You should end up with a valid JSON config in case of correct formatting beforehand (with correct appliance of the augmented ruleset) or a invalid config if formatting was wrong or contained cyclic reference definitions.
+
+Note: no json parsing will be done in the preprocessor! Just string processing!
+
+[[summary]]
+== Summary
+
+* Comments for JSON configs
+* Add Preprocessor replacement
+* Optional New API function _configApplyPreprocessor()_ (as C++ function and WebService)
+* No interfering with the existing Connected Vision approach
+* Only preprocessed config is stored to DB +
+-> When you retrieve a config via the Connected Vision API you will get a pure, valid JSON config (without comments or defines).

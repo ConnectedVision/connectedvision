@@ -1,0 +1,43 @@
+{
+	"name": "VideoImporter",
+	"description": "This module imports video frames as well as video meta data from .avi files. It has 2 metadata output pins and 3 raw frame output pins and a png output pin." ,
+	"version": 0.1,
+	"moduleID": "VideoImporter",
+	"moduleURI" : "",
+	"moduleLogoURI": "VideoImporter.png",
+	"author": "Connected Vision",
+	"params": {
+		"type": "object",
+		"properties": {
+			"filename": {
+				"description": "network path to video file",
+				"type": "string",
+				"exttype":"filepath"
+			},
+			"deinterlaceMode": {
+				"type": "string",
+				"description": "deinterlace mode (modes are: 'AUTO' ... deinterlaces dependent on the interlaced flag of the video source, 'FORCE' ... forces deinterlacing, 'OFF' ... disables deinterlacing",
+				"enum": ["AUTO", "FORCE", "OFF"],
+				"required": false,
+				"default": "AUTO"
+			},
+			"recordingDateTime": {
+				"description": "recording date (start time of video)",
+				"required": false,
+				"type": "integer",
+				"exttype":"timestamp",
+				"unit":"ms",
+				"default": 0
+			},
+			"timestampStart": {
+				"description": "stable results start time (only considred when Trigger input pin is connected)",
+				"required": false,
+				"type": "integer",
+				"exttype":"timestamp",
+				"unit":"ms",
+				"minimum": 0,
+				"default": 0
+			}
+		}
+	}
+}

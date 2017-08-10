@@ -1,0 +1,14 @@
+{
+	"name": "rtsp://192.168.0.91/axis-media/media.amp (AXIS Q1755)",						
+	"description": "", 
+	"version": 1, 						
+	"id" : "",			
+	"aliasID": [ {"id": "VLC" } ],	
+	"moduleID": "RTPImporter",
+	"moduleURI" : "http://localhost:2020/RTPImporter",
+	"params":
+	{
+		"url": "rtsp://192.168.0.91/axis-media/media.amp"
+	},
+	"chain": []
+}

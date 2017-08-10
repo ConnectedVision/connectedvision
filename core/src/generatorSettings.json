@@ -1,0 +1,9 @@
+{
+	"Paths": {
+		"moduleDescriptionPath": "../def/",
+		"sqlPath": "./Module/Control/sql/",
+		"srcPath": "./Module/Control/",
+		"stubPath": "./Module/Control/stubs/"
+	},
+	"namespace": ["ConnectedVision"]
+}

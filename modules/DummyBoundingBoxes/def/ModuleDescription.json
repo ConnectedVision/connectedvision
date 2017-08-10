@@ -1,0 +1,128 @@
+{
+	"name": "DummyBoundingBoxes",
+	"description": "This module generates dummy bounding boxes.",
+	"version": 0.1,
+	"moduleID": "DummyBoundingBoxes",
+	"moduleURI": "http://localhost:2020/DummyBoundingBoxes",
+	"moduleFeatures": {
+		"supportsLive": false,
+		"supportsResume": false,
+		"supportsDynamicParameters": false
+	},
+	"author": "Stephan Veigl",
+	"params": {
+		"description": "Dummy Bounding Box Generator configuration",
+		"required": true,
+		"type": "object",
+		"properties": {
+			"count": {
+				"description": "number of bounding boxes to be generated (interpolated)",
+				"type": "integer",
+				"unit": "count",
+				"required": true,
+				"default": 0
+			},
+			"boundingBoxStart": {
+				"description": "first bounding box data at start of video",
+				"type": "object",
+				"exttype": "rectangle",
+				"required": true,
+				"properties": {
+					"left": {
+						"description": "x position of top left point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"right": {
+						"description": "x position of bottom right point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"top": {
+						"description": "y position of top left point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"bottom": {
+						"description": "y position of bottom right point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					}
+				}
+			},
+			"timestampStart": {
+				"description": "timestamp of first bounding box data at start of video",
+				"type": "integer",
+				"exttype": "timestamp",
+				"unit": "ms",
+				"required": true
+			},
+			"boundingBoxEnd": {
+				"description": "last bounding box data at end of video",
+				"type": "object",
+				"exttype": "rectangle",
+				"required": true,
+				"properties": {
+					"left": {
+						"description": "x position of top left point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"right": {
+						"description": "x position of bottom right point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"top": {
+						"description": "y position of top left point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					},
+					"bottom": {
+						"description": "y position of bottom right point of the rectangle",
+						"type": "number",
+						"unit": "fractional position",
+						"required": true,
+						"minimum": 0,
+						"maximum": 1
+					}
+				}
+			},
+			"timestampEnd": {
+				"description": "timestamp of last bounding box data at end of video",
+				"type": "integer",
+				"exttype": "timestamp",
+				"unit": "ms",
+				"required": true
+			},
+			"delay": {
+				"description": "processing delay",
+				"type": "integer",
+				"unit": "ms",
+				"required": false,
+				"default": 0
+			}
+		}
+	}
+}

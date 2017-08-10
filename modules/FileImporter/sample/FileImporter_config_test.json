@@ -1,0 +1,13 @@
+{
+    "id": "Test Image",
+    "name": "test.png",
+    "description": "fetch test.png",
+    "version": 1,
+    "moduleID": "FileImporter",
+    "moduleURI": "http://localhost:2020/FileImporter/",
+    "params": {
+		"filename": "..\\..\\..\\..\\test\\data\\images\\test.png",
+        "mimeType": "image/png"
+    },
+    "chain": []
+}

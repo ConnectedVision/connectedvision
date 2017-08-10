@@ -1,0 +1,14 @@
+{
+	"name": "rtsp://:8554/video (VLC stream)",						
+	"description": "", 
+	"version": 1, 						
+	"id" : "",			
+	"profileID": 0, 					
+	"moduleID": "",
+	"moduleURI" : "http://localhost:2020/RTPImporter",
+	"params":
+	{
+		"url": "rtsp://user1:password1@172.30.33.36:8554/importtest1?startdate=1436348633&duration=60"
+	},
+	"chain": []
+}

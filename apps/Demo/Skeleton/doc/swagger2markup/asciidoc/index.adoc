@@ -1,0 +1,11 @@
+.Connected Vision API on the example of the Skeleton module
+****
+*This document explains the Connected Vision API on the example of the Skeleton module. The workflow (<<Workflow Example>>) and all query endpoints (<<Resources>>) are generic to all Connected Vision modules.*
+****
+
+include::{generated}/overview.adoc[]
+include::module_structure.adoc[]
+include::workflow.adoc[]
+include::{generated}/security.adoc[]
+include::{generated}/paths.adoc[]
+include::{generated}/definitions.adoc[]
