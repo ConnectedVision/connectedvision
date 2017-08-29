@@ -141,7 +141,7 @@ no_sha=False
 		
 		if self.settings.os == "Linux" and self.settings.compiler == "gcc" and self.settings.arch == "armv7hf":
 			self.output.warn("The tool makedepend is needed to build. Please enter sudo password if requested...")
-			self.run("sudo apt-get install -y makedepend")
+			self.run("sudo apt-get install -y xutils-dev")
 		
 		config_options_string = ""
 
