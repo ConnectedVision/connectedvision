@@ -138,7 +138,11 @@ no_sha=False
 		
 		if self.settings.compiler == "Visual Studio":
 			self.output.info("runtime   : " + str(self.settings.compiler.runtime))
-
+		
+		if self.settings.os == "Linux" and self.settings.compiler == "gcc" and self.settings.arch == "armv7hf":
+			self.output.warn("The tool makedepend is needed to build. Please enter sudo password if requested...")
+			self.run("sudo apt-get install -y makedepend")
+		
 		config_options_string = ""
 
 		if self.deps_cpp_info.include_paths:
