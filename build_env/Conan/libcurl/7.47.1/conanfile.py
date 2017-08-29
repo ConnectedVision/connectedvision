@@ -75,6 +75,9 @@ class LibCurlConan(ConanFile):
 			suffix += " --without-librtmp " if not self.options.with_librtmp else "--with-librtmp"
 			suffix += " --without-libmetalink " if not self.options.with_libmetalink else "--with-libmetalink"
 			
+			if self.settings.compiler == "gcc" and self.settings.arch == "armv7hf":
+				suffix += " --host=arm-linux-gnueabihf --prefix=/usr/arm-linux-gnueabihf "
+			
 			if self.options.with_openssl:
 				if self.settings.os == "Macos" and self.options.darwin_ssl:
 					suffix += "--with-darwinssl "

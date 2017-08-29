@@ -46,15 +46,15 @@ target_link_libraries(${PROJECT_NAME}
 	DummyBoundingBoxes
 	FileExport
 	FileImporter
-	RTPImporter
+#	RTPImporter
 	SyntheticVideo
 	ThumbnailGenerator
-	VideoImporter
+#	VideoImporter
 	
 	ConnectedVisionCore
 	
 	CONAN_PKG::Boost
-	CONAN_PKG::FFmpeg
+#	CONAN_PKG::FFmpeg
 	CONAN_PKG::OpenCV
 	CONAN_PKG::OpenSSL
 	CONAN_PKG::POCO

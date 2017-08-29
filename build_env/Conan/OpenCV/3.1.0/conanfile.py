@@ -12,7 +12,7 @@ class OpenCV(ConanFile):
 	version = "3.1.0"
 	license = "3-clause BSD License, http://opencv.org/license.html"
 	url = "http://opencv.org"
-	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64"], "build_type": ["Debug", "Release"]}
+	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	exports = "CMakeLists.txt"
 	options = {
 		"BUILD_DOCS": [True, False],

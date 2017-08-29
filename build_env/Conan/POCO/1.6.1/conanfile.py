@@ -9,7 +9,7 @@ class POCO(ConanFile):
 	version = "1.6.1"
 	license = "The Boost Software License 1.0, https://pocoproject.org/license.html"
 	url = "https://pocoproject.org"
-	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64"], "build_type": ["Debug", "Release"]}
+	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	generator = "cmake"
 	options = {
 		"POCO_STATIC": [True, False],

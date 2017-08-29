@@ -9,7 +9,7 @@ class OpenSSLConan(ConanFile):
 	version = "1.0.2g"
 	license = "https://www.openssl.org/source/license.html, https://license.openssl.org/"
 	url = "https://www.openssl.org"
-	settings = {"os": ["Windows", "Linux", "Macos"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64"], "build_type": ["Debug", "Release"]}
+	settings = {"os": ["Windows", "Linux", "Macos"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	# https://github.com/openssl/openssl/blob/OpenSSL_1_0_2c/INSTALL
 	options = {"no_threads": [True, False],
 				"no_electric_fence": [True, False],
@@ -200,7 +200,19 @@ no_sha=False
 				replace_in_file("./openssl-%s/Makefile.shared" % self.version, old_str, new_str)
 				self.output.warn("----------MAKE OPENSSL %s-------------" % self.version)
 				run_in_src("make")
-
+		
+		def arm_make(config_options_string):
+			verbose=False
+			self.output.warn("----------CONFIGURING OPENSSL %s-------------" % self.version)
+			# CAUTION: We intentionally set CC and CXX in order to satisfy the Configure script!!!
+			command = "CC=gcc CXX=g++ CROSS_COMPILE=arm-linux-gnueabihf- ./Configure linux-armv4 -march=armv7-a %s" % config_options_string
+			self.output.info("command: %s" % command)
+			run_in_src(command, show_output=verbose)
+			# run_in_src("printenv", show_output=True) # test CC and CXX having original values
+			run_in_src("make depend", show_output=verbose)
+			self.output.warn("----------MAKE OPENSSL %s-------------" % self.version)
+			run_in_src("make", show_output=verbose)
+		
 		def windows_make(config_options_string):
 			self.output.warn("----------CONFIGURING OPENSSL FOR WINDOWS. %s-------------" % self.version)
 			debug = "debug-" if self.settings.build_type == "Debug" else ""
@@ -250,7 +262,10 @@ no_sha=False
 			self.run("del \\\\?\\" + os.path.join(os.getcwd(), "openssl-" + self.version, "NUL") + " 2> nul")
 
 		if self.settings.os == "Linux" or self.settings.os == "Macos":
-			unix_make(config_options_string)
+			if self.settings.compiler == "gcc" and self.settings.arch == "armv7hf":
+				arm_make(config_options_string)
+			else:
+				unix_make(config_options_string)
 		elif self.settings.os == "Windows":
 			windows_make(config_options_string)
 

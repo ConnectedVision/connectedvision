@@ -12,19 +12,33 @@ add_definitions(-D_UNICODE)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
+
+# this one is important
+SET(CMAKE_SYSTEM_NAME Linux)
+#this one not so much
+SET(CMAKE_SYSTEM_VERSION 1)
+
+# specify the cross compiler
+SET(CMAKE_C_COMPILER   arm-linux-gnueabihf-gcc)
+SET(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++)
+
+
+
 if(MSVC)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 elseif(CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} -std=c++0x -pthread")
+	set(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} -std=c++0x -pthread -D__STDC_CONSTANT_MACROS")
+	set(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} -DMACHINE_ARCH_ARM -fPIC -DLINUX=1 -UMMX")
 else()
 	message(FATAL_ERROR "only MSVC and GCC compilers are supported")
 endif()
 
 set(CONNECTED_VISION_CONAN_PACKAGES_DEFAULT
-	Boost/1.57.0@covi/stable
-	FFmpeg/3.2.4@covi/stable
+	Boost/1.58.0@covi/stable
+#	FFmpeg/3.2.4@covi/stable
 	libcurl/7.47.1@covi/stable
 	OpenCV/3.1.0@covi/stable
 	OpenSSL/1.0.2g@covi/stable
