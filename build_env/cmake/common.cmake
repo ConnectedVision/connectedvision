@@ -4,37 +4,23 @@ if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/conan.cmake")
 	file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake" "${CMAKE_CURRENT_LIST_DIR}/conan.cmake")
 endif()
 
-include(${CMAKE_CURRENT_LIST_DIR}/conan.cmake)
-
 add_definitions(-DUNICODE)
 add_definitions(-D_UNICODE)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
-
-# this one is important
-SET(CMAKE_SYSTEM_NAME Linux)
-#this one not so much
-SET(CMAKE_SYSTEM_VERSION 1)
-
-# specify the cross compiler
-SET(CMAKE_C_COMPILER   arm-linux-gnueabihf-gcc)
-SET(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++)
-
-
-
 if(MSVC)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 elseif(CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} -std=c++0x -pthread -D__STDC_CONSTANT_MACROS")
-	set(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} -DMACHINE_ARCH_ARM -fPIC -DLINUX=1 -UMMX")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pthread")
 else()
 	message(FATAL_ERROR "only MSVC and GCC compilers are supported")
 endif()
+
+include(${CMAKE_CURRENT_LIST_DIR}/conan.cmake)
 
 set(CONNECTED_VISION_CONAN_PACKAGES_DEFAULT
 	Boost/1.58.0@covi/stable
@@ -78,6 +64,31 @@ function(create_version_info_file checkoutDir templateFile destinationFile)
 	
 	# write the version info file
 	file(WRITE "${destinationFile}" "${template}")
+endfunction()
+
+
+
+function(execute_conan_cmake_run_without_targets)
+	conan_cmake_run(REQUIRES
+		${CONNECTED_VISION_CONAN_PACKAGES_DEFAULT}
+		${ARGN}
+		BASIC_SETUP
+		BUILD
+		outdated
+	)
+endfunction()
+
+
+
+function(execute_conan_cmake_run_with_targets)
+	conan_cmake_run(REQUIRES
+		${CONNECTED_VISION_CONAN_PACKAGES_DEFAULT}
+		${ARGN}
+		BASIC_SETUP
+		CMAKE_TARGETS
+		BUILD
+		outdated
+	)
 endfunction()
 
 
@@ -182,29 +193,4 @@ function(get_lib_directory result)
 	endif()
 	
 	set(${result} ${${result}} PARENT_SCOPE)
-endfunction()
-
-
-
-function(execute_conan_cmake_run_without_targets)
-	conan_cmake_run(REQUIRES
-		${CONNECTED_VISION_CONAN_PACKAGES_DEFAULT}
-		${ARGN}
-		BASIC_SETUP
-		BUILD
-		outdated
-	)
-endfunction()
-
-
-
-function(execute_conan_cmake_run_with_targets)
-	conan_cmake_run(REQUIRES
-		${CONNECTED_VISION_CONAN_PACKAGES_DEFAULT}
-		${ARGN}
-		BASIC_SETUP
-		CMAKE_TARGETS
-		BUILD
-		outdated
-	)
 endfunction()

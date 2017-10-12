@@ -28,7 +28,7 @@ def installPackages():
 		])
 	
 	packages.extend([
-		"Boost/1.57.0",
+		"Boost/1.58.0",
 		"CppUTest/3.8",
 		"FFmpeg/3.2.4",
 		"libcurl/7.47.1",
@@ -43,7 +43,7 @@ def installPackages():
 	])
 	
 	for package in packages:
-		dirPathList = [os.getcwd()] + package.split("/")
+		dirPathList = [os.path.join(os.getcwd(), "packages")] + package.split("/")
 		dirPath = os.path.abspath(os.path.join(*dirPathList))
 		
 		with conanTools.chdir(dirPath):
