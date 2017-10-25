@@ -10,9 +10,9 @@
 #include "../../../modules/FileExport/src/FileExportModuleFactory.h"
 #include "../../../modules/FileImporter/src/FileImporterModuleFactory.h"
 #include "../../../modules/SyntheticVideo/src/SyntheticVideoModuleFactory.h"
-//#include "../../../modules/RTPImporter/src/RTPImporterModuleFactory.h"
+#include "../../../modules/RTPImporter/src/RTPImporterModuleFactory.h"
 #include "../../../modules/ThumbnailGenerator/src/ThumbnailGeneratorModuleFactory.h"
-//#include "../../../modules/VideoImporter/src/VideoImporterModuleFactory.h"
+#include "../../../modules/VideoImporter/src/VideoImporterModuleFactory.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -71,8 +71,8 @@ int main(int argc, char **argv)
 		auto fileImporter = FileImporter::FileImporterModuleFactory::createModule();
 		server.registerModule(fileImporter);
 
-		//auto rtpImporter = RTPImporter::RTPImporterModuleFactory::createModule();
-		//server.registerModule(rtpImporter);
+		auto rtpImporter = RTPImporter::RTPImporterModuleFactory::createModule();
+		server.registerModule(rtpImporter);
 
 		auto syntheticVideo = SyntheticVideo::SyntheticVideoModuleFactory::createModule();
 		server.registerModule(syntheticVideo);
@@ -80,8 +80,8 @@ int main(int argc, char **argv)
 		auto thumbnailGenerator = ThumbnailGenerator::ThumbnailGeneratorModuleFactory::createModule();
 		server.registerModule(thumbnailGenerator);
 
-		//auto videoImporter = VideoImporter::VideoImporterModuleFactory::createModule();
-		//server.registerModule(videoImporter);
+		auto videoImporter = VideoImporter::VideoImporterModuleFactory::createModule();
+		server.registerModule(videoImporter);
 
 		server.start();		
 
