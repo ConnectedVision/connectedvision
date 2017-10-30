@@ -117,7 +117,7 @@ class FFmpeg(ConanFile):
 		
 		if self.settings.os == "Linux":
 			cmdStr = "sudo apt-get install -y yasm"
-			self.output.warn("yasm is needed to build " + self.name + ". Please enter sudo password if requested required for executing the following command \"" + cmdStr + "\"")
+			self.output.warn("yasm is required for building " + self.name + ". If requested, please enter the sudo password for executing the following command \"" + cmdStr + "\"")
 			self.run(cmdStr)
 		
 		ffmpegInstallDir = self.getInstallDir()
