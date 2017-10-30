@@ -10,7 +10,7 @@ class BoostConan(ConanFile):
 	version = "1.58.0"
 	license = "Boost Software License, http://www.boost.org/LICENSE_1_0.txt"
 	url = "http://www.boost.org"
-	settings = "os", "arch", "compiler", "build_type"
+	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	FOLDER_NAME = "boost_%s" % version.replace(".", "_")
 	options = {"shared": [True, False], "header_only": [True, False]}
 	default_options = "shared=False", "header_only=False"
@@ -77,23 +77,26 @@ class BoostConan(ConanFile):
 		
 		if self.settings.compiler == "Visual Studio":
 			flags.append("toolset=msvc-%s.0" % self.settings.compiler.version)
-		
-		if self.settings.compiler == "gcc" and self.settings.arch == "armv7hf":
-			self.output.info("Patch project-config.jam for ARMv7hf")
+		elif self.settings.arch == "armv7hf":
+			if not os.environ.has_key("CXX"):
+				raise Exception("failed to extract compiler from environment variable \"CXX\" (variable is not set)")
 			
+			result = re.search("(.*g\+\+)$", os.environ.get("CXX"), re.M|re.I)
+			
+			if not result:
+				raise Exception("Failed to extract compiler from environment variable \"CXX\". Variable value \"" + os.environ.get("CXX") + "\" does not end with \"g++\", e.g. \"arm-linux-gnueabihf-g++\".")
+			
+			# set the compiler directly by editing the project-config.jam instead of specifying it in a user-config.jam file in combination with the BOOST_BUILD_PATH environment variable since a possibly existing user-config.jam in the HOME directory would take precedence over BOOST_BUILD_PATH
 			with tools.chdir(self.FOLDER_NAME):			
-				f = open("project-config.jam", 'r+')					
-				content = f.read()
-				# TODO finetune regular expression
-				content_new = re.sub(" *    using gcc ;*", r"    using gcc : arm : arm-linux-gnueabihf-g++ ;", content, flags = re.M)
-				# self.output.info("content new: " + content_new)
-				f.seek(0)
-				f.write(content_new)
-				f.truncate()
-				f.close()
+				with open("project-config.jam", "r+") as f:
+					content = f.read()
+					content = re.sub(r"([ \t]*)using gcc[ \t]*;*", r"\1using gcc : arm : " + result.group(1) + " ;", content)
+					f.seek(0)
+					f.write(content)
+					f.truncate()
 			
 			flags.append("toolset=gcc-arm")
-
+		
 		flags.append("link=%s" % ("static" if not self.options.shared else "shared"))
 		
 		if self.settings.compiler == "Visual Studio" and self.settings.compiler.runtime:
@@ -111,19 +114,15 @@ class BoostConan(ConanFile):
 		else:
 			command = "./b2"
 		
-		full_command = command + " " + b2_flags + " -j " + str(tools.cpu_count()) + " -s NO_BZIP2=1 --abbreviate-paths --without-python"
+		command += " " + b2_flags + " -j " + str(tools.cpu_count()) + " -s NO_BZIP2=1 --abbreviate-paths --without-python"
+
+		if self.settings.arch == "armv7hf":
+			command += " --without-context --without-coroutine"
 		
-		self.output.warn(full_command)
+		self.output.warn(command)
 
 		with tools.chdir(self.FOLDER_NAME):
-			if self.settings.arch == "armv7hf":
-				try:
-					self.run(full_command)
-				except:
-					# TODO fix failing build
-					self.output.warn("we knew that this would happen")
-			else:
-				self.run(full_command)
+			self.run(command)
 
 	def package(self):
 		self.output.info("")
@@ -149,13 +148,17 @@ class BoostConan(ConanFile):
 			else:
 				self.cpp_info.defines.append("BOOST_USE_STATIC_LIBS")
 
-			libs = ("atomic chrono container coroutine date_time exception filesystem "
+			libs = ("atomic chrono container context coroutine date_time exception filesystem "
 					"graph iostreams locale log_setup log math_c99 math_c99f math_c99l math_tr1 "
 					"math_tr1f math_tr1l prg_exec_monitor program_options random regex serialization "
 					"signals system test_exec_monitor thread timer unit_test_framework wave "
 					"wserialization").split()
 
 		if self.settings.os != "Windows":
+				if self.settings.arch == "armv7hf":
+					libs.remove("context")
+					libs.remove("coroutine")
+				
 				self.cpp_info.libs.extend(["boost_%s" % lib for lib in libs])
 		elif self.settings.os == "Windows":
 			win_libs = []
