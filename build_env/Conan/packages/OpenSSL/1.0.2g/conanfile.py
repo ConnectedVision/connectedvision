@@ -237,10 +237,10 @@ no_sha=False
 				run_in_src(os.path.join("ms", "do_ms"))
 			runtime = self.settings.compiler.runtime
 			# Replace runtime in ntdll.mak and nt.mak
-			replace_in_file("./openssl-%s/ms/ntdll.mak" % self.version, "/MD ", "/%s " % runtime)
-			replace_in_file("./openssl-%s/ms/nt.mak" % self.version, "/MT ", "/%s " % runtime)
-			replace_in_file("./openssl-%s/ms/ntdll.mak" % self.version, "/MDd ", "/%s " % runtime)
-			replace_in_file("./openssl-%s/ms/nt.mak" % self.version, "/MTd ", "/%s " % runtime)
+			replace_in_file("./openssl-%s/ms/ntdll.mak" % self.version, "/MD ", "/%s " % runtime, False)
+			replace_in_file("./openssl-%s/ms/nt.mak" % self.version, "/MT ", "/%s " % runtime, False)
+			replace_in_file("./openssl-%s/ms/ntdll.mak" % self.version, "/MDd ", "/%s " % runtime, False)
+			replace_in_file("./openssl-%s/ms/nt.mak" % self.version, "/MTd ", "/%s " % runtime, False)
 
 			self.output.warn(os.curdir)
 			
