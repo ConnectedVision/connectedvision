@@ -2,16 +2,14 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(SystemTestServer)
 
+option(USE_INSTALL_SUBDIRECTORY_STRUCTURE "create a subdirectory structure for the install directory which consists of architecture and configuration type" OFF)
+
 set(ConnectedVisionCppRoot ../../..)
 
 include(${ConnectedVisionCppRoot}/build_env/cmake/common.cmake)
 
 execute_conan_cmake_run_without_targets()
 execute_conan_cmake_run_with_targets()
-
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/${ConnectedVisionCppRoot}" CACHE PATH "default install path" FORCE)
-endif()
 
 include_directories(
 	${ConnectedVisionCppRoot}/core/include
@@ -78,5 +76,11 @@ if(MSVC)
 endif()
 
 get_bin_install_directory(InstallDirectory)
+
+# set CMAKE_INSTALL_PREFIX here after!!! add_subdirectory commands since they would overwrite the correct CMAKE_INSTALL_PREFIX otherwise
+# since they define $ConnectedVisionCppRoot on their own and it is a different relative directory there
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/${ConnectedVisionCppRoot}" CACHE PATH "default install path" FORCE)
+endif()
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${InstallDirectory})
