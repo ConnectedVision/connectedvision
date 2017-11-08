@@ -121,7 +121,7 @@ endfunction()
 function(get_install_directory outputType result)
 	set(str "${outputType}")
 		
-	if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	if(USE_INSTALL_SUBDIRECTORY_STRUCTURE)
 		get_compiler_short_name(compilerShortName)
 		set(str "${str}/${compilerShortName}")
 		
@@ -158,7 +158,7 @@ endfunction()
 function(get_lib_directory result)
 	get_install_directory("lib" ${result})
 	
-	if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	if(USE_INSTALL_SUBDIRECTORY_STRUCTURE)
 		# specify the parent directory of the Debug/Release subdirectories as the link_directories command only accepts it that way
 		if(MSVC)
 			set(${result} "${${result}}/..")
