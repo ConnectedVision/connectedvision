@@ -56,6 +56,8 @@ VideoImport_FFmpeg::VideoImport_FFmpeg(const char filename[], int64_t recordingD
 	AVRational timebase = pFormatCtx->streams[0]->time_base;
 	AVRational framerate = pFormatCtx->streams[0]->r_frame_rate;
 	
+	
+	//fps = av_q2d(decoder.getCodecCtx()->time_base) / decoder.getCodecCtx()->ticks_per_frame;
 	fps = (double)framerate.num / (double)framerate.den;
 	double time_base = (double)timebase.num / (double)timebase.den;
 
@@ -153,8 +155,8 @@ void VideoImport_FFmpeg::goToTimestamp(int64_t timestamp, int numCsp, VideoImpor
 	AVRational timebase = this->containerDemuxer.getFormatCtx()->streams[0]->time_base;
 	double time_base = (double)timebase.num / (double)timebase.den;
 	AVStream *stream = this->containerDemuxer.getFormatCtx()->streams[0];
-	int64_t duration = (int64_t)(this->containerDemuxer.getFormatCtx()->duration * fps / AV_TIME_BASE);
-	int64_t maxTimestamp = (int64_t)(((duration) / ((double)timebase.den / (double)timebase.num / this->fps) - 1) * this->frameDist);
+	int64_t frameNum = (int64_t)(this->containerDemuxer.getFormatCtx()->duration * fps / AV_TIME_BASE);
+	int64_t maxTimestamp = (int64_t)((frameNum - 1) * this->frameDist);
 
 	int64_t timestampMilliSeconds;
 	if (timestamp - StartTime < maxTimestamp) //LLONG_MAX / 1000) // check for value overflow and prevent it
@@ -414,11 +416,6 @@ bool VideoImport_FFmpeg::ContainerDemuxer::goToFrame(int64_t timestamp, AVFrame 
 	bool frameFound = this->seekKeyFrame(timestamp);
 	if (!frameFound)
 		return(false);
-
-	if (this->packetVideo.stream_index != 0)
-	{
-		throw std::runtime_error("error in function VideoImport_FFmpeg::ContainerDemuxer::goToFrame: video stream expected but not found");
-	}
 	
 	bool success = nextFrame(decodedFrame);
 	
