@@ -65,10 +65,8 @@ VideoImport_FFmpeg::VideoImport_FFmpeg(const char filename[], int64_t recordingD
 	if (numberOfFrames == 0) // some videos (e.g. webm) might have no nb_frames specified (see https://stackoverflow.com/questions/32532122/finding-duration-number-of-frames-of-webm-using-ffmpeg-libavformat)
 	{
 		// do fallback then
-		numberOfFrames = (int64_t)(pFormatCtx->duration / AV_TIME_BASE * fps);
+		numberOfFrames = (int64_t)(pFormatCtx->duration * fps / AV_TIME_BASE);
 	}
-
-	//numberOfFrames = (int64_t)(pFormatCtx->duration / AV_TIME_BASE * fps);
 
 	StartTime = recordingDateTime; // get AVI file time - and convert from microseconds to milliseconds
 	LengthTime = (int64_t)((numberOfFrames - 1) * frameDist * 1000);
@@ -155,7 +153,8 @@ void VideoImport_FFmpeg::goToTimestamp(int64_t timestamp, int numCsp, VideoImpor
 	AVRational timebase = this->containerDemuxer.getFormatCtx()->streams[0]->time_base;
 	double time_base = (double)timebase.num / (double)timebase.den;
 	AVStream *stream = this->containerDemuxer.getFormatCtx()->streams[0];
-	int64_t maxTimestamp = (int64_t)(((stream->duration) / ((double)timebase.den / (double)timebase.num / this->fps) - 1) * this->frameDist);
+	int64_t duration = (int64_t)(this->containerDemuxer.getFormatCtx()->duration * fps / AV_TIME_BASE);
+	int64_t maxTimestamp = (int64_t)(((duration) / ((double)timebase.den / (double)timebase.num / this->fps) - 1) * this->frameDist);
 
 	int64_t timestampMilliSeconds;
 	if (timestamp - StartTime < maxTimestamp) //LLONG_MAX / 1000) // check for value overflow and prevent it
@@ -433,55 +432,49 @@ bool VideoImport_FFmpeg::ContainerDemuxer::goToFrame(int64_t timestamp, AVFrame 
 
 bool VideoImport_FFmpeg::ContainerDemuxer::nextFrame(AVFrame *decodedFrame)
 {
-	bool hasVideoPacket = false;	
 	bool frameFound = false;
-	while (!hasVideoPacket)
-	{
-		this->readNext(hasVideoPacket, frameFound);
-		if ((hasVideoPacket) && (!frameFound))
-			return(false);
-	}
 
-	if (frameFound)
+	int ret = AVERROR(EAGAIN);
+	while (ret == AVERROR(EAGAIN))
 	{
-		pDecoder->decode(decodedFrame);
-	}
-	else
-	{
-		return(false);
+		frameFound = this->readNext();
+		if (!frameFound)
+			return(false);
+		ret = pDecoder->decode(decodedFrame);
 	}
 
 	return(true);
 }
 
-void VideoImport_FFmpeg::ContainerDemuxer::readNext(bool &hasVideoPacket, bool &readSuccess)
+bool VideoImport_FFmpeg::ContainerDemuxer::readNext()
 {
 	int nRet = 0;
-
+	bool hasVideoPacket = false;
 	AVPacket newPacket;		
 	
-	nRet = av_read_frame(this->pFormatCtx, &newPacket);
-	if(nRet < 0)
+	while (!hasVideoPacket)
 	{
-		av_packet_unref(&newPacket);
-		hasVideoPacket = false;
-		readSuccess = false;
-		return;
+		nRet = av_read_frame(this->pFormatCtx, &newPacket);
+		if(nRet < 0)
+		{
+			av_packet_unref(&newPacket);
+			return(false);
+		}
+
+		av_packet_unref(&this->packetVideo);
+		this->packetVideo = newPacket;
+
+		if (this->packetVideo.stream_index != 0)
+		{
+			hasVideoPacket = false;	
+		}
+		else
+		{
+			hasVideoPacket = true;
+		}
 	}
 
-	av_packet_unref(&this->packetVideo);
-	this->packetVideo = newPacket;
-
-	if (this->packetVideo.stream_index != 0)
-	{
-		hasVideoPacket = false;
-		readSuccess = true;		
-	}
-	else
-	{
-		hasVideoPacket = true;
-		readSuccess = true;
-	}
+	return(true);
 }
 
 void VideoImport_FFmpeg::ContainerDemuxer::close()
@@ -632,7 +625,7 @@ void VideoImport_FFmpeg::Decoder::freeFilters()
 	}
 }
 
-void VideoImport_FFmpeg::Decoder::decode(AVFrame *pFrame)
+int VideoImport_FFmpeg::Decoder::decode(AVFrame *pFrame)
 {
 	if (!pFrame)
 		throw std::runtime_error("error in function VideoImport_FFmpeg::Decoder::decode(): parameter pFrame is NULL");
@@ -700,6 +693,7 @@ void VideoImport_FFmpeg::Decoder::decode(AVFrame *pFrame)
 		//this->avpkt.size -= len;
 		//this->avpkt.data += len;
 	}
+	return(ret);
 }
 
 void VideoImport_FFmpeg::Decoder::close()

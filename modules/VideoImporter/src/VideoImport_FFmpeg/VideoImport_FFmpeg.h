@@ -155,7 +155,7 @@ private:
 		void open();		
 		void initFilters();
 		void freeFilters();
-		void decode(AVFrame *pFrame);
+		int decode(AVFrame *pFrame);
 		void close();
 
 		AVCodecContext* getCodecCtx() const { return(codecCtx); };
@@ -244,11 +244,11 @@ private:
 		/**
 		*
 		* reads the next video frame or audio packet (what comes first)
+		*		
+		* @return returns true on successful read of video frame
 		*
-		* @param hasVideoPacket indicates if video data was found
-		* @param readSuccess indicates if a frame could be read
 		*/
-		void readNext(bool &hasVideoPacket, bool &readSuccess);
+		bool readNext();
 
 		VideoImport_FFmpeg *pParent;
 
