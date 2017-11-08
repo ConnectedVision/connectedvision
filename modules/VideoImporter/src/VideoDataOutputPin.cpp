@@ -79,7 +79,7 @@ int VideoDataOutputPin::getByID(const id_t id, ConnectedVisionResponse &response
 int VideoDataOutputPin::getByIndex(const int64_t index, ConnectedVisionResponse &response)
 {
 	// make sure that video importer is init
-	videoImportModule->priv->prepareVideoHandle( this->config );
+	videoImportModule->priv->VideoImport_init( this->config );
 
 	id_t configID = this->config.get_id();
 	try 
@@ -154,7 +154,7 @@ int VideoDataOutputPin::getByIndexRange(const int64_t start, const int64_t end, 
 int VideoDataOutputPin::getByTimestamp(const timestamp_t timestamp, ConnectedVisionResponse &response)
 {
 	// make sure that video importer is init
-	videoImportModule->priv->prepareVideoHandle( this->config );
+	videoImportModule->priv->VideoImport_init( this->config );
 
 	id_t configID = this->config.get_id();
 	
@@ -216,7 +216,7 @@ int VideoDataOutputPin::getByTimestamp(const timestamp_t timestamp, ConnectedVis
 int VideoDataOutputPin::getBeforeTimestamp(const timestamp_t timestamp, ConnectedVisionResponse &response)
 {
 	// make sure that video importer is init
-	videoImportModule->priv->prepareVideoHandle( this->config );
+	videoImportModule->priv->VideoImport_init( this->config );
 	
 	id_t configID = this->config.get_id();
 	
@@ -282,7 +282,7 @@ int VideoDataOutputPin::getBeforeTimestamp(const timestamp_t timestamp, Connecte
 int VideoDataOutputPin::getAfterTimestamp(const timestamp_t timestamp, ConnectedVisionResponse &response)
 {
 	// make sure that video importer is init
-	videoImportModule->priv->prepareVideoHandle( this->config );
+	videoImportModule->priv->VideoImport_init( this->config );
 
 	id_t configID = this->config.get_id();
 	

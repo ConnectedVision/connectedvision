@@ -217,7 +217,7 @@ ConnectedVision::shared_ptr<Class_generic_status> VideoImporterModule::init(boos
 	LOG_SCOPE_CONFIG( constConfig->get_id() );
 
 	// get the video metadata for determining the number of frames and the end timestamp
-	this->priv->prepareVideoHandle(*constConfig);
+	this->priv->VideoImport_init(*constConfig);
 	
 	boost::shared_ptr<ConnectedVision::Module::VideoImporter::VideoImport> vi;
 	{
@@ -253,14 +253,6 @@ ConnectedVision::shared_ptr<Class_generic_status> VideoImporterModule::init(boos
 
 	return status;
 }
-
-
-void VideoImporterModule_priv::prepareVideoHandle(const Class_generic_config &config)
-{
-	// make sure that video importer is init
-	VideoImport_init(config);
-}
-
 
 std::string VideoImporterModule_priv::FileMetadataEncoder(const id_t configID, const VideoImport* videoImport, const unsigned int colorSpace)
 {

@@ -182,6 +182,7 @@ private:
 		ContainerDemuxer();
 		virtual ~ContainerDemuxer();
 
+		void registerParentInstance(VideoImport_FFmpeg *pParent);
 		/**
 		*
 		* registers the used decoder instance
@@ -202,14 +203,13 @@ private:
 
 		/**
 		*
-		* reads video frame or audio packet (what comes first) at a given timestamp
+		* reads video frame packet at a given timestamp
 		*
 		* @param [in] timestamp the timestamp of the desired frame
-		* @param [in] frameDist the frame distance in microseconds
 		* @param [out] decodedFrame the decoded frame
 		* @returns true if a new frame was found
 		*/
-		bool goToFrame(int64_t timestamp, int64_t frameDist, AVFrame *decodedFrame);
+		bool goToFrame(int64_t timestamp, AVFrame *decodedFrame);
 
 		/**
 		*
@@ -234,20 +234,23 @@ private:
 	private:
 		/**
 		*
-		* reads the nearest keyframe video frame at a given timestamp (first backward search, then if no keyframe was found forward search)
+		* seeks the nearest keyframe video frame at a given timestamp (first backward search, then if no keyframe was found forward search)
 		*
 		* @param [in] timestamp the timestamp used for searching next key frame
 		* @returns true if a frame was found
 		*/
-		bool getKeyFrame(int64_t timestamp);
+		bool seekKeyFrame(int64_t timestamp);
 
 		/**
 		*
 		* reads the next video frame or audio packet (what comes first)
 		*
-		* @returns true if a new frame was found
+		* @param hasVideoPacket indicates if video data was found
+		* @param readSuccess indicates if a frame could be read
 		*/
-		bool readNext();
+		void readNext(bool &hasVideoPacket, bool &readSuccess);
+
+		VideoImport_FFmpeg *pParent;
 
 		Decoder *pDecoder;
 
@@ -259,18 +262,18 @@ private:
 	};
 
 	Decoder decoder;
-	ContainerDemuxer containerDemuxer;	
+	ContainerDemuxer containerDemuxer;
 	
 	AVFrame decodedFrame;
 
 	int64_t StartTime;
 	int64_t EndTime;
 	int64_t LengthTime;
-	double fps;
+	double fps;	
 	int64_t numberOfFrames;
-	int64_t frameDist;
+	double frameDist;
 	int64_t actual_timestamp;
-	int64_t latestFrameRequested;
+	int64_t latestFrameIndexRequested;
 
 	AVFrame *picYUV420;
 	AVFrame *picBGR24;
@@ -279,7 +282,6 @@ private:
 	SwsContext *cSwScaleYUV420P;
 	SwsContext *cSwScaleBGR24;
 	SwsContext *cSwScaleRGB24;
-
 
 	void convertFrame(AVFrame *frame, int numCspDesired, VideoImport_FFmpeg_Frame *convertedFrame);
 };
