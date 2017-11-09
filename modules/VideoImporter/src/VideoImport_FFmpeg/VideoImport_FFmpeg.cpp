@@ -57,20 +57,13 @@ VideoImport_FFmpeg::VideoImport_FFmpeg(const char filename[], int64_t recordingD
 	AVRational framerate = pFormatCtx->streams[0]->r_frame_rate;
 	
 	
-	//fps = av_q2d(decoder.getCodecCtx()->time_base) / decoder.getCodecCtx()->ticks_per_frame;
+	//fps = av_q2d(framerate);
 	fps = (double)framerate.num / (double)framerate.den;
 	double time_base = (double)timebase.num / (double)timebase.den;
 
 	frameDist = 1000.0 / fps;
 
 	numberOfFrames = (int64_t)(pFormatCtx->duration * fps / AV_TIME_BASE);
-
-	//numberOfFrames = pFormatCtx->streams[0]->nb_frames;
-	//if (numberOfFrames == 0) // some videos (e.g. webm) might have no nb_frames specified (see https://stackoverflow.com/questions/32532122/finding-duration-number-of-frames-of-webm-using-ffmpeg-libavformat)
-	//{
-	//	// do fallback then
-	//	numberOfFrames = (int64_t)(pFormatCtx->duration * fps / AV_TIME_BASE);
-	//}
 
 	StartTime = recordingDateTime; // get AVI file time - and convert from microseconds to milliseconds
 	LengthTime = (int64_t)((numberOfFrames - 1) * frameDist);
@@ -389,15 +382,13 @@ bool VideoImport_FFmpeg::ContainerDemuxer::seekKeyFrame(int64_t timestamp)
 
 	int64_t request_timestamp = (AV_TIME_BASE / ((double)timebase.den / (double)timebase.num)) * timestampConverted;
 
-	avcodec_flush_buffers(this->pDecoder->getCodecCtx());
-
 	int x = av_seek_frame(this->pFormatCtx, -1, (int64_t)(request_timestamp), AVSEEK_FLAG_BACKWARD);
 	
 	//if backward search for key-frame is not successful, search forward
 	if (x < 0)
 		x = av_seek_frame(this->pFormatCtx, -1, (int64_t)(request_timestamp), 0);	
 
-	avcodec_flush_buffers(this->pDecoder->getCodecCtx());
+	//avcodec_flush_buffers(this->pDecoder->getCodecCtx());
 
 	return true;
 }
@@ -425,6 +416,8 @@ bool VideoImport_FFmpeg::ContainerDemuxer::nextFrame(AVFrame *decodedFrame)
 {
 	bool frameFound = false;
 
+	// loop until decoding is successful - this is important since there are videos that need several read and decoding commands to produce a correctly decoded frame
+	// only stop on success or if no further frame is found
 	int ret = AVERROR(EAGAIN);
 	while (ret == AVERROR(EAGAIN))
 	{
@@ -452,10 +445,10 @@ bool VideoImport_FFmpeg::ContainerDemuxer::readNext()
 			return(false);
 		}
 
-		av_packet_unref(&this->packetVideo);
-		this->packetVideo = newPacket;
+		av_packet_unref(&this->packetVideo); // discard old packet
+		this->packetVideo = newPacket; // store new packet
 
-		if (this->packetVideo.stream_index != 0)
+		if (this->packetVideo.stream_index != 0) // TODO: make sure video stream is really always stream with index 0
 		{
 			hasVideoPacket = false;	
 		}
