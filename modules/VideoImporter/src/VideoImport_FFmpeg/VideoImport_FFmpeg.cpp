@@ -63,21 +63,19 @@ VideoImport_FFmpeg::VideoImport_FFmpeg(const char filename[], int64_t recordingD
 
 	frameDist = 1000.0 / fps;
 
-	numberOfFrames = pFormatCtx->streams[0]->nb_frames;
-	if (numberOfFrames == 0) // some videos (e.g. webm) might have no nb_frames specified (see https://stackoverflow.com/questions/32532122/finding-duration-number-of-frames-of-webm-using-ffmpeg-libavformat)
-	{
-		// do fallback then
-		numberOfFrames = (int64_t)(pFormatCtx->duration * fps / AV_TIME_BASE);
-	}
+	numberOfFrames = (int64_t)(pFormatCtx->duration * fps / AV_TIME_BASE);
+
+	//numberOfFrames = pFormatCtx->streams[0]->nb_frames;
+	//if (numberOfFrames == 0) // some videos (e.g. webm) might have no nb_frames specified (see https://stackoverflow.com/questions/32532122/finding-duration-number-of-frames-of-webm-using-ffmpeg-libavformat)
+	//{
+	//	// do fallback then
+	//	numberOfFrames = (int64_t)(pFormatCtx->duration * fps / AV_TIME_BASE);
+	//}
 
 	StartTime = recordingDateTime; // get AVI file time - and convert from microseconds to milliseconds
-	LengthTime = (int64_t)((numberOfFrames - 1) * frameDist * 1000);
+	LengthTime = (int64_t)((numberOfFrames - 1) * frameDist);
 	EndTime    = StartTime + LengthTime;
 		
-	//// important so that frame width and height is known
-	//int64_t timestamp = 0;
-	//bool goToResult = containerDemuxer.goToFrame(timestamp, &decodedFrame);
-
 	actual_timestamp = StartTime;
 	latestFrameIndexRequested = LLONG_MIN;
 }
@@ -159,19 +157,19 @@ void VideoImport_FFmpeg::goToTimestamp(int64_t timestamp, int numCsp, VideoImpor
 	int64_t maxTimestamp = (int64_t)((frameNum - 1) * this->frameDist);
 
 	int64_t timestampMilliSeconds;
-	if (timestamp - StartTime < maxTimestamp) //LLONG_MAX / 1000) // check for value overflow and prevent it
+	if (timestamp - StartTime < maxTimestamp) // check for value overflow and prevent it
 	{
-		timestampMilliSeconds =  (timestamp - StartTime) / 1000;
+		timestampMilliSeconds = timestamp - StartTime;
 	}
 	else
 	{
-		timestampMilliSeconds = maxTimestamp; //LLONG_MAX - (int64_t)(frameDist * 1000) / 2; // since there is a + frameDist / 2 operation on timestamp in function containerDemuxer.goToFrame later
+		timestampMilliSeconds = maxTimestamp;
 	}
 
 	containerDemuxer.goToFrame(timestampMilliSeconds, &decodedFrame);
 	
-	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts - stream->first_dts) / ((double)timebase.den / (double)timebase.num / this->fps));
-	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist) * 1000; // *1000 ... milliseconds to microseconds, StartTime already in microseconds
+	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts) / ((double)timebase.den / (double)timebase.num / this->fps));
+	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist);
 
 	convertFrame(&decodedFrame, numCsp, frame);
 }
@@ -187,7 +185,7 @@ void VideoImport_FFmpeg::goToFrameNumber(unsigned int frameNr, int numCsp, Video
 	double time_base = (double)timebase.num / (double)timebase.den;
 	AVStream *stream = this->containerDemuxer.getFormatCtx()->streams[0];
 
-	int64_t timestampMilliSeconds =  (int64_t)(StartTime / 1000 + frameNr * frameDist);
+	int64_t timestampMilliSeconds =  (int64_t)(frameNr * frameDist);
 
 	AVFormatContext *pFormatCtx = containerDemuxer.getFormatCtx();
 	
@@ -209,8 +207,8 @@ void VideoImport_FFmpeg::goToFrameNumber(unsigned int frameNr, int numCsp, Video
 			containerDemuxer.goToFrame(timestampMilliSeconds, &decodedFrame);
 	}
 		
-	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts - stream->first_dts) / ((double)timebase.den / (double)timebase.num / this->fps));
-	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist) * 1000; // *1000 ... milliseconds to microseconds, StartTime already in microseconds
+	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts) / ((double)timebase.den / (double)timebase.num / this->fps));
+	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist);
 
 	convertFrame(&decodedFrame, numCsp, frame);
 }
@@ -228,8 +226,8 @@ void VideoImport_FFmpeg::getNextFrame(int numCsp, VideoImport_FFmpeg_Frame *fram
 	
 	containerDemuxer.nextFrame(&decodedFrame);
 
-	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts - stream->first_dts) / ((double)timebase.den / (double)timebase.num / this->fps));
-	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist) * 1000; // *1000 ... milliseconds to microseconds, StartTime already in microseconds
+	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts) / ((double)timebase.den / (double)timebase.num / this->fps));
+	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist);
 
 	convertFrame(&decodedFrame, numCsp, frame);
 }
@@ -384,12 +382,10 @@ void VideoImport_FFmpeg::ContainerDemuxer::open(const char *strFilename)
 
 bool VideoImport_FFmpeg::ContainerDemuxer::seekKeyFrame(int64_t timestamp)
 {
-	AVRational timebase = this->getFormatCtx()->streams[0]->time_base;
+	AVRational timebase = this->pFormatCtx->streams[0]->time_base;
 	double time_base = (double)timebase.num / (double)timebase.den;
 
-	int64_t first_dts = this->getFormatCtx()->streams[0]->first_dts;
-
-	int64_t timestampConverted = (int64_t)((double)timestamp / this->pParent->frameDist) * ((double)timebase.den / (double)timebase.num / this->pParent->fps) + first_dts;	
+	int64_t timestampConverted = (int64_t)((double)timestamp / this->pParent->frameDist) * ((double)timebase.den / (double)timebase.num / this->pParent->fps);
 
 	int64_t request_timestamp = (AV_TIME_BASE / ((double)timebase.den / (double)timebase.num)) * timestampConverted;
 
@@ -407,10 +403,8 @@ bool VideoImport_FFmpeg::ContainerDemuxer::seekKeyFrame(int64_t timestamp)
 }
 
 bool VideoImport_FFmpeg::ContainerDemuxer::goToFrame(int64_t timestamp, AVFrame *decodedFrame)
-{	
-	int64_t first_dts = this->getFormatCtx()->streams[0]->first_dts;
-
-	AVRational timebase = this->getFormatCtx()->streams[0]->time_base;
+{
+	AVRational timebase = this->pFormatCtx->streams[0]->time_base;
 	double time_base = (double)timebase.num / (double)timebase.den;	
 
 	bool frameFound = this->seekKeyFrame(timestamp);
@@ -419,7 +413,7 @@ bool VideoImport_FFmpeg::ContainerDemuxer::goToFrame(int64_t timestamp, AVFrame 
 	
 	bool success = nextFrame(decodedFrame);
 	
-	while((success) && ((this->packetVideo.dts - first_dts) * time_base * 1000 < timestamp)) //  * 1000... sec to msec
+	while((success) && (this->packetVideo.dts * time_base * 1000 < timestamp)) //  * 1000... sec to msec
 	{
 		success = nextFrame(decodedFrame);
 	}
