@@ -378,9 +378,9 @@ bool VideoImport_FFmpeg::ContainerDemuxer::seekKeyFrame(int64_t timestamp)
 	AVRational timebase = this->pFormatCtx->streams[0]->time_base;
 	double time_base = (double)timebase.num / (double)timebase.den;
 
-	int64_t timestampConverted = (int64_t)((double)timestamp / this->pParent->frameDist) * ((double)timebase.den / (double)timebase.num / this->pParent->fps);
+	int64_t timestampConverted = (int64_t)((double)timestamp / this->pParent->frameDist * ((double)timebase.den / (double)timebase.num / this->pParent->fps));
 
-	int64_t request_timestamp = (AV_TIME_BASE / ((double)timebase.den / (double)timebase.num)) * timestampConverted;
+	int64_t request_timestamp = (int64_t)(AV_TIME_BASE / ((double)timebase.den / (double)timebase.num) * timestampConverted);
 
 	int x = av_seek_frame(this->pFormatCtx, -1, (int64_t)(request_timestamp), AVSEEK_FLAG_BACKWARD);
 	
@@ -388,7 +388,9 @@ bool VideoImport_FFmpeg::ContainerDemuxer::seekKeyFrame(int64_t timestamp)
 	if (x < 0)
 		x = av_seek_frame(this->pFormatCtx, -1, (int64_t)(request_timestamp), 0);	
 
-	//avcodec_flush_buffers(this->pDecoder->getCodecCtx());
+	// flush buffers so that next query frame operation works correctly
+	// otherwise, this can lead to a frame being returned that was queried/processed before and not being the actual frame requested
+	avcodec_flush_buffers(this->pDecoder->getCodecCtx());
 
 	return true;
 }
