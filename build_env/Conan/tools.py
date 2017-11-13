@@ -3,8 +3,48 @@ import platform
 import re
 import shutil
 import subprocess
+import urllib.request
 import warnings
 import xml.etree.ElementTree as ET
+
+
+
+def compareRecipeWithBintray():
+	"""
+	Compares the recipe from the current checkout with the recipe hosted on Bintray and throws an exception if a mismatch was detected.
+	Differences regarding newline encoding (LF vs. CRLF) are deliberatly ignored.
+	This method is supposed to be used by the build server for detecting mismatches between the two instances of the same recipe when accidentally not updating one of the two recipe storage locations.
+	"""
+	
+	rootDir = os.getcwd()
+	
+	for packageName in [d for d in os.listdir(rootDir) if os.path.isdir(d)]:
+		packageDir = os.path.join(rootDir, packageName)
+		
+		for packageVersion in [d for d in os.listdir(packageDir) if os.path.isdir(packageDir)]:
+			recipeCheckoutFilePath = os.path.join(packageDir, packageVersion, "conanfile.py")
+			
+			if not os.path.exists(recipeCheckoutFilePath):
+				continue
+			
+			with open(recipeCheckoutFilePath, "r") as f:
+				recipeCheckoutContent = f.read()
+			
+			# make sure that line endings are LF
+			recipeCheckoutContent = recipeCheckoutContent.replace("\r\n", "\n")
+			
+			url = "https://dl.bintray.com/covi/ConnectedVision/covi/" + packageName + "/" + packageVersion + "/stable/export/conanfile.py"
+			
+			with urllib.request.urlopen(url) as response:
+				encoding = response.headers.get_content_charset("utf-8")
+				recipeBintrayContent = response.read().decode(encoding)
+			
+			# make sure that line endings are LF
+			recipeBintrayContent = recipeBintrayContent.replace("\r\n", "\n")
+			
+			if(recipeCheckoutContent != recipeBintrayContent):
+				raise Exception("Conan package recipe " + packageName + " " + packageVersion + " from checkout does not match recipe on Bintray")
+
 
 
 def deleteDirectory(dirPath, message):
