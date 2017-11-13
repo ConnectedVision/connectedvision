@@ -2,6 +2,7 @@ from conans import ConanFile
 from conans import tools
 from conans.tools import replace_in_file
 import os
+import re
 
 
 class OpenSSLConan(ConanFile):
@@ -206,10 +207,18 @@ no_sha=False
 				run_in_src("make")
 		
 		def arm_make(config_options_string):
+			if not os.environ.has_key("CXX"):
+				raise Exception("failed to extract compiler from environment variable \"CXX\" (variable is not set)")
+			
+			result = re.search(r"(.*)g\+\+$", os.environ.get("CXX"), re.M|re.I)
+			
+			if not result:
+				raise Exception("Failed to extract compiler from environment variable \"CXX\". Variable value \"" + os.environ.get("CXX") + "\" does not end with \"g++\", e.g. \"arm-linux-gnueabihf-g++\".")
+			
 			verbose=False
 			self.output.warn("----------CONFIGURING OPENSSL %s-------------" % self.version)
 			# CAUTION: We intentionally set CC and CXX in order to satisfy the Configure script!!!
-			command = "CC=gcc CXX=g++ CROSS_COMPILE=arm-linux-gnueabihf- ./Configure linux-armv4 -march=armv7-a %s" % config_options_string
+			command = "CC=gcc CXX=g++ CROSS_COMPILE=" + result.group(1) + " ./Configure linux-armv4 -march=armv7-a %s" % config_options_string
 			self.output.info("command: %s" % command)
 			run_in_src(command, show_output=verbose)
 			# run_in_src("printenv", show_output=True) # test CC and CXX having original values
