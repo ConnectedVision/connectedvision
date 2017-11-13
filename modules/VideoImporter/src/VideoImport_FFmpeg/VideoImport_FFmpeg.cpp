@@ -159,7 +159,11 @@ void VideoImport_FFmpeg::goToTimestamp(int64_t timestamp, int numCsp, VideoImpor
 		timestampMilliSeconds = maxTimestamp;
 	}
 
-	containerDemuxer.goToFrame(timestampMilliSeconds, &decodedFrame);
+	bool success = containerDemuxer.goToFrame(timestampMilliSeconds, &decodedFrame);
+	if (!success)
+	{
+		throw std::runtime_error("error in function VideoImport_FFmpeg::goToTimestamp(): frame could not be decoded");
+	}
 	
 	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts) / ((double)timebase.den / (double)timebase.num / this->fps));
 	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist);
@@ -188,18 +192,25 @@ void VideoImport_FFmpeg::goToFrameNumber(unsigned int frameNr, int numCsp, Video
 	}
 
 	int64_t dist = (int64_t)frameNr - latestFrameIndexRequested;
+	
+	bool success = false;
 
 	switch (dist)
 	{
 		case 0:
 			break;
 		case 1:
-			containerDemuxer.nextFrame(&decodedFrame);
+			success = containerDemuxer.nextFrame(&decodedFrame);
 			break;
 		default:
-			containerDemuxer.goToFrame(timestampMilliSeconds, &decodedFrame);
+			success = containerDemuxer.goToFrame(timestampMilliSeconds, &decodedFrame);
 	}
-		
+	
+	if (!success)
+	{
+		throw std::runtime_error("error in function VideoImport_FFmpeg::goToFrameNumber(): frame could not be decoded");
+	}
+
 	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts) / ((double)timebase.den / (double)timebase.num / this->fps));
 	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist);
 
@@ -405,13 +416,15 @@ bool VideoImport_FFmpeg::ContainerDemuxer::goToFrame(int64_t timestamp, AVFrame 
 		return(false);
 	
 	bool success = nextFrame(decodedFrame);
-	
+	if (!success)
+		return false;
+
 	while((success) && (this->packetVideo.dts * time_base * 1000 < timestamp)) //  * 1000... sec to msec
 	{
 		success = nextFrame(decodedFrame);
 	}
 
-	return(success);
+	return(true);
 }
 
 bool VideoImport_FFmpeg::ContainerDemuxer::nextFrame(AVFrame *decodedFrame)
