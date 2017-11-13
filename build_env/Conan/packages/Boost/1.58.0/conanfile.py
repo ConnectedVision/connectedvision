@@ -81,7 +81,7 @@ class BoostConan(ConanFile):
 			if not os.environ.has_key("CXX"):
 				raise Exception("failed to extract compiler from environment variable \"CXX\" (variable is not set)")
 			
-			result = re.search("(.*g\+\+)$", os.environ.get("CXX"), re.M|re.I)
+			result = re.search(r"(.*g\+\+)$", os.environ.get("CXX"), re.M|re.I)
 			
 			if not result:
 				raise Exception("Failed to extract compiler from environment variable \"CXX\". Variable value \"" + os.environ.get("CXX") + "\" does not end with \"g++\", e.g. \"arm-linux-gnueabihf-g++\".")
