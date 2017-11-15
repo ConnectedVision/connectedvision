@@ -198,6 +198,7 @@ void VideoImport_FFmpeg::goToFrameNumber(unsigned int frameNr, int numCsp, Video
 	switch (dist)
 	{
 		case 0:
+			success = true;
 			break;
 		case 1:
 			success = containerDemuxer.nextFrame(&decodedFrame);
@@ -409,7 +410,7 @@ bool VideoImport_FFmpeg::ContainerDemuxer::seekKeyFrame(int64_t timestamp)
 bool VideoImport_FFmpeg::ContainerDemuxer::goToFrame(int64_t timestamp, AVFrame *decodedFrame)
 {
 	AVRational timebase = this->pFormatCtx->streams[0]->time_base;
-	double time_base = (double)timebase.num / (double)timebase.den;	
+	double time_base = (double)timebase.num / (double)timebase.den;
 
 	bool frameFound = this->seekKeyFrame(timestamp);
 	if (!frameFound)
