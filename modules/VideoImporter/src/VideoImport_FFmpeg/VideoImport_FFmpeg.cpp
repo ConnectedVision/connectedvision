@@ -252,9 +252,9 @@ void VideoImport_FFmpeg::convertFrame(AVFrame *frame, int numCspDesired, VideoIm
 			picYUV420->data[1] = picYUV420->data[0] + offset;
 			offset += frame->width * frame->height / 4;
 			picYUV420->data[2] = picYUV420->data[0] + offset;
-			picYUV420->linesize[0] = frame->linesize[0];
-			picYUV420->linesize[1] = frame->linesize[1];
-			picYUV420->linesize[2] = frame->linesize[2];
+			picYUV420->linesize[0] = picYUV420->width;
+			picYUV420->linesize[1] = picYUV420->width/2;
+			picYUV420->linesize[2] = picYUV420->width/2;
 		}
 		
 		if (!cSwScaleYUV420P)
