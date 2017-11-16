@@ -154,7 +154,7 @@ private:
 		* registers the ContainerDemuxer instance
 		* @param pContainerDemuxer pointer to the ContainerDemuxer instance
 		*/
-		void registerContainterDemuxerParent(ContainerDemuxer *pContainerDemuxer);
+		void registerContainerDemuxerParent(ContainerDemuxer *pContainerDemuxer);
 
 		/**
 		* sets the decoder params
@@ -222,6 +222,8 @@ private:
 		* @param pParent pointer to the parent VideoImport_FFmpeg instance
 		*/
 		void registerParentInstance(VideoImport_FFmpeg *pParent);
+
+		VideoImport_FFmpeg* getParentInstance();
 
 		/**
 		* registers the used decoder instance	
@@ -310,6 +312,7 @@ private:
 	double frameDist;
 	int64_t actual_timestamp;
 	int64_t latestFrameIndexRequested;
+	int streamIndexVideo;
 
 	AVFrame *picYUV420;
 	AVFrame *picBGR24;
