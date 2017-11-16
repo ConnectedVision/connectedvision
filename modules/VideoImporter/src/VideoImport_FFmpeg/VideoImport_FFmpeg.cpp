@@ -165,6 +165,9 @@ void VideoImport_FFmpeg::goToTimestamp(int64_t timestamp, int numCsp, VideoImpor
 		throw std::runtime_error("error in function VideoImport_FFmpeg::goToTimestamp(): frame could not be decoded");
 	}
 	
+	//int64_t first_dts = this->containerDemuxer.getFormatCtx()->streams[0]->first_dts;
+	//if (first_dts == LLONG_MIN)
+	//	first_dts = 0;
 	latestFrameIndexRequested = (int64_t)(double(containerDemuxer.getVideoPacket().dts) / ((double)timebase.den / (double)timebase.num / this->fps));
 	actual_timestamp = StartTime + (int64_t)(latestFrameIndexRequested * frameDist);
 
@@ -419,11 +422,17 @@ bool VideoImport_FFmpeg::ContainerDemuxer::goToFrame(int64_t timestamp, AVFrame 
 	bool success = nextFrame(decodedFrame);
 	if (!success)
 		return false;
-
-	while((success) && (this->packetVideo.dts * time_base * 1000 < timestamp)) //  * 1000... sec to msec
+	
+	while((success) && ((int64_t)(this->packetVideo.dts * time_base * 1000) < timestamp)) //  * 1000... sec to msec
 	{
 		success = nextFrame(decodedFrame);
 	}
+
+	// this->packetVideo.dts might have become wrong if last frame could not be read successfully
+	// (this can happen for some videos for which number of frames could not be derived exactly from duration)
+	// so make sure we set it to expected timestamp in this case (this is kind of a hack and a more clean solution would be prefered)
+	if (!success)
+		this->packetVideo.dts = timestamp / time_base / 1000;
 
 	return(true);
 }
