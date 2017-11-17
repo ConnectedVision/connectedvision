@@ -485,7 +485,7 @@ bool VideoImport_FFmpeg::ContainerDemuxer::readNext()
 		av_packet_unref(&this->packetVideo); // discard old packet
 		this->packetVideo = newPacket; // store new packet
 
-		if (this->packetVideo.stream_index != 0) // TODO: make sure video stream is really always stream with index 0
+		if (this->packetVideo.stream_index != this->getParentInstance()->streamIndexVideo)
 		{
 			hasVideoPacket = false;	
 		}
@@ -663,7 +663,7 @@ int VideoImport_FFmpeg::Decoder::decode(AVFrame *pFrame)
 	len = avcodec_send_packet(this->codecCtx, &this->avpkt);
 	if (len < 0) 
 	{
-		std::string errorMsg = "error in function VideoImport_FFmpeg::Decoder::decode(): Error while decoding frame " + boost::lexical_cast<std::string>(this->pContainerDemuxerParent->getVideoPacket().dts);
+		std::string errorMsg = "error in function VideoImport_FFmpeg::Decoder::decode(): Error while decoding frame at dts " + boost::lexical_cast<std::string>(this->pContainerDemuxerParent->getVideoPacket().dts);
 		throw std::runtime_error(errorMsg);		
 	}
 
