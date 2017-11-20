@@ -1,0 +1,214 @@
+' https://www.planttext.com/
+
+title WorkerController constructor / desctuctor
+
+participant ":WorkerController \n <<IWorkerController>>\n <<thread_safe>>" as WorkerController
+note right of WorkerController
+	The WorkerController manages and controls the worker of exactly one config. The config chain is not handled by the WorkerController.
+
+	**used patterns:**
+	- [Command Pattern, Command Queue] To queue invoked commands and execute them in the controller thread or delegate to worker thread.
+	- [Singleton] Allow only one instance per config.
+	- [Active Object] Run methods / commands in a separate thread (controllerThread).
+end note 
+
+participant "commandQueue \n <<thread_safe>>" as commandQueue
+participant "controllerThread \n <<boost::thread>>" as controllerThread
+
+participant "terminateCmd \n <<Command>>" as terminateCmd
+participant "stopCmd \n <<Command>>" as stopCmd
+
+participant "workerStatus \n <<thread_safe>>" as workerStatus
+note over workerStatus 
+	The workerStatus is stable 
+	while no command is active, 
+	but can change during 
+	command execution. 
+end note
+
+participant "workerThreadProgress \n <<thread_safe_progress>>" as workerThreadProgress
+participant "workerThread \n <<boost::thread>>" as workerThread
+
+participant "worker \n <<IWorker>>" as worker
+
+legend
+The color coding is used to indicate in which thread a function is executed.
+endlegend
+
+
+== constructor ==
+
+ -> WorkerController : <<create>>(config, module, workerFactory, workerTimeout)
+activate WorkerController
+WorkerController -> WorkerController : init(config)
+activate WorkerController
+
+alt DEBUG
+	hnote over WorkerController: check only one instance per config
+end alt
+
+note over commandQueue: []
+note over workerThreadProgress: END
+
+alt config.status == starting || running || stopping
+	WorkerController ->> workerStatus : set(error)
+else
+	WorkerController ->> workerStatus : set(config.status)
+end alt
+
+create controllerThread
+WorkerController --> controllerThread : <<create>>
+activate controllerThread #cyan
+hnote over controllerThread: thread loop
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+create workerThread
+WorkerController --> workerThread : <<create>>
+activate workerThread #orange
+hnote over workerThread: thread loop
+workerThread -> workerThreadProgress: wait_while(END)
+activate workerThreadProgress #orange
+activate workerThread #gray
+ 
+WorkerController <<- WorkerController
+deactivate WorkerController
+ <<- WorkerController
+deactivate WorkerController
+|||
+
+== working ... ==
+
+group working ...
+	workerThread <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+
+	workerThread -> workerThreadProgress: get()
+	activate workerThreadProgress #orange
+	activate workerThread #gray
+	workerThread <<- workerThreadProgress: STARTING
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+		
+	workerThread --> worker: run ...
+	activate workerThread #gray
+	activate worker #orange
+	note over workerThreadProgress: RUNNIG
+	...
+end
+
+== destructor ==
+
+ -> WorkerController : <<destroy>>
+activate WorkerController
+note left of WorkerController #orangered: <&warning> **destroy can BLOCK**\n (implicite worker stop)
+
+create stopCmd
+WorkerController -> stopCmd: <<create>>(\n   workerStatus \n   workerThreadProgress \n   worker thread)
+activate stopCmd
+activate WorkerController #gray
+WorkerController <<- stopCmd: stopCmd
+deactivate stopCmd
+deactivate WorkerController #gray
+
+create terminateCmd
+WorkerController -> terminateCmd: <<create>>(\n   workerThreadProgress \n   stopCmd)
+activate terminateCmd
+activate WorkerController #gray
+WorkerController <<- terminateCmd: terminateCmd
+deactivate terminateCmd
+deactivate WorkerController #gray
+WorkerController -> commandQueue: enqueue(terminateCmd)
+activate commandQueue
+activate WorkerController #gray
+WorkerController <<- commandQueue
+deactivate commandQueue
+deactivate WorkerController #gray
+
+note over commandQueue: [terminateCmd]
+controllerThread <<- commandQueue: terminateCmd
+deactivate commandQueue
+deactivate controllerThread #gray
+
+controllerThread -> terminateCmd: execute()
+activate terminateCmd #cyan
+activate controllerThread #gray
+
+terminateCmd -> stopCmd: execute()
+activate stopCmd #cyan
+activate terminateCmd #gray
+group ref: stop
+	|||
+	workerThread <<- worker
+	deactivate worker
+	deactivate workerThread #gray
+	destroy worker
+	workerThread -->> workerThreadProgress
+	note over workerThreadProgress: END
+	workerThreadProgress -->> stopCmd
+	
+	workerThread -> workerThreadProgress: wait_while(END)
+	activate workerThreadProgress #orange
+	activate workerThread #gray
+	|||	
+end group
+terminateCmd <<- stopCmd
+deactivate stopCmd
+deactivate terminateCmd #gray
+destroy stopCmd
+
+|||
+hnote over workerThreadProgress: ensures that all waiting threads \n for workerThreadProgress are \n notified / woken up
+terminateCmd -> workerThreadProgress: set(TERMINATE)
+activate workerThreadProgress #cyan
+activate terminateCmd #gray
+terminateCmd <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate terminateCmd #gray
+note over workerThreadProgress: TERMINATE
+workerThread <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate workerThread #gray
+
+workerThread -> workerThreadProgress: get()
+activate workerThreadProgress #orange
+activate workerThread #gray
+workerThread <<- workerThreadProgress: TERMINATE
+deactivate workerThreadProgress
+deactivate workerThread #gray
+	
+hnote over workerThread: exit thread loop and terminate \n if workerThreadProgress == TERMINATE
+workerThread -->> workerThread: exit
+deactivate workerThread
+
+controllerThread <<- terminateCmd
+deactivate terminateCmd
+deactivate controllerThread #gray
+destroy terminateCmd
+
+controllerThread -> workerThreadProgress: get()
+activate workerThreadProgress #cyan
+activate controllerThread #gray
+controllerThread <<- workerThreadProgress: TERMINATE
+deactivate workerThreadProgress
+deactivate controllerThread #gray
+hnote over controllerThread: exit thread loop and terminate \n if workerThreadProgress == TERMINATE
+controllerThread -->> controllerThread: exit
+deactivate controllerThread
+
+
+WorkerController --> controllerThread: <<join>>
+destroy controllerThread
+
+WorkerController --> workerThread: <<join>>
+destroy workerThread
+
+ 
+ <<- WorkerController
+deactivate WorkerController
+destroy WorkerController
+
+ 

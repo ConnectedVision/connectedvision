@@ -1,0 +1,114 @@
+title WorkerController reset
+
+participant ":WorkerController \n <<IWorkerController>> \n <<thread_safe>>" as WorkerController
+
+participant "commandQueue \n <<thread_safe>>" as commandQueue
+participant "controllerThread \n <<boost::thread>>" as controllerThread
+activate controllerThread #cyan
+
+participant "resetCmd \n <<Command>>" as resetCmd
+participant "stopCmd \n <<Command>>" as stopCmd
+
+participant "module \n <<IModule>>" as module
+
+legend
+The color coding is used to indicate in which thread a function is executed.
+endlegend
+
+note over commandQueue: []
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+...
+
+== reset config ==
+
+
+ -> WorkerController : reset()
+activate WorkerController
+
+create stopCmd
+WorkerController -> stopCmd: <<create>>(\n   workerStatus \n   workerThreadProgress \n   worker thread)
+activate stopCmd
+activate WorkerController #gray
+WorkerController <<- stopCmd: stopCmd
+deactivate stopCmd
+deactivate WorkerController #gray
+
+create resetCmd
+WorkerController -> resetCmd: <<create>>(\n   module \n   configID \n   workerStatus \n   stopCmd)
+activate resetCmd
+activate WorkerController #gray
+WorkerController <<- resetCmd: resetCmd
+deactivate resetCmd
+deactivate WorkerController #gray
+WorkerController -> commandQueue: enqueue(resetCmd)
+activate commandQueue
+activate WorkerController #gray
+WorkerController <<- commandQueue
+deactivate commandQueue
+deactivate WorkerController #gray
+note over commandQueue: [resetCmd]
+ <<- WorkerController
+deactivate WorkerController
+
+controllerThread <<- commandQueue: resetCmd
+deactivate commandQueue
+deactivate controllerThread #gray
+controllerThread -> resetCmd: execute()
+activate resetCmd #cyan
+activate controllerThread #gray
+
+resetCmd -> stopCmd: execute()
+activate stopCmd #cyan
+activate resetCmd #gray
+|||
+ref over stopCmd, workerStatus: stop worker if running \n
+|||
+resetCmd <<- stopCmd
+deactivate stopCmd
+deactivate resetCmd #gray
+destroy stopCmd
+
+resetCmd -> workerStatus: set(resetting)
+activate workerStatus #cyan
+activate resetCmd #gray
+resetCmd <<- workerStatus
+deactivate workerStatus
+deactivate resetCmd #gray
+note over workerStatus: resetting
+
+resetCmd -> module: deleteAllData(configID)
+activate module #cyan
+activate resetCmd #gray
+|||
+ref over resetCmd, module: delete all results of config\n
+|||
+resetCmd <<- module
+deactivate module
+deactivate resetCmd #gray
+
+resetCmd -> workerStatus: set(init)
+activate workerStatus #cyan
+activate resetCmd #gray
+resetCmd <<- workerStatus
+deactivate workerStatus
+deactivate resetCmd #gray
+note over workerStatus: init
+
+controllerThread <<- resetCmd
+deactivate resetCmd
+deactivate controllerThread #gray
+destroy resetCmd
+
+note over commandQueue: []
+hnote over controllerThread: thread loop
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+|||
+...
+

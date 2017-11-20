@@ -1,0 +1,118 @@
+title WorkerController recover
+
+participant ":WorkerController \n <<IWorkerController>>\n <<thread_safe>>" as WorkerController
+
+participant "commandQueue \n <<thread_safe>>" as commandQueue
+participant "controllerThread \n <<boost::thread>>" as controllerThread
+activate controllerThread #cyan
+
+participant "recoverCmd \n <<Command>>" as recoverCmd
+
+participant "module \n <<IModule>>" as module
+
+participant "workerStatus \n <<thread_safe>>" as workerStatus
+
+legend
+The color coding is used to indicate in which thread a function is executed.
+endlegend
+
+note over commandQueue: []
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+note over workerStatus: error
+
+...
+
+== recover config ==
+
+
+ -> WorkerController : recover()
+activate WorkerController
+
+create recoverCmd
+WorkerController -> recoverCmd: <<create>>(\n   module \n   configID\n   workerStatus)
+activate recoverCmd
+activate WorkerController #gray
+WorkerController <<- recoverCmd: recoverCmd
+deactivate recoverCmd
+deactivate WorkerController #gray
+WorkerController -> commandQueue: enqueue(recoverCmd)
+activate commandQueue
+activate WorkerController #gray
+WorkerController <<- commandQueue
+deactivate commandQueue
+deactivate WorkerController #gray
+note over commandQueue: [recoverCmd]
+ <<- WorkerController
+deactivate WorkerController
+
+controllerThread <<- commandQueue: recoverCmd
+deactivate commandQueue
+deactivate controllerThread #gray
+controllerThread -> recoverCmd: execute()
+activate recoverCmd #cyan
+activate controllerThread #gray
+
+recoverCmd -> workerStatus: get()
+activate workerStatus #cyan
+activate recoverCmd #gray
+recoverCmd <<- workerStatus
+deactivate workerStatus
+deactivate recoverCmd #gray
+
+alt workerStatus == error
+
+	recoverCmd -> workerStatus: set(recovering)
+	activate workerStatus #cyan
+	activate recoverCmd #gray
+	recoverCmd <<- workerStatus
+	deactivate workerStatus
+	deactivate recoverCmd #gray
+	note over workerStatus: recovering
+
+	recoverCmd -> module: recoverConfig(configID)
+	activate module #cyan
+	activate recoverCmd #gray
+	|||
+	ref over recoverCmd, module: recover from error\n
+	|||
+	recoverCmd <<- module
+	deactivate module
+	deactivate recoverCmd #gray
+
+	alt recoverConfig == OK
+		recoverCmd -> workerStatus: set(stopped)
+		activate workerStatus #cyan
+		activate recoverCmd #gray
+		recoverCmd <<- workerStatus
+		deactivate workerStatus
+		deactivate recoverCmd #gray
+		note over workerStatus: stopped
+	else else
+		recoverCmd -> workerStatus: set(error)
+		activate workerStatus #cyan
+		activate recoverCmd #gray
+		recoverCmd <<- workerStatus
+		deactivate workerStatus
+		deactivate recoverCmd #gray
+		note over workerStatus: error
+	end
+end
+
+controllerThread <<- recoverCmd
+deactivate recoverCmd
+deactivate controllerThread #gray
+destroy recoverCmd
+
+note over commandQueue: []
+hnote over controllerThread: thread loop
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+|||
+...
+

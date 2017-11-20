@@ -18,7 +18,6 @@ create_version_info_file("${ConnectedVisionCppRootAbs}" "${ConnectedVisionCppRoo
 set(ConnectedVisionIncludeHeaders
 	${ConnectedVisionCppRoot}/core/include/general.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision.h
-	${ConnectedVisionCppRoot}/core/include/ConnectedVision_ConcurrentQueue.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_Exceptions.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_SmartPointer.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_Thread.h
@@ -217,14 +216,12 @@ set(ConnectedVisionCoreHTTPSources
 
 set(ConnectedVisionCoreModuleHeaders
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerThread.h
-	${ConnectedVisionCppRoot}/core/src/Module/WorkerDispatcher.h
 	${ConnectedVisionCppRoot}/core/src/Module/ConfigManager.h
 	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.h
 )
 
 set(ConnectedVisionCoreModuleSources
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerThread.cpp
-	${ConnectedVisionCppRoot}/core/src/Module/WorkerDispatcher.cpp
 	${ConnectedVisionCppRoot}/core/src/Module/ConfigManager.cpp
 )
 

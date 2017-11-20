@@ -421,14 +421,33 @@ public:
 		ConnectedVisionResponse &response	///< [out] response containing status
 	) { throw ConnectedVision::runtime_error("not implemented"); }
 
-	virtual int processParameterCommand(const id_t configID, const std::string& command, ConnectedVisionResponse &response)
-	{ throw ConnectedVision::runtime_error("not implemented"); }
+	//////////////////////////////////////////////////////////////////////////////////
+	// config / worker specific
 
-	virtual int processParameterCommand(const id_t configID, const std::string& command, const std::string& payload, ConnectedVisionResponse &response)
-	{ throw ConnectedVision::runtime_error("not implemented"); }
+	/**
+		* delete all results for a given configID
+		*/
+	virtual void deleteAllData(
+		const id_t configID				///< [in] ID of config
+	) {
+		this->resultData.clear();
+	}
 
-	virtual int getModuleLogo(ConnectedVisionResponse &response)
-	{ throw ConnectedVision::runtime_error("not implemented"); }
+
+	/**
+	* try to recover a given config
+	*
+	* @return	- true: if recovering was sucessfully (status is stopped)
+	*			- false: if config could not be recovered or module does not support recovering
+	*/
+	virtual bool recover(
+		const id_t configID				///< [in] ID of config
+	) { 
+		return false;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////
+	// store functions
 
 	/**
 	* get status store
@@ -450,6 +469,7 @@ public:
 public:
 	bool ready;
 	IModuleEnvironment *pEnv;
+	std::vector<int> resultData;
 
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_status> > statusStore;
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_config> > configStore;

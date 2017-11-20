@@ -178,7 +178,7 @@ void ConnectedVisionModule::initModule( IModuleEnvironment *env )
 		}
 
 		// abort zombi configurations
-		vector<id_t> list = this->configStore->getIDList();
+		vector<const id_t> list = this->configStore->getIDList();
 		for (auto it = list.begin(); it != list.end(); ++it) 
 		{
 			auto constStatus = this->statusStore->getByID( *it );
@@ -2504,6 +2504,10 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 						// set config and retry
 						inPin->setConfig(resolvedConfigID, config->getSubConfigConnectionByInputPin(pinIDIndexed), pinIDIndexed);
 					}
+
+///////////////////////////////// MIGRATION FIX-ME  is sub-config started somewhere else ? ////////////////
+					// start previous config
+					inPin->start();
 				}
 			}
 

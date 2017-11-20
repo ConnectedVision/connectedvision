@@ -75,7 +75,7 @@ TEST(thread_safe_queue, try_pop_removes_element_from_queue)
 
 	//////////////////////////////////////
 	// actual test
-	CHECK( q.try_pop(val) );
+	val = q.pop_wait();
 
 	LONGS_EQUAL( 1, val );
 	LONGS_EQUAL( 0, q.size() );
@@ -94,10 +94,41 @@ TEST(thread_safe_queue, try_pop_waits_for_timeout)
 
 	auto start = boost::chrono::high_resolution_clock::now();
 
-	CHECK_FALSE( q.try_pop(val, timeout) );
+	CHECK_THROWS( ConnectedVision::timeout_error, q.pop_wait(timeout) );
 
 	auto end = boost::chrono::high_resolution_clock::now();
 	auto runtime = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start).count();
 
-	CHECK_TEXT( timeout <= runtime, "try_pop() returns before timeout");
+	CHECK_TEXT( timeout <= runtime, "pop_wait() returns before timeout");
+}
+
+
+TEST(thread_safe_queue, clear_on_empty_queue)
+{
+	//////////////////////////////////////
+	// test initialization
+	TestWrapper_thread_safe_queue<int> q;
+
+	//////////////////////////////////////
+	// actual test
+	q.clear();
+
+	LONGS_EQUAL( 0, q.size() );
+}
+
+TEST(thread_safe_queue, clear_on_non_empty_queue)
+{
+	//////////////////////////////////////
+	// test initialization
+	TestWrapper_thread_safe_queue<int> q;
+	q.push(1);
+	q.push(2);
+
+	//////////////////////////////////////
+	// actual test
+	LONGS_EQUAL( 2, q.size() );
+
+	q.clear();
+
+	LONGS_EQUAL( 0, q.size() );
 }

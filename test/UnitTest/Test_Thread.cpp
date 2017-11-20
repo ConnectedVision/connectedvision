@@ -288,6 +288,40 @@ TEST(thread_safe_progress, get_calls_copy_and_move_constructor_once)
 
 }
 
+TEST(thread_safe_progress, wait_while_should_return_immediately_if_not_current_state)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVision::thread_safe_progress<int> a(10);
+
+	//////////////////////////////////////
+	// actual test
+	a.wait_while(5); // does not match current state
+	a.wait_while(15); // does not match current state
+
+	CHECK( true );
+}
+
+TEST(thread_safe_progress, wait_while_should_timeout)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVision::thread_safe_progress<int> a(1);
+	int timeout = 10;
+	int tol = 50;
+
+	//////////////////////////////////////
+	// actual test
+	auto start = boost::chrono::high_resolution_clock::now();
+
+	a.wait_while(1, timeout);
+
+	auto end = boost::chrono::high_resolution_clock::now();
+	auto runtime = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start).count();
+	
+	CHECK( runtime < (timeout + tol) );
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //  synchronization tests
@@ -295,21 +329,27 @@ TEST(thread_safe_progress, get_calls_copy_and_move_constructor_once)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-static void thread_set_delayed(ConnectedVision::thread_safe_progress<T>* a, T i, int64_t delay)
+static void thread_set_delayed(ConnectedVision::thread_safe_progress<T>* a, const T val, int64_t delay)
 {
-	sleep((uint64_t)delay);
-	a->set(i);
+	sleep(delay);
+	a->set(val);
 }
 template<typename T>
 static void thread_get_delayed(ConnectedVision::thread_safe_progress<T>* a, int64_t delay)
 {
-	sleep((uint64_t)delay);
+	sleep(delay);
 	T val = a->get();
 }
 template<typename T>
-static void thread_wait_until_timeout(ConnectedVision::thread_safe_progress<T>* a, const T i, int64_t timeout)
+static void thread_reset_delayed(ConnectedVision::thread_safe_progress<T>* a, const T val, int64_t delay)
 {
-	a->wait_until(i, timeout);
+	sleep(delay);
+	a->reset(val);
+}
+template<typename T>
+static void thread_wait_until_timeout(ConnectedVision::thread_safe_progress<T>* a, const T val, int64_t timeout)
+{
+	a->wait_until(val, timeout);
 }
 
 TEST(thread_safe_progress, wait_until_should_wait_until_progress_has_been_reached)
@@ -324,6 +364,25 @@ TEST(thread_safe_progress, wait_until_should_wait_until_progress_has_been_reache
 	auto start = boost::chrono::high_resolution_clock::now();
 	boost::scoped_thread<boost::interrupt_and_join_if_joinable> t(boost::thread( thread_set_delayed<int>, &a, 10, waittime ));
 	a.wait_until(10);
+	auto end = boost::chrono::high_resolution_clock::now();
+	auto runtime = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start).count();
+	t.interrupt(); t.join();
+	LONGS_EQUAL( 10, a.get() );
+	CHECK( runtime >= waittime );
+}
+
+TEST(thread_safe_progress, wait_while_should_wait_for_the_progress_to_change)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVision::thread_safe_progress<int> a(1);
+	int waittime = 20;
+
+	//////////////////////////////////////
+	// actual test
+	auto start = boost::chrono::high_resolution_clock::now();
+	boost::scoped_thread<boost::interrupt_and_join_if_joinable> t(boost::thread( thread_set_delayed<int>, &a, 10, waittime ));
+	a.wait_while(1);
 	auto end = boost::chrono::high_resolution_clock::now();
 	auto runtime = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start).count();
 	t.interrupt(); t.join();
@@ -350,12 +409,7 @@ TEST(thread_safe_progress, set_notifies_all_waiting_threads)
 	a.set(10);
 
 	// force task switch and give threads a chance to terminate
-	boost::this_thread::yield();
-	boost::this_thread::yield();
-	boost::this_thread::yield();
-	boost::this_thread::yield();
-	boost::this_thread::yield();
-
+	sleep(1);
 
 	// all threads should join immediately
 	CHECK( t1.try_join_for(boost::chrono::milliseconds(timeout)) );
@@ -509,3 +563,49 @@ TEST(thread_safe_progress, set_with_concurrent_get_is_thread_safe)
 
 	CHECK_TEXT( runtime >= blocktime, "set() does not wait for get() to finished" );
 }
+
+TEST(thread_safe_progress, wait_until_throws_on_reset)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVision::thread_safe_progress<int> a(1);
+	int waittime = 20;
+
+	//////////////////////////////////////
+	// actual test
+	boost::scoped_thread<boost::interrupt_and_join_if_joinable> t(boost::thread( thread_reset_delayed<int>, &a, 0, waittime ));
+
+	CHECK_THROWS( ConnectedVision::sequence_exception, a.wait_until(10) );
+}
+
+TEST(thread_safe_progress, wait_while_returns_on_reset)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVision::thread_safe_progress<int> a(1);
+	int waittime = 20;
+
+	//////////////////////////////////////
+	// actual test
+	boost::scoped_thread<boost::interrupt_and_join_if_joinable> t(boost::thread( thread_reset_delayed<int>, &a, 0, waittime ));
+
+	CHECK( a.wait_while(1) );
+}
+
+TEST(thread_safe_progress, wait_until_after_reset)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVision::thread_safe_progress<int> a(1);
+	int waittime = 20;
+
+	//////////////////////////////////////
+	// actual test
+	a.reset(0);
+
+	boost::scoped_thread<boost::interrupt_and_join_if_joinable> t(boost::thread( thread_set_delayed<int>, &a, 10, waittime ));
+
+	CHECK( a.wait_until(1) );
+}
+
+
