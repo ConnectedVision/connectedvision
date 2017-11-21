@@ -24,14 +24,14 @@ namespace ConnectedVision {
 
 const boost::shared_ptr<std::string> Stub_generic_status::status_na = boost::make_shared<std::string>("n/a");
 const boost::shared_ptr<std::string> Stub_generic_status::status_init = boost::make_shared<std::string>("init");
-const boost::shared_ptr<std::string> Stub_generic_status::status_startup = boost::make_shared<std::string>("startup");
+const boost::shared_ptr<std::string> Stub_generic_status::status_starting = boost::make_shared<std::string>("starting");
 const boost::shared_ptr<std::string> Stub_generic_status::status_running = boost::make_shared<std::string>("running");
 const boost::shared_ptr<std::string> Stub_generic_status::status_stopping = boost::make_shared<std::string>("stopping");
 const boost::shared_ptr<std::string> Stub_generic_status::status_stopped = boost::make_shared<std::string>("stopped");
 const boost::shared_ptr<std::string> Stub_generic_status::status_finished = boost::make_shared<std::string>("finished");
 const boost::shared_ptr<std::string> Stub_generic_status::status_error = boost::make_shared<std::string>("error");
-const boost::shared_ptr<std::string> Stub_generic_status::status_reset = boost::make_shared<std::string>("reset");
-const boost::shared_ptr<std::string> Stub_generic_status::status_cleanup = boost::make_shared<std::string>("cleanup");
+const boost::shared_ptr<std::string> Stub_generic_status::status_recovering = boost::make_shared<std::string>("recovering");
+const boost::shared_ptr<std::string> Stub_generic_status::status_reseting = boost::make_shared<std::string>("reseting");
 
 
 
@@ -49,6 +49,17 @@ Stub_generic_status::Stub_generic_status(const Stub_generic_status& other)
 	// moduleURI
 	if ( other.moduleURI ) 
 		moduleURI = boost::make_shared<std::string>(*other.moduleURI);
+	// commandQueue
+	{
+		const auto& n0 = other.commandQueue;
+		auto a0 = boost::make_shared<std::vector<boost::shared_ptr<std::string>>>( (n0->size()) );
+		for (size_t i0 = 0; i0 < n0->size(); ++i0)
+		{
+			if ( n0->at(i0) )
+				a0->at(i0) = boost::make_shared<std::string>( *n0->at(i0) );
+		}
+		commandQueue = a0;
+	}
 	// status
 	if ( other.status ) 
 		status = boost::make_shared<std::string>(*other.status);
@@ -113,6 +124,8 @@ Stub_generic_status& Stub_generic_status::operator =(Stub_generic_status&& other
     std::swap(moduleID, other.moduleID);
 	// moduleURI
     std::swap(moduleURI, other.moduleURI);
+	// commandQueue
+    std::swap(commandQueue, other.commandQueue);
 	// status
     std::swap(status, other.status);
 	// message
@@ -170,6 +183,7 @@ void Stub_generic_status::clear()
 	this->timestamp = 0;
 	this->moduleID = "";
 	this->moduleURI.reset( new std::string("") );
+	this->commandQueue.reset( new std::vector<boost::shared_ptr<std::string>> );
 	this->status.reset( new std::string("n/a") );
 	this->message.reset( new std::string("") );
 	this->progress = static_cast<double>(0);
@@ -251,6 +265,20 @@ void Stub_generic_status::parseJson(const rapidjson::Value& value)
 	}
 	else
 		throw ConnectedVision::runtime_error( "required member is missing: 'moduleURI'");
+
+	// commandQueue
+	if ((value.HasMember("commandQueue")) && value["commandQueue"].IsArray())
+	{
+		const rapidjson::Value& n0 = value["commandQueue"];
+		boost::shared_ptr<std::vector<boost::shared_ptr<std::string>>> a0( new std::vector<boost::shared_ptr<std::string>>(n0.Size()) );
+		for (rapidjson::SizeType i0 = 0; i0 < n0.Size(); i0++)
+		{
+			a0->at(i0) = boost::shared_ptr<std::string>( new std::string( n0[i0].GetString() ) );
+		}
+		set_commandQueue( a0 );
+	}
+	else
+		throw ConnectedVision::runtime_error( "required member is missing: 'commandQueue'");
 
 	// status
 	if ((value.HasMember("status")) && value["status"].IsString())
@@ -368,6 +396,17 @@ rapidjson::Value& Stub_generic_status::toJson(rapidjson::Value& node, rapidjson:
 	}
 	{ // moduleURI
 		node.AddMember("moduleURI", rapidjson::Value().SetString( get_moduleURI()->c_str(), allocator), allocator);
+	}
+	{ // commandQueue
+		rapidjson::Value n0; n0.SetArray();
+		boost::shared_ptr<std::vector<boost::shared_ptr<std::string>>>&& a0 = get_commandQueue(); // rvalue reference for const functions
+		for (size_t i0 = 0; i0 < a0->size(); i0++)
+		{
+			// process array level 0
+			// final level of array, add string
+			n0.PushBack(rapidjson::Value().SetString( a0->at(i0)->c_str(), allocator), allocator);
+		}
+		node.AddMember("commandQueue", n0, allocator);
 	}
 	{ // status
 		node.AddMember("status", rapidjson::Value().SetString( get_status()->c_str(), allocator), allocator);
@@ -493,6 +532,42 @@ const boost::shared_ptr<const std::string> Stub_generic_status::getconst_moduleU
 void Stub_generic_status::set_moduleURI(boost::shared_ptr<std::string> value)
 {
 	this->moduleURI = value;
+}
+
+// --> Do NOT EDIT <--
+boost::shared_ptr<std::vector<boost::shared_ptr<std::string>>> Stub_generic_status::get_commandQueue() const
+{
+	return( this->commandQueue );
+}
+
+// --> Do NOT EDIT <--
+const boost::shared_ptr<const std::vector<boost::shared_ptr<std::string>>> Stub_generic_status::getconst_commandQueue() const
+{
+	return( boost::static_pointer_cast<const std::vector<boost::shared_ptr<std::string>>>(this->commandQueue) );
+}
+
+// --> Do NOT EDIT <--
+void Stub_generic_status::set_commandQueue(boost::shared_ptr<std::vector<boost::shared_ptr<std::string>>> value)
+{
+	this->commandQueue = value;
+}
+
+// --> Do NOT EDIT <--
+boost::shared_ptr<std::string> Stub_generic_status::get_commandQueue(int index) const
+{
+	return( this->commandQueue->at(index) );
+}
+
+// --> Do NOT EDIT <--
+const boost::shared_ptr<std::string>& Stub_generic_status::getconst_commandQueue(int index) const
+{
+	return( this->commandQueue->at(index) );
+}
+
+// --> Do NOT EDIT <--
+void Stub_generic_status::add_commandQueue(boost::shared_ptr<std::string> value)
+{
+	this->commandQueue->push_back(value);
 }
 
 // --> Do NOT EDIT <--

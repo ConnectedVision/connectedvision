@@ -17,7 +17,8 @@
 
 namespace ConnectedVision
 {
-
+#define Class_generic_config_extended
+#ifdef Class_generic_config_extended
 /**
  * Class_generic_config
  * 
@@ -81,7 +82,10 @@ public:
 
 };
 typedef boost::shared_ptr<Class_generic_config> Class_generic_config_p;
+#endif // Class_generic_config_extended
 
 } // namespace ConnectedVision
+
+#include "stubs/Class_generic_config_Default.h"
 
 #endif // Class_generic_config_def
