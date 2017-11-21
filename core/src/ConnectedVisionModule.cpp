@@ -178,7 +178,7 @@ void ConnectedVisionModule::initModule( IModuleEnvironment *env )
 		}
 
 		// abort zombi configurations
-		vector<const id_t> list = this->configStore->getIDList();
+		vector<id_t> list = this->configStore->getIDList();
 		for (auto it = list.begin(); it != list.end(); ++it) 
 		{
 			auto constStatus = this->statusStore->getByID( *it );

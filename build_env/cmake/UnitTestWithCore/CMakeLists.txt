@@ -75,7 +75,6 @@ set(ConnectedVisionUnitTestSources
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_Thread.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_WorkerThread.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_ConfigList.cpp
-	${ConnectedVisionCppRoot}/test/UnitTest/Test_ConcurrentQueue.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_ThreadSafe_Queue.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_CallStack.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_DynamicParameters.cpp

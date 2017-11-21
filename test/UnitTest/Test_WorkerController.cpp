@@ -5,11 +5,11 @@
 
 #include <unordered_set>
 
-#include "ConnectedVision_Thread.h"
-#include "Class_generic_config.h"
-#include "Class_generic_status.h"
-#include "DataHandling/Store_Ringbuffer.h"
-#include "Module/Module_BaseClass.h"
+#include <ConnectedVision_Thread.h>
+#include <Module/Control/Class_generic_config.h>
+#include <Module/Control/Class_generic_status.h>
+#include <DataHandling/Store_Ringbuffer.h>
+#include <Module/Module_BaseClass.h>
 
 #include "TestHelper_Module.hpp"
 #include "TestHelper_Threads.hpp"

@@ -4,11 +4,11 @@
 */
 
 #include <unordered_set>
-#include <ConnectedVision_Thread.h>
-#include <Class_generic_config.h>
-#include <Class_generic_status.h>
-#include <DataHandling/Store_Ringbuffer.h>
-#include <Module/Module_BaseClass.h>
+#include "ConnectedVision_Thread.h"
+#include "Module/Control/Class_generic_config.h"
+#include "Module/Control/Class_generic_status.h"
+#include "DataHandling/Store_Ringbuffer.h"
+#include "Module/Module_BaseClass.h"
 
 namespace ConnectedVision {
 namespace Module {
@@ -655,8 +655,10 @@ protected:
 
 
 	// config singleton
+#ifdef CHECK_INSTANCE_SINGLETON
 	static boost::mutex instanceListMutex;
 	static std::unordered_set<id_t> instanceList;
+#endif
 
 public:
 	// spy functions
@@ -665,9 +667,5 @@ public:
 
 
 };
-#ifdef CHECK_INSTANCE_SINGLETON
-boost::mutex WorkerController::instanceListMutex;
-std::unordered_set<id_t> WorkerController::instanceList;
-#endif
 
 }} // namespace

@@ -49,7 +49,6 @@ namespace ConnectedVision {
 		) : ConnectedVision::logic_error (what_arg) {}
 	};
 
-///////////////////////// MIGRATION FIXME //////////////////////////////////////////////
 	// TODO: when changing to C++11 switched to std::mutex
 	// for now, boost is used 
 	typedef boost::mutex std__mutex;
@@ -72,22 +71,6 @@ namespace ConnectedVision {
 	};
 	typedef unique_lock Lock;
 
-	/**
-	* use special implementation of lock
-	* map to try-lock
-	*/
-	class Lock : public boost::unique_lock<boost::mutex>
-	{
-	public:
-		Lock(boost::mutex& m) : boost::unique_lock<boost::mutex>(m, boost::try_to_lock)
-		{
-			if ( !this->owns_lock() )
-				throw ConnectedVision::mutex_error("cannot get lock (mutex is already locked)");
-		}
-	};
-
-
-///////////////////////// MIGRATION FIXME //////////////////////////////////////////////
 
 	/**
 	* thread-safe wrapper for a strictly increasing data element
