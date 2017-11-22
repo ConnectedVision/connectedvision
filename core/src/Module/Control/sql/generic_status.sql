@@ -1,4 +1,4 @@
-/* auto-generated header by CodeFromTemplate */
+/* auto-generated header by CodeFromTemplate - Connected Vision - https://github.com/ConnectedVision */
 /* CodeFromTemplate Version: 0.3 alpha */
 /* generic_status.sql */
 /* NEVER TOUCH this file! */

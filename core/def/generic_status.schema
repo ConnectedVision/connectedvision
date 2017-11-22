@@ -45,7 +45,7 @@
 		"status": {
 			"description": "current status of config / job",
 			"required": true,
-			"enum": ["n/a", "init", "starting", "running", "stopping", "stopped", "finished", "error", "recovering", "reseting"],
+			"enum": ["n/a", "init", "starting", "running", "stopping", "stopped", "finished", "error", "recovering", "resetting"],
 			"unit": "",
 			"type": "string",
 			"default": "n/a"

@@ -31,7 +31,7 @@ const boost::shared_ptr<std::string> Stub_generic_status::status_stopped = boost
 const boost::shared_ptr<std::string> Stub_generic_status::status_finished = boost::make_shared<std::string>("finished");
 const boost::shared_ptr<std::string> Stub_generic_status::status_error = boost::make_shared<std::string>("error");
 const boost::shared_ptr<std::string> Stub_generic_status::status_recovering = boost::make_shared<std::string>("recovering");
-const boost::shared_ptr<std::string> Stub_generic_status::status_reseting = boost::make_shared<std::string>("reseting");
+const boost::shared_ptr<std::string> Stub_generic_status::status_resetting = boost::make_shared<std::string>("resetting");
 
 
 
