@@ -24,13 +24,6 @@ http://plantuml.com/plantuml/form
 
 #define CHECK_INSTANCE_SINGLETON
 
-// TODO: driver: WorkerThreadProgress, ConfigStatus gets status from WorkerThreadProgress
-/*
-namespace ConfigStatus { 
-	enum ConfigStatus {init, starting, running, stopping, stopped, finished, error, recovering, resetting};
-}	// wrap in namespace to avoid ambiguity of enums
-*/
-
 namespace WorkerThreadProgress { 
 	enum WorkerThreadProgress {Undefined, Init, Starting, Running, Stopping, Cleanup, Stopped, Finished, Error, Recovering, Resetting, Terminating, Terminated};
 }	// wrap in namespace to avoid ambiguity of enums
@@ -96,7 +89,7 @@ namespace WorkerCommand {
 				if ( !this->workerThreadProgress.wait_until(WorkerThreadProgress::Cleanup, this->workerTimeout) )
 				{
 					// interrupt uncooperative worker
-					this->workerThread.interrupt();	// TODO in workerThread class: make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+					this->workerThread.interrupt();
 				}
 
 				// wait until cleanup has finished
@@ -246,11 +239,8 @@ public:
 		const timestamp_t workerTimeout = 5000												///< timeout to wait for worker to stop cooperatively
 	) : module(module), workerFactory(workerFactory), workerTimeout(workerTimeout), workerThreadProgress(WorkerThreadProgress::Finished)
 	{
-		// load config
-		auto config = this->loadConfig(configID, module);
-
 		// init worker manager
-		this->init(config);
+		this->init(configID);
 	}
 
 	/**
@@ -267,7 +257,7 @@ public:
 		auto config = this->saveConfig(configOrig, module);
 		
 		// init worker manager
-		this->init(configConst);
+		this->init(config->getconst_configID());
 	}
 
 
@@ -284,8 +274,7 @@ public:
 		this->controllerThread.join();
 
 		// remove from instance list
-		if ( this->configConst )
-			this->module.unregisterWorkerInstance(this->configConst->getconst_configID(), this);
+		this->module.unregisterWorkerInstance(this->configID, this);
 	}
 
 	/**
@@ -335,7 +324,7 @@ public:
 			case WorkerThreadProgress::Recovering:
 				return Class_generic_status::status_recovering;
 			case WorkerThreadProgress::Resetting:
-				return Class_generic_status::status_resetting;
+				return Class_generic_status::set_status_resetting;
 			case WorkerThreadProgress::Terminating:
 			case WorkerThreadProgress::Terminated:
 				return getStatusFromProgress(this->progressBeforeTermination); // recursive call
@@ -355,8 +344,7 @@ public:
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> start() 
 	{
 		// enqueue start command
-		ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdStart = 
-			ConnectedVision::make_shared<WorkerCommand::CommandStart>(this->workerStatus, this->workerThreadProgress);
+		WorkerCommand::CommandStart cmdStart(this->workerThreadProgress);
 		commandQueue.push( cmdStart );
 
 		return this->getStatus();
@@ -370,8 +358,7 @@ public:
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> stop()
 	{
 		// enqueue stop command
-		ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdStop = 
-			ConnectedVision::make_shared<WorkerCommand::CommandStop>(this->workerStatus, this->workerThreadProgress, this->workerThread, this->workerTimeout);
+		WorkerCommand::CommandStop cmdStop(this->workerThreadProgress, this->workerThread, this->workerTimeout);
 		commandQueue.push( cmdStop );
 
 		return this->getStatus();
@@ -386,16 +373,9 @@ public:
 	*/
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> reset()
 	{
-		// stop command
-		auto cmdStop = 
-			ConnectedVision::make_shared<WorkerCommand::CommandStop>(this->workerStatus, this->workerThreadProgress, this->workerThread, this->workerTimeout);
-
-		// reset command
-		id_t configID = this->configConst->getconst_id();
-		ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdReset = 
-			ConnectedVision::make_shared<WorkerCommand::CommandReset>(this->module, configID, this->workerStatus, cmdStop);
-
 		// enqueue reset command
+		WorkerCommand::CommandStop cmdStop(this->workerThreadProgress, this->workerThread, this->workerTimeout);
+		WorkerCommand::CommandReset cmdReset(this->workerThreadProgress, cmdStop);
 		commandQueue.push( cmdReset );
 
 		return this->getStatus();
@@ -410,13 +390,9 @@ public:
 	*/
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> recover()
 	{
-		// stop command
-		id_t configID = this->configConst->getconst_id();
-		ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmd = 
-				ConnectedVision::make_shared<WorkerCommand::CommandRecover>(this->module, configID, this->workerStatus);
-
-		// enqueue reset command
-		commandQueue.push( cmd );
+		// enqueue recover command
+		WorkerCommand::CommandRecover cmdRecover(this->workerThreadProgress);
+		commandQueue.push( cmdRecover );
 
 		return this->getStatus();
 	}
@@ -428,16 +404,22 @@ public:
 	*/
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> getStatus()
 	{
-		// TODO short status
-		auto status = this->statusObj->copy();
-		auto commandQueue = boost::make_shared<	std::vector< boost::shared_ptr<std::string> > >();
+		// get status and current status according to worker progress
+		auto statusConst = this->statusStore->getByID(this->configID);
+		auto status = statusConst->copy();
+		auto statusProgress = this->getStatusFromProgress();
 
-// TODO		commandQueue = this->commandQueue;
+		// return directly if status didn't change
+		if ( status->is_status( statusProgress ) )
+			return statusConst;
 
-		status->set_commandQueue(commandQueue);
-
-		this->statusConst = this->statusStore->make_const( status );
-		return this->statusConst;
+		// update according to worker progress
+		status->set_status( statusProgress );
+		
+		// save status and return
+		statusConst = this->statusStore->make_const( status );
+		this->statusStore->save_const( statusConst );
+		return statusConst;
 	}
 
 	/**
@@ -447,7 +429,7 @@ public:
 	*/
 	virtual ConnectedVision::shared_ptr<const Class_generic_config> getConfig()
 	{
-		return this->configConst;
+		return this->configStore->getByID(this->configID);
 	}
 
 	// WorkerController functions
@@ -477,6 +459,7 @@ public:
 	*/
 	virtual bool nextIterationStep()
 	{
+		// for now, there is nothing else to do than just check if we are not stopped
 		return intermediateContinueCheck();
 	}
 
@@ -488,108 +471,123 @@ protected:
 		try
 		{
 			// loop until destructor sets terminate flag
-			while ( this->workerThreadProgress.get() != WorkerThreadProgress::Terminate )
+			while ( this->workerThreadProgress < WorkerThreadProgress::Terminating )
 			{
 				// wait for new command in queue
 				auto cmd = this->commandQueue.pop_wait();
 
 				// execute command
-				cmd->execute();
+				cmd.execute();
 			}
 		}
-		catch (...)
+		catch (std::exception e)
 		{
-			// ignore
+			// TODO Log exception
+			std::cout << "CORE PANIC: [Exception in controller thread command] " << e.what();
+
+			// terminate to worker
+			this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
+			this->workerThread.interrupt();
+			return;
 		}
 	}
 
 	void workerThreadFunction()
 	{
+		// TODO in workerThread class: make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+		boost::this_thread::disable_interruption interrupt_disabler;
+
 		// thread loop
 		for(;;)
 		{
-			bool error = false;
-			bool stopped = false;
-
-			// wait for progress to change
-			try
-			{
-				this->workerThreadProgress.wait_while( WorkerThreadProgress::Finished );
-			}
-			catch (boost::thread_interrupted&)
-			{
-				// ignore
-			}
-			
 			auto progress = this->workerThreadProgress.get();
-
-			// exit if terminate flag is set
-			if ( progress == WorkerThreadProgress::Terminate )
-				break;
-
-			if ( progress == WorkerThreadProgress::Starting )
+			switch (progress)
 			{
-				try
-				{
-					// create worker
-					this->workerStatus = ConfigStatus::starting;
-					auto worker = this->workerFactory->createWorker(*this, this->configConst);
+				case WorkerThreadProgress::Undefined:
+				case WorkerThreadProgress::Init:
+				case WorkerThreadProgress::Stopped:
+				case WorkerThreadProgress::Finished:
+				case WorkerThreadProgress::Error:
+					// ignore and wait for next progress
+					break;
 
-					// start worker
-					this->workerThreadProgress = WorkerThreadProgress::Running;
-					this->workerStatus = ConfigStatus::running;
+				case WorkerThreadProgress::Terminating:
+				case WorkerThreadProgress::Terminated:
+					// exit if terminate flag is set
+					return;
 
+				case WorkerThreadProgress::Starting:
+					bool error = false;
 					try
 					{
-						worker->run();
+						// create worker
+						auto worker = this->workerFactory->createWorker(*this, this->getConfig());
+
+						// start worker
+						try
+						{
+							this->workerThreadProgress = WorkerThreadProgress::Running;
+							boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
+							worker->run();
+						}
+						catch (boost::thread_interrupted e)
+						{
+							error = true;
+							std::cout << "[Exception worker.run() did not return on stop request in time -> interrupted after timeout] ";
+						}
+						catch (std::exception e)
+						{
+							// TODO Log exception
+							error = true;
+							std::cout << "[Exception in worker.run()] " << e.what();
+						}
+
+						// clean up worker -> destroy worker
+						this->workerThreadProgress = WorkerThreadProgress::Cleanup;
+						worker.reset();
+
+
+						// set status
+						bool stopped = !this->intermediateContinueCheck();	// was worker forced to stop?
+						if ( error )
+							progress = WorkerThreadProgress::Error;
+						else if ( stopped )
+							progress = WorkerThreadProgress::Stopped;
+						else
+							progress = WorkerThreadProgress::Finished;
+						this->workerThreadProgress = progress;
+
 					}
-					catch(...)
+					catch (std::exception e)
 					{
-						error = true;
+						// TODO Log exception
+						std::cout << "CORE PANIC: [Exception in controller thread command] " << e.what();
+
+						// terminate
+						this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
+						return;
 					}
+					break;
 
-					// clean up worker
-					this->workerThreadProgress = WorkerThreadProgress::Cleanup;
-					this->workerStatus = ConfigStatus::stopping;
-					stopped = !this->intermediateContinueCheck();
 
-					// destroy worker
-					worker.reset();
-				}
-				catch (...)
-				{
-					error = true;
-				}
+				case WorkerThreadProgress::Resetting:
+					// TODO
+					break;
 
-				// set status
-				if ( error )
-					this->workerStatus = ConfigStatus::error;
-				else if ( stopped )
-					this->workerStatus = ConfigStatus::stopped;
-				else
-					this->workerStatus = ConfigStatus::finished;
+				case WorkerThreadProgress::Recovering:
+					// TODO
+					break;
+
+
+				default:
+					std::cout << "CORE PANIC: [worker thread] unexpected worker progress in thread loop: " << progress;
+					this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
+					return;
 			}
 
-			// wait for next worker
-			this->workerThreadProgress = WorkerThreadProgress::Finished;
+			// wait on change of worker progress
+			this->workerThreadProgress.wait_while(progress);
 		}
-	}
-
-	shared_ptr<const Class_generic_config> loadConfig(
-		const id_t& configID,																///< config chain ID
-		ConnectedVision::Module::IModule& module											///< ConnectedVision module
-		)
-	{
-		auto configStore = this->module.getConfigStore();
-		if ( !configStore )
-			throw ConnectedVision::invalid_argument("[WorkerController] invalid configStore (null pointer)");
-
-		// load config from store
-		shared_ptr<const Class_generic_config> config = configStore->getByID(configID);
-		if ( !config )
-			throw ConnectedVision::invalid_argument("[WorkerController] cannot find config with config id: " + configID);
-
-		return config;
 	}
 
 	shared_ptr<const Class_generic_config> saveConfig(
@@ -619,7 +617,7 @@ protected:
 	*	- load / create status
 	*/
 	void init(
-		ConnectedVision::shared_ptr<const Class_generic_config> config ///< config object
+		id_t configID ///< config ID
 	)
 	{
 		// intentional set to error: if progressBeforeTermination is used in getStatusFromProgress() before it is set in CommandTerminate execute()
@@ -628,30 +626,31 @@ protected:
 		if ( !this->workerFactory )
 			throw ConnectedVision::invalid_argument("[WorkerController] invalid workerFactory (null pointer)");
 
-		// set config
-		if ( !config )
-			throw ConnectedVision::invalid_argument("[WorkerController] init(): invalid config (null pointer)");
-		id_t configID = config->getconst_id();
-		if ( configID.empty() )
+		// get config
+		this->configID = configID;
+		if ( this->configID.empty() )
 			throw ConnectedVision::invalid_argument("[WorkerController] init(): invalid config has no ID");
+		this->configStore = this->module.getConfigStore();
+		if ( !this->configStore )
+			throw ConnectedVision::invalid_argument("[WorkerController] init(): invalid config store");
+		auto configConst = this->configStore->getByID(this->configID);
+		if ( !configConst )
+			throw ConnectedVision::invalid_argument("[WorkerController] init(): invalid config (null pointer)");
 
-		// set member config
-		this->configConst = config;
-
-		this->module.registerWorkerInstance(configID, this); // TODO module ->	throw ConnectedVision::runtime_error("[WorkerController] there is already an instance for config: " + IDToStr(configID) );
-
+		// notify module about new worker instance
+		this->module.registerWorkerInstance(this->configID, this); // TODO module ->	throw ConnectedVision::runtime_error("[WorkerController] there is already an instance for config: " + IDToStr(configID) );
 		try
 		{
 			// init command queue
 			commandQueue.clear();
 
 			// set progress according to config status
-			auto statusStore = this->module.getStatusStore();
-			if ( !statusStore )
+			this->statusStore = this->module.getStatusStore();
+			if ( !this->statusStore )
 				throw ConnectedVision::invalid_argument("[WorkerController] invalid statusStore (null pointer)");
 
 			// read status from store
-			auto statusConst = statusStore->getByID(configID);
+			auto statusConst = statusStore->getByID(this->configID);
 			if ( !statusConst )
 			{
 				// create new status
@@ -678,7 +677,7 @@ protected:
 		catch (...)
 		{
 			// remove from instance list
-			this->module.unregisterWorkerInstance(configID, this);
+			this->module.unregisterWorkerInstance(this->configID, this);
 
 			// rethrow
 			throw;
@@ -689,7 +688,11 @@ protected:
 	ConnectedVision::Module::IModule& module;
 
 	// config
-	ConnectedVision::shared_ptr<const Class_generic_config> configConst;
+	id_t configID;
+	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_config> > configStore;
+
+	// status
+	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_status> > statusStore;
 
 	// command
 	WorkerCommand::CommandQueue commandQueue;
@@ -705,7 +708,6 @@ protected:
 
 public:
 	// spy functions
-	const ConfigStatus::ConfigStatus spy_workerStatus() { return this->workerStatus.load(); }
 	const thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &spy_workerThreadProgress() { return this->workerThreadProgress; }
 
 	boost::atomic<WorkerThreadProgress::WorkerThreadProgress> progressBeforeTermination;
