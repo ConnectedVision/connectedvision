@@ -110,21 +110,17 @@ namespace WorkerCommand {
 	public:
 		CommandReset(
 			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress,	///< reference to thread safe worker progress
-			const CommandStop stopCmd				///< stop command
+			const ConnectedVision::shared_ptr<CommandStop> &stopCmd				///< stop command
 		) :	workerThreadProgress(workerThreadProgress), stopCmd(stopCmd) {}
 		virtual ~CommandReset() {}
 
 		virtual void execute()
 		{
 			// make sure that worker is stopped
-			stopCmd.execute();
+			this->stopCmd->execute();
 
 			// signal to reset
 			this->workerThreadProgress = WorkerThreadProgress::Resetting;
-
-			// reset config / delete all data of config
-// TODO move into workerThread:			module.deleteAllData( configID );
-// -> so only one thread (workerThread) is writing / deleting data
 
 			// wait for resetting to finish
 			this->workerThreadProgress.wait_while(WorkerThreadProgress::Resetting);	// expected progress: Init
@@ -132,7 +128,7 @@ namespace WorkerCommand {
 
 	protected:
 		thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress;
-		CommandStop stopCmd;
+		ConnectedVision::shared_ptr<CommandStop> stopCmd;
 	};
 
 	/**
@@ -153,17 +149,8 @@ namespace WorkerCommand {
 				// signal to recover
 				this->workerThreadProgress = WorkerThreadProgress::Recovering;
 
-				// recover config
-	/* TODO move into workerThread:
-				if ( module.recover( configID ) )
-					this->workerStatus = ConfigStatus::stopped;
-				else
-					this->workerStatus = ConfigStatus::error;
-*/
-	// -> so only one thread (workerThread) is writing / deleting data
-
 				// wait for recover to finish
-				this->workerThreadProgress.wait_while(WorkerThreadProgress::Recovering);	// expected progress: Init, Stopped or Error (if recovering is not possible)
+				this->workerThreadProgress.wait_while(WorkerThreadProgress::Recovering);	// expected progress: Stopped or Error (if recovering is not possible)
 			}
 		}
 
@@ -180,14 +167,14 @@ namespace WorkerCommand {
 		CommandTerminate(
 			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &workerThreadProgress,	///< reference to thread safe worker progress
 			boost::atomic<WorkerThreadProgress::WorkerThreadProgress> &progressBeforeTermination, ///< reference to progress before terminate in worker controller
-			const CommandStop stopCmd										///< stop command
+			const ConnectedVision::shared_ptr<CommandStop> &stopCmd										///< stop command
 		) : workerThreadProgress(workerThreadProgress), progressBeforeTermination(progressBeforeTermination), stopCmd(stopCmd) {}
 		virtual ~CommandTerminate() {}
 
 		virtual void execute()
 		{
 			// make sure that worker is stopped
-			stopCmd.execute();
+			stopCmd->execute();
 
 			this->progressBeforeTermination = this->workerThreadProgress;
 
@@ -201,13 +188,13 @@ namespace WorkerCommand {
 	protected:
 		thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &workerThreadProgress;
 		boost::atomic<WorkerThreadProgress::WorkerThreadProgress> &progressBeforeTermination;
-		CommandStop stopCmd;
+		ConnectedVision::shared_ptr<CommandStop> stopCmd;
 	};
 
 	/**
 	* command queue for worker commands
 	*/
-	class CommandQueue : public ConnectedVision::thread_safe_queue< WorkerCommand::ICommand >
+	class CommandQueue : public ConnectedVision::thread_safe_queue< ConnectedVision::shared_ptr<WorkerCommand::ICommand> >
 	{
 	public:
 		CommandQueue() {}
@@ -264,8 +251,8 @@ public:
 	virtual ~WorkerController()
 	{
 		// terminate controller and worker thread
-		auto stopCmd = WorkerCommand::CommandStop( this->workerThreadProgress, this->workerThread, this->workerTimeout );
-		auto terminateCmd = WorkerCommand::CommandTerminate( this->workerThreadProgress, this->progressBeforeTermination, stopCmd );
+		auto stopCmd = ConnectedVision::make_shared<WorkerCommand::CommandStop>( this->workerThreadProgress, this->workerThread, this->workerTimeout );
+		ConnectedVision::shared_ptr<WorkerCommand::ICommand> terminateCmd = ConnectedVision::make_shared<WorkerCommand::CommandTerminate>( this->workerThreadProgress, this->progressBeforeTermination, stopCmd );
 		commandQueue.push( terminateCmd );
 
 		// wait for the threads to terminate before destroying the class
@@ -324,7 +311,7 @@ public:
 			case WorkerThreadProgress::Recovering:
 				return Class_generic_status::status_recovering;
 			case WorkerThreadProgress::Resetting:
-				return Class_generic_status::set_status_resetting;
+				return Class_generic_status::status_resetting;
 			case WorkerThreadProgress::Terminating:
 			case WorkerThreadProgress::Terminated:
 				return getStatusFromProgress(this->progressBeforeTermination); // recursive call
@@ -344,7 +331,7 @@ public:
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> start() 
 	{
 		// enqueue start command
-		WorkerCommand::CommandStart cmdStart(this->workerThreadProgress);
+		ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdStart = ConnectedVision::make_shared<WorkerCommand::CommandStart>(this->workerThreadProgress);
 		commandQueue.push( cmdStart );
 
 		return this->getStatus();
@@ -358,7 +345,7 @@ public:
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> stop()
 	{
 		// enqueue stop command
-		WorkerCommand::CommandStop cmdStop(this->workerThreadProgress, this->workerThread, this->workerTimeout);
+		ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdStop = ConnectedVision::make_shared<WorkerCommand::CommandStop>(this->workerThreadProgress, this->workerThread, this->workerTimeout);
 		commandQueue.push( cmdStop );
 
 		return this->getStatus();
@@ -374,8 +361,8 @@ public:
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> reset()
 	{
 		// enqueue reset command
-		WorkerCommand::CommandStop cmdStop(this->workerThreadProgress, this->workerThread, this->workerTimeout);
-		WorkerCommand::CommandReset cmdReset(this->workerThreadProgress, cmdStop);
+		auto cmdStop = ConnectedVision::make_shared<WorkerCommand::CommandStop>(this->workerThreadProgress, this->workerThread, this->workerTimeout);
+		ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdReset = ConnectedVision::make_shared<WorkerCommand::CommandReset>(this->workerThreadProgress, cmdStop);
 		commandQueue.push( cmdReset );
 
 		return this->getStatus();
@@ -391,7 +378,7 @@ public:
 	virtual ConnectedVision::shared_ptr<const Class_generic_status> recover()
 	{
 		// enqueue recover command
-		WorkerCommand::CommandRecover cmdRecover(this->workerThreadProgress);
+		ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdRecover = ConnectedVision::make_shared<WorkerCommand::CommandRecover>(this->workerThreadProgress);
 		commandQueue.push( cmdRecover );
 
 		return this->getStatus();
@@ -477,7 +464,7 @@ protected:
 				auto cmd = this->commandQueue.pop_wait();
 
 				// execute command
-				cmd.execute();
+				cmd->execute();
 			}
 		}
 		catch (std::exception e)
@@ -500,6 +487,8 @@ protected:
 		// thread loop
 		for(;;)
 		{
+			bool error = false;
+
 			auto progress = this->workerThreadProgress.get();
 			switch (progress)
 			{
@@ -514,11 +503,10 @@ protected:
 				case WorkerThreadProgress::Terminating:
 				case WorkerThreadProgress::Terminated:
 					// exit if terminate flag is set
-					this->workerThreadProgress.set( WorkerThreadProgress::Terminated )
+					progress = WorkerThreadProgress::Terminated; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
 					return;
 
 				case WorkerThreadProgress::Starting:
-					bool error = false;
 					try
 					{
 						// create worker
@@ -572,11 +560,18 @@ protected:
 
 
 				case WorkerThreadProgress::Resetting:
-					// TODO
+					// reset config / delete all data of config
+					module.deleteAllData( configID );	// one thread (workerThread) is writing / deleting data
+					progress = WorkerThreadProgress::Init; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
 					break;
 
 				case WorkerThreadProgress::Recovering:
-					// TODO
+					// recover config
+					if ( this->module.processConfigRecover( this->configID ) ) 	// one thread (workerThread) is writing / deleting data
+						progress = WorkerThreadProgress::Stopped;
+					else
+						progress = WorkerThreadProgress::Error;
+					this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
 					break;
 
 
@@ -655,7 +650,7 @@ protected:
 			if ( !statusConst )
 			{
 				// create new status
-				statusConst = boost::make_shared<Class_generic_status>(config->getconst_id(), module.getModuleID(), module.getModuleURI(), this->module.getOutputPinIDs());
+				statusConst = boost::make_shared<Class_generic_status>(this->configID, this->module.getModuleID(), this->module.getModuleURI(), this->module.getOutputPinIDs());
 				statusStore->save_const( statusConst );
 			}
 

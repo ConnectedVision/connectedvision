@@ -122,9 +122,9 @@ public:
 	const static boost::shared_ptr<std::string> status_recovering;
 	virtual bool is_status_recovering() const { return is_status( Stub_generic_status::status_recovering ); }
 	virtual void set_status_recovering() { set_status ( Stub_generic_status::status_recovering ); }
-	const static boost::shared_ptr<std::string> status_reseting;
-	virtual bool is_status_reseting() const { return is_status( Stub_generic_status::status_reseting ); }
-	virtual void set_status_reseting() { set_status ( Stub_generic_status::status_reseting ); }
+	const static boost::shared_ptr<std::string> status_resetting;
+	virtual bool is_status_resetting() const { return is_status( Stub_generic_status::status_resetting ); }
+	virtual void set_status_resetting() { set_status ( Stub_generic_status::status_resetting ); }
 
 	/* message - general message (e.g. description of last error) */
 	virtual boost::shared_ptr<std::string> get_message() const;

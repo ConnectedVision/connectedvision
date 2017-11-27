@@ -3643,15 +3643,10 @@ void ConnectedVisionModule::recover(boost::shared_ptr<const Class_generic_config
 {
 	auto configID = constConfig->get_id();
 	LOG_SCOPE_CONFIG( configID );
-	boost::shared_ptr< const Class_generic_status > status = statusStore->getByID( configID );
-	if ( !status )
-		throw ConnectedVision::runtime_error("start: status not found (configID: " + IDToStr( configID ) + ")");
-
-	if ( status->is_status_error() )
-	{
-		// recover from error
-		this->algoDispatcher->recover( constConfig );
-	}
+	/* TODO
+	auto workerController = this->getWorkerController(configID);
+	workerController->recover();
+	*/
 }
 
 /**
@@ -3688,6 +3683,17 @@ void ConnectedVisionModule::reset(boost::shared_ptr<const Class_generic_config> 
 		this->deleteResults( constConfig );
 	}
 }
+
+
+void ConnectedVisionModule::registerWorkerInstance(const id_t configID, const ConnectedVision::Module::IWorkerController *workerController)
+{
+	// TODO
+}
+void ConnectedVisionModule::unregisterWorkerInstance(const id_t configID, const ConnectedVision::Module::IWorkerController *workerController)
+{
+	// TODO
+}
+
 
 
 /**

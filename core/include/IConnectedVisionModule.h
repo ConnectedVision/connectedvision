@@ -439,6 +439,8 @@ namespace ConnectedVision
 	};
 
 	namespace Module {
+		class IWorkerController;
+
 		class IModule
 		{
 		public:
@@ -609,7 +611,7 @@ namespace ConnectedVision
 
 
 			//////////////////////////////////////////////////////////////////////////////////
-			// config specific
+			// config specific external API functions
 
 			/**
 			* get configuration for given config ID as JSON response
@@ -678,6 +680,24 @@ namespace ConnectedVision
 			//////////////////////////////////////////////////////////////////////////////////
 			// config / worker specific
 
+
+			/**
+			 * register worker instance for specific config
+			 */
+			virtual void registerWorkerInstance(
+				const id_t configID,						///< [in] ID of config
+				const IWorkerController *workerController	///< [in] worker controller instance
+			) = 0;
+
+			/**
+			 * unregister worker instance for specific config
+			 */
+			virtual void unregisterWorkerInstance(
+				const id_t configID,						///< [in] ID of config
+				const IWorkerController *workerController	///< [in] worker controller instance
+			) = 0;
+
+
 			/**
 			 * delete all results for a given configID
 			 */
@@ -691,7 +711,7 @@ namespace ConnectedVision
 			 * @return	- true: if recovering was sucessfully (status is stopped)
 			 *			- false: if config could not be recovered or module does not support recovering
 			 */
-			virtual bool recover(
+			virtual bool processConfigRecover(
 				const id_t configID				///< [in] ID of config
 			) = 0;
 

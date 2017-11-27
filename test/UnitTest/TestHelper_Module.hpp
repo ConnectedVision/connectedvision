@@ -10,6 +10,7 @@
 #include <boost/atomic.hpp>
 #include "IModuleEnvironment.h"
 #include "IConnectedVisionModule.h"
+#include "ConnectedVision_Exceptions.h"
 #include "TestHelper_Threads.hpp"
 
 namespace ConnectedVision {
@@ -424,6 +425,45 @@ public:
 	//////////////////////////////////////////////////////////////////////////////////
 	// config / worker specific
 
+
+	/**
+		* register worker instance for specific config
+		*/
+	virtual void registerWorkerInstance(
+		const id_t configID,						///< [in] ID of config
+		const IWorkerController *workerController	///< [in] worker controller instance
+	)  {
+		if ( !this->workerMap.insert ( std::pair<id_t, const IWorkerController*>(configID, workerController)).second )
+		{
+			throw ConnectedVision::runtime_error("config: " + IDToStr(configID) + " already in worker list");
+		}
+	}
+
+	/**
+		* unregister worker instance for specific config
+		*/
+	virtual void unregisterWorkerInstance(
+		const id_t configID,						///< [in] ID of config
+		const IWorkerController *workerController	///< [in] worker controller instance
+	) {
+		try 
+		{
+			if ( this->workerMap.at(configID) == workerController )
+			{
+				// remove worker controller from map
+				this->workerMap.erase(configID);
+			}
+			else
+			{
+				// ignore
+			}
+		}
+		catch (std::out_of_range e)
+		{
+			// ignore
+		}
+	}
+
 	/**
 		* delete all results for a given configID
 		*/
@@ -440,7 +480,7 @@ public:
 	* @return	- true: if recovering was sucessfully (status is stopped)
 	*			- false: if config could not be recovered or module does not support recovering
 	*/
-	virtual bool recover(
+	virtual bool processConfigRecover(
 		const id_t configID				///< [in] ID of config
 	) { 
 		return false;
@@ -470,6 +510,7 @@ public:
 	bool ready;
 	IModuleEnvironment *pEnv;
 	std::vector<int> resultData;
+	std::map<id_t, const IWorkerController*> workerMap;
 
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_status> > statusStore;
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_config> > configStore;

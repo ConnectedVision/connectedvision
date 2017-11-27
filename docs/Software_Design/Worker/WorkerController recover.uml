@@ -30,10 +30,10 @@ hnote over workerThreadProgress: wait for change of \n workerThreadProgress
 
 ...
 
-== reset config ==
+== recover config ==
 
 
- -> WorkerController : reset()
+ -> WorkerController : recover()
 activate WorkerController
 
 create recoverCmd
@@ -112,7 +112,7 @@ alt workerThreadProgress == Error
 		deactivate workerThread #gray
 		note over workerThreadProgress: Stopped
 	else
-		workerThread -> workerThreadProgress: reset(Error)
+		workerThread -> workerThreadProgress: set(Error)
 		activate workerThreadProgress #orange
 		activate workerThread #gray
 		workerThread <<- workerThreadProgress

@@ -150,7 +150,13 @@ public:
 	virtual boost::shared_ptr< IConnectedVisionOutputPin > getOutputPin(const Class_generic_config &config, const pinID_t pinID);
 	virtual boost::shared_ptr< IConnectedVisionOutputPin > getOutputPin(const boost::shared_ptr<const Class_generic_config> config, const pinID_t pinID) { return getOutputPin( *(config.get()), pinID); };
 
+
+
+	virtual void registerWorkerInstance(const id_t configID, const ConnectedVision::Module::IWorkerController *workerController);
+	virtual void unregisterWorkerInstance(const id_t configID, const ConnectedVision::Module::IWorkerController *workerController);
 	virtual void deleteResults(const boost::shared_ptr<const Class_generic_config> config) = 0;
+	virtual bool processConfigRecover(const id_t configID) { return false; }
+
 
 	virtual DBConnection& getDB() { return dbConn; };
 
