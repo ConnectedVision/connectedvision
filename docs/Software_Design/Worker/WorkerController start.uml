@@ -8,14 +8,6 @@ activate controllerThread #cyan
 
 participant "startCmd \n <<Command>>" as startCmd
 
-participant "workerStatus \n <<thread_safe>>" as workerStatus
-note over workerStatus 
-	The workerStatus config is stable 
-	while no command is active, 
-	but can change during 
-	command execution. 
-end note
-
 participant "workerThreadProgress \n <<thread_safe_progress>>" as workerThreadProgress
 
 participant "workerThread \n <<boost::thread>>" as workerThread
@@ -34,8 +26,8 @@ activate commandQueue #cyan
 activate controllerThread #gray
 hnote over commandQueue: wait for command
 
-note over workerThreadProgress: END
-workerThread -> workerThreadProgress: wait_while(END)
+note over workerThreadProgress: xxx
+workerThread -> workerThreadProgress: wait_while(...)
 activate workerThreadProgress #orange
 activate workerThread #gray
 ...
@@ -46,10 +38,10 @@ activate workerThread #gray
  -> WorkerController : start()
 activate WorkerController
 create startCmd
-WorkerController -> startCmd : <<create>>(\n   workerStatus \n   workerThreadProgress)
+WorkerController -> startCmd : <<create>>(\n   workerThreadProgress)
 activate WorkerController #gray
 activate startCmd
-WorkerController <<- startCmd : startCmd
+WorkerController <<- startCmd : //startCmd//
 deactivate startCmd
 deactivate WorkerController #gray
 WorkerController -> commandQueue: enqueue(startCmd)
@@ -60,7 +52,7 @@ deactivate commandQueue
 deactivate WorkerController #gray
 
 note over commandQueue: [startCmd]
-controllerThread <<- commandQueue: startCmd
+controllerThread <<- commandQueue: //startCmd//
 deactivate commandQueue
 deactivate controllerThread #gray
 
@@ -71,13 +63,6 @@ controllerThread -> startCmd: execute()
 activate startCmd #cyan
 activate controllerThread #gray
 
-startCmd -> workerStatus: get()
-activate workerStatus #cyan
-activate startCmd #gray
-startCmd <<- workerStatus
-deactivate workerStatus
-deactivate startCmd #gray
-
 startCmd -> workerThreadProgress: get()
 activate workerThreadProgress #cyan
 activate startCmd #gray
@@ -85,11 +70,7 @@ startCmd <<- workerThreadProgress
 deactivate workerThreadProgress
 deactivate startCmd #gray
 
-alt ( workerStatus == init || stopped ) && ( workerThreadProgress == END )
-	note over workerThreadProgress: END
-
-	note right of startCmd: reset worker thread if not active 
-
+alt workerThreadProgress == Init || Stopped
 	startCmd -> workerThreadProgress: reset(STARTING)
 	activate workerThreadProgress #cyan
 	activate startCmd #gray
@@ -118,23 +99,10 @@ alt ( workerStatus == init || stopped ) && ( workerThreadProgress == END )
 	deactivate workerThreadProgress
 	deactivate workerThread #gray
 	
-	alt workerThreadProgress == TERMINATE
-		hnote over workerThread: exit thread loop and terminate \n if workerThreadProgress == TERMINATE	
-	end
-		
 	alt workerThreadProgress == STARTING		
-		workerThread -> workerStatus: set(starting)
-		activate workerStatus #orange
-		activate workerThread #gray
-		workerThread <<- workerStatus
-		deactivate workerStatus
-		deactivate workerThread #gray
-		note over workerStatus: starting
-		workerThread -> WorkerFactory : createWorker(workerController, config)
+		workerThread -> WorkerFactory: create worker
 		activate WorkerFactory #orange
 		activate workerThread #gray
-
-		create worker
 		WorkerFactory -> worker : <<create>>
 		activate worker #orange
 		activate WorkerFactory #gray
@@ -157,13 +125,6 @@ alt ( workerStatus == init || stopped ) && ( workerThreadProgress == END )
 		activate workerThread #gray
 		note over workerThreadProgress: RUNNING
 
-		workerThread -> workerStatus: set(running)
-		activate workerStatus #orange
-		activate workerThread #gray
-		workerThread <<- workerStatus
-		deactivate workerStatus
-		deactivate workerThread #gray
-		note over workerStatus: running
 	end
 		
 	startCmd <<- workerThreadProgress
@@ -195,88 +156,66 @@ deactivate worker #gray
 == finish worker ==
 
 workerThread <<- worker
+deactivate workerThread #gray
 deactivate worker
-deactivate workerThread #gray
 
-workerThread -> workerThreadProgress: set(CLEANUP)
-activate workerThreadProgress #orange
-activate workerThread #gray
-workerThread <<- workerThreadProgress
-deactivate workerThreadProgress
-deactivate workerThread #gray
-note over workerThreadProgress: CLEANUP
-
-workerThread -> workerStatus: set(stopping)
-activate workerStatus #orange
-activate workerThread #gray
-workerThread <<- workerStatus
-deactivate workerStatus
-deactivate workerThread #gray
-note over workerStatus: stopping
-		
-workerThread -> WorkerController: intermediateContinueCheck()
+workerThread -> WorkerController: stopped = !intermediateContinueCheck()
 activate WorkerController #orange
 activate workerThread #gray
 workerThread <<- WorkerController
 deactivate WorkerController
 deactivate workerThread #gray
 
-workerThread -> worker: <<destroy>>
-activate worker #orange
-activate workerThread #gray
-|||
-workerThread <<- worker
-deactivate worker
-deactivate workerThread #gray
-destroy worker
-
-alt worker finished normally: intermediateContinueCheck == true
-	workerThread -> workerStatus: set(finished)
-	activate workerStatus #orange
-	activate workerThread #gray
-	workerThread <<- workerStatus
-	deactivate workerStatus
-	deactivate workerThread #gray
-	note over workerStatus: finished
-
-else worker was stopped: intermediateContinueCheck == false	
-	workerThread -> workerStatus: set(stopped)
-	activate workerStatus #orange
-	activate workerThread #gray
-	workerThread <<- workerStatus
-	deactivate workerStatus
-	deactivate workerThread #gray
-	note over workerStatus: stopped
-
-else exception (e.g. runtime_error, interrupt, ...)
-	workerThread -> workerStatus: set(error)
-	activate workerStatus #orange
-	activate workerThread #gray
-	workerThread <<- workerStatus
-	deactivate workerStatus
-	deactivate workerThread #gray
-	note over workerStatus: error
-
-end	
-
-workerThread -> workerThreadProgress: set(END)
+workerThread -> workerThreadProgress: set(Cleanup)
 activate workerThreadProgress #orange
 activate workerThread #gray
 workerThread <<- workerThreadProgress
 deactivate workerThreadProgress
 deactivate workerThread #gray
-note over workerThreadProgress: END
-hnote over workerThreadProgress #orangered
-	All commands (except of terminate)
-	will throw an exception
-	until workerThreadProgress is reset.
-end note
+note over workerThreadProgress: Cleanup	
 
-hnote over workerThread: thread loop
-workerThread -> workerThreadProgress: wait_while(END)
-activate workerThreadProgress #orange
+workerThread -> worker: <<destroy>>
+activate worker #orange
 activate workerThread #gray
 |||
 ...
+workerThread <<- worker
+deactivate worker
+deactivate workerThread #gray
+destroy worker
+
+alt on error
+	workerThread -> workerThreadProgress: set(Error)
+	activate workerThreadProgress #orange
+	activate workerThread #gray
+	workerThread <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+	note over workerThreadProgress: Error	
+else stopped == true
+	workerThread -> workerThreadProgress: set(Stopped)
+	activate workerThreadProgress #orange
+	activate workerThread #gray
+	workerThread <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+	note over workerThreadProgress: Stopped	
+else else
+	workerThread -> workerThreadProgress: set(Finished)
+	activate workerThreadProgress #orange
+	activate workerThread #gray
+	workerThread <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+	note over workerThreadProgress: Finished	
+end		
 
 
+hnote over workerThread: thread loop
+workerThread -> workerThreadProgress: wait_while(...)
+activate workerThreadProgress #orange
+activate workerThread #gray
+hnote over workerThreadProgress: wait for change of \n workerThreadProgress
+
+|||
+...

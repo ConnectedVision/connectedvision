@@ -514,6 +514,7 @@ protected:
 				case WorkerThreadProgress::Terminating:
 				case WorkerThreadProgress::Terminated:
 					// exit if terminate flag is set
+					this->workerThreadProgress.set( WorkerThreadProgress::Terminated )
 					return;
 
 				case WorkerThreadProgress::Starting:
@@ -541,6 +542,7 @@ protected:
 							error = true;
 							std::cout << "[Exception in worker.run()] " << e.what();
 						}
+						bool stopped = !this->intermediateContinueCheck();	// was worker forced to stop?
 
 						// clean up worker -> destroy worker
 						this->workerThreadProgress = WorkerThreadProgress::Cleanup;
@@ -548,7 +550,6 @@ protected:
 
 
 						// set status
-						bool stopped = !this->intermediateContinueCheck();	// was worker forced to stop?
 						if ( error )
 							progress = WorkerThreadProgress::Error;
 						else if ( stopped )
