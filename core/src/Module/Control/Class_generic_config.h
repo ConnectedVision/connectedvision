@@ -57,9 +57,9 @@ public:
 	virtual boost::shared_ptr<Class_generic_config_chain> getSubConfigConnectionByInputPin( const pinID_t& pinID ) const;
 
 	// dummy configID getter / setter
-	virtual const id_t getconst_configID() const { return ID_NULL; } // the generic config class does not use the configID
-	virtual id_t get_configID() const { return ID_NULL; } // the generic config class does not use the configID
-	virtual void set_configID(id_t configID) { /* do nothing */ }
+	virtual const id_t getconst_configID() const { return getconst_id(); } // map id to configID
+	virtual id_t get_configID() const { return get_id(); } // map id to configID
+	virtual void set_configID(id_t configID) { set_id(configID); } // map id to configID
 
 
 	/**

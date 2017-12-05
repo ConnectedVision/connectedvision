@@ -167,8 +167,10 @@ DataRange Store_SQLite_BaseClass<TDataClass>::getDataRange() const
 
 	// build SQL statement
 	std::string sql =	"SELECT COUNT(DISTINCT(id)) AS count, MIN(timestamp) AS startTimestamp, MAX(timestamp) AS lastTimestamp FROM "
-						+ this->tableName + " WHERE configID=?1";
+						+ this->tableName;
 
+	if ( this->configID != ID_NULL )
+		sql += " WHERE configID=?1";
 
 	// prepare statement
 	const char *tail;
@@ -176,7 +178,8 @@ DataRange Store_SQLite_BaseClass<TDataClass>::getDataRange() const
 	if (error == SQLITE_OK)
 	{
 		// bind filter
-		sqlite3_bind_text(stmt, 1, this->configID.c_str(), -1, SQLITE_TRANSIENT);
+		if ( this->configID != ID_NULL )
+			sqlite3_bind_text(stmt, 1, this->configID.c_str(), -1, SQLITE_TRANSIENT);
 
 		// read first line
 		// execute SQL
@@ -229,7 +232,8 @@ shared_ptr<const TDataClass> Store_SQLite_BaseClass<TDataClass>::getByID(const i
 {
 	std::vector<Store::FilterEntry> filterList;
 	filterList.push_back( Store::FilterEntry("id", Store::Op::EQUAL, IDToStr(id) ) );
-	filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+	if ( this->configID != ID_NULL )
+		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 	std::vector< shared_ptr<const TDataClass> > list( getByFilter(filterList) );
 	
 	if ( list.size() == 1 )
@@ -253,7 +257,8 @@ template <IConnectedVisionDataClass TDataClass>
 std::vector< shared_ptr<const TDataClass> > Store_SQLite_BaseClass<TDataClass>::getByIndexRange(const int64_t start, const int64_t end)
 {
 	std::vector< Store::FilterEntry > filterList;
-	filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+	if ( this->configID != ID_NULL )
+		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 	std::vector< Store::SortEntry > sortList;
 	return getByFilter(filterList, sortList, start, (end - start +1) );
 }
@@ -262,7 +267,8 @@ template <IConnectedVisionDataClass TDataClass>
 std::vector< shared_ptr<const TDataClass> > Store_SQLite_BaseClass<TDataClass>::getByTimestamp(const timestamp_t timestamp)
 {
 	std::vector< Store::FilterEntry > filterList;
-	filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+	if ( this->configID != ID_NULL )
+		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 	filterList.push_back( Store::FilterEntry("timestamp", Store::Op::EQUAL, timestamp) );
 
 	return this->getByFilter(filterList);
@@ -272,7 +278,8 @@ template <IConnectedVisionDataClass TDataClass>
 std::vector< shared_ptr<const TDataClass> > Store_SQLite_BaseClass<TDataClass>::getBeforeTimestamp(const timestamp_t timestamp)
 {
 	std::vector< Store::FilterEntry > filterList;
-	filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+	if ( this->configID != ID_NULL )
+		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 	filterList.push_back( Store::FilterEntry("timestamp", Store::Op::SMALLER, timestamp) );
 
 	std::vector< Store::SortEntry > sortList;
@@ -284,7 +291,8 @@ std::vector< shared_ptr<const TDataClass> > Store_SQLite_BaseClass<TDataClass>::
 		timestamp_t objTime = objs[0]->getconst_timestamp();
 
 		filterList.clear();
-		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+		if ( this->configID != ID_NULL )
+			filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 		Store::FilterEntry filterTimestamp("timestamp", Store::Op::EQUAL, objTime);
 		filterList.push_back( filterTimestamp );
 		objs = getByFilter(filterList, sortList);
@@ -297,7 +305,8 @@ template <IConnectedVisionDataClass TDataClass>
 std::vector< shared_ptr<const TDataClass> > Store_SQLite_BaseClass<TDataClass>::getAfterTimestamp(const timestamp_t timestamp)
 {
 	std::vector< Store::FilterEntry > filterList;
-	filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+	if ( this->configID != ID_NULL )
+		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 	filterList.push_back( Store::FilterEntry("timestamp", Store::Op::GREATER, timestamp) );
 
 	std::vector< Store::SortEntry > sortList;
@@ -309,7 +318,8 @@ std::vector< shared_ptr<const TDataClass> > Store_SQLite_BaseClass<TDataClass>::
 		timestamp_t objTime = objs[0]->getconst_timestamp();
 
 		filterList.clear();
-		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+		if ( this->configID != ID_NULL )
+			filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 		Store::FilterEntry filterTimestamp("timestamp", Store::Op::EQUAL, objTime);
 		filterList.push_back( filterTimestamp );
 		objs = getByFilter(filterList, sortList);
@@ -322,7 +332,8 @@ template <IConnectedVisionDataClass TDataClass>
 std::vector< shared_ptr<const TDataClass> > Store_SQLite_BaseClass<TDataClass>::getAllInTimespan(const timestamp_t start, const timestamp_t end)
 {
 	std::vector< Store::FilterEntry > filterList;
-	filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+	if ( this->configID != ID_NULL )
+		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 	filterList.push_back( Store::FilterEntry("timestamp", Store::Op::GREATEREQUAL, start) );
 	filterList.push_back( Store::FilterEntry("timestamp", Store::Op::SMALLEREQUAL, end) );
 
@@ -333,7 +344,8 @@ template <IConnectedVisionDataClass TDataClass>
 void Store_SQLite_BaseClass<TDataClass>::deleteAll()
 {
 	std::vector< Store::FilterEntry > filterList;
-	filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+	if ( this->configID != ID_NULL )
+		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 
 	this->deleteByFilter(filterList);
 }
@@ -342,7 +354,8 @@ template <IConnectedVisionDataClass TDataClass>
 void Store_SQLite_BaseClass<TDataClass>::deleteByID(const id_t& id)
 {
 	std::vector< Store::FilterEntry > filterList;
-	filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
+	if ( this->configID != ID_NULL )
+		filterList.push_back( Store::FilterEntry("configID", Store::Op::EQUAL, this->configID) );
 	filterList.push_back( Store::FilterEntry("id", Store::Op::EQUAL, IDToStr(id)) );
 
 	this->deleteByFilter(filterList);
@@ -392,12 +405,17 @@ std::vector<id_t> Store_SQLite_BaseClass<TDataClass>::save_constVector(const std
 		if ( !obj )
 			throw ConnectedVision::runtime_error("try to save NULL object");
 
-		if ( this->configID != obj->getconst_configID() )
+		// check configID
+		if ( this->configID != ID_NULL) // if ringbuffer used for config/status object instead of data object -> omit config id check
 		{
-			throw ConnectedVision::runtime_error( "configID not set correctly for object ID: " + IDToStr(obj->getconst_id()) + 
-										" was set to: " + IDToStr(obj->getconst_configID()) +
-										" should be: " + IDToStr(this->configID) );
+			if ( this->configID != obj->getconst_configID() )
+			{
+				throw ConnectedVision::runtime_error( "configID not set correctly for object ID: " + IDToStr(obj->getconst_id()) + 
+											" was set to: " + IDToStr(obj->getconst_configID()) +
+											" should be: " + IDToStr(this->configID) );
+			}
 		}
+
 		if ( obj->getconst_id() == ID_NULL )
 		{
 			throw ConnectedVision::runtime_error( "id was not set");
@@ -436,18 +454,22 @@ std::vector<id_t> Store_SQLite_BaseClass<TDataClass>::save_constVector(const std
 			placeholderStr += ",?";
 
 		// search for existing objects
-		sql = "SELECT DISTINCT id, " + this->objectKey() + " FROM " + this->tableName + " WHERE configID = ? AND id IN (" + placeholderStr + ")";
+		sql = "SELECT DISTINCT id, " + this->objectKey() + " FROM " + this->tableName + " WHERE id IN (" + placeholderStr + ")";
+		if ( this->configID != ID_NULL )
+			sql += " AND configID = ?";
 		error = sqlite3_prepare_v2( db , sql.c_str(), -1, &stmt, &tail);
 		if (error != SQLITE_OK)
 		{
 			throw ConnectedVision::runtime_error( sqlite3_errmsg( db ) );
 		}
-		sqlite3_bind_text(stmt, 1, this->configID.c_str(), -1, SQLITE_TRANSIENT);
-		for( unsigned int i = 0; i < objs.size(); i++ )
+		unsigned int i = 0;
+		for(; i < objs.size(); i++ )
 		{
 			auto const &obj = objs[i];
-			sqlite3_bind_text(stmt, i+2, obj->getconst_id().c_str(), -1, SQLITE_TRANSIENT);
+			sqlite3_bind_text(stmt, i+1, obj->getconst_id().c_str(), -1, SQLITE_TRANSIENT);
 		}
+		if ( this->configID != ID_NULL )
+			sqlite3_bind_text(stmt, i+1, this->configID.c_str(), -1, SQLITE_TRANSIENT);
 		std::map<id_t, int64_t> objStoreKeyMap;
 		while ( sqlite3_step(stmt) == SQLITE_ROW )
 		{
@@ -459,18 +481,24 @@ std::vector<id_t> Store_SQLite_BaseClass<TDataClass>::save_constVector(const std
 
 
 		// delete old elements
-		sql = "DELETE FROM " + this->tableName + " WHERE configID = ? AND id IN (" + placeholderStr + ")";
+		sql = "DELETE FROM " + this->tableName + " WHERE id IN (" + placeholderStr + ")";
+		if ( this->configID != ID_NULL )
+			sql += " AND configID = ?";
+
 		error = sqlite3_prepare_v2( db , sql.c_str(), -1, &stmt, &tail);
 		if (error != SQLITE_OK)
 		{
 			throw ConnectedVision::runtime_error( sqlite3_errmsg( db ) );
 		}
-		sqlite3_bind_text(stmt, 1, this->configID.c_str(), -1, SQLITE_TRANSIENT);
-		for( unsigned int i = 0; i < objs.size(); i++ )
+		i = 0;
+		for(; i < objs.size(); i++ )
 		{
 			auto const &obj = objs[i];
-			sqlite3_bind_text(stmt, i+2, obj->getconst_id().c_str(), -1, SQLITE_TRANSIENT);
+			sqlite3_bind_text(stmt, i+1, obj->getconst_id().c_str(), -1, SQLITE_TRANSIENT);
 		}
+		if ( this->configID != ID_NULL )
+			sqlite3_bind_text(stmt, i+1, this->configID.c_str(), -1, SQLITE_TRANSIENT);
+
 		error = sqlite3_step(stmt);
 		sqlite3_finalize(stmt);
 		if (error != SQLITE_DONE)

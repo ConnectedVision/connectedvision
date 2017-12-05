@@ -59,7 +59,7 @@ namespace ConnectedVision
 		*	uses DataAllocator_Primitive (new / delete for every object request)
 		*/
 		Store_Ringbuffer(
-			const ConnectedVision::id_t& configID,	///< [in] configID
+			const ConnectedVision::id_t& configID,	///< [in] configID (if configID == ID_NULL store is used for all configs in table)
 			const int64_t size		///< [in] number of maximal elements in ring buffer
 		);
 
@@ -67,7 +67,7 @@ namespace ConnectedVision
 		* constructor
 		*/
 		Store_Ringbuffer(
-			const ConnectedVision::id_t& configID,	///< [in] configID
+			const ConnectedVision::id_t& configID,	///< [in] configID (if configID == ID_NULL store is used for all configs in table)
 			const int64_t size, 												///< [in] number of maximal elements in ring buffer
 			ConnectedVision::shared_ptr< IDataAllocator<TDataClass> > allocator	///< [in] data allocator / factory and deallocator / reuse
 		);

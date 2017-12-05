@@ -44,7 +44,7 @@ namespace ConnectedVision
 		 * construct and initialise store
 		 */
 		Store_SQLite_BaseClass(
-			const id_t& configID,						///< [in] config ID
+			const id_t& configID,						///< [in] config ID (if configID == ID_NULL store is used for all configs in table)
 			DBConnection& db,							///< [in] DB connection object
 			const std::string &tableName, 				///< [in] name of table in DB
 			const std::vector<std::string> columnDesc 	///< [in] array of column names

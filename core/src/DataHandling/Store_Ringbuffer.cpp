@@ -174,11 +174,14 @@ ConnectedVision::id_t Store_Ringbuffer<TDataClass>::save_const( const ConnectedV
 		throw ConnectedVision::runtime_error("object ID is not set");
 
 	// check configID
-	if ( this->configID != data->getconst_configID() )
+	if ( this->configID != ID_NULL) // if ringbuffer used for config/status object instead of data object -> omit config id check
 	{
-		throw ConnectedVision::runtime_error( "configID not set correctly for object ID: " + IDToStr(data->getconst_id()) + 
-									" was set to: " + IDToStr(data->getconst_configID()) +
-									" should be: " + IDToStr(this->configID) );
+		if ( this->configID != data->getconst_configID() )
+		{
+			throw ConnectedVision::runtime_error( "configID not set correctly for object ID: " + IDToStr(data->getconst_id()) + 
+										" was set to: " + IDToStr(data->getconst_configID()) +
+										" should be: " + IDToStr(this->configID) );
+		}
 	}
 
 	// lock data container
