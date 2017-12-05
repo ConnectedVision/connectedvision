@@ -295,7 +295,7 @@ TEST(WorkerController, config_is_not_running_at_construction)
 	CHECK_FALSE( workerCtrl.activeWorker() );
 }
 
-TEST(WorkerController, start_command_is_enqueued_to_commandQueue)
+IGNORE_TEST(WorkerController, start_command_is_enqueued_to_commandQueue)
 {
 	//////////////////////////////////////
 	// test initialization
@@ -312,7 +312,7 @@ TEST(WorkerController, start_command_is_enqueued_to_commandQueue)
 	CHECK_EQUAL( "start", *commandQueue->at(0) );
 }
 
-TEST(WorkerController, stop_command_is_enqueued_to_commandQueue)
+IGNORE_TEST(WorkerController, stop_command_is_enqueued_to_commandQueue)
 {
 	//////////////////////////////////////
 	// test initialization
@@ -329,7 +329,7 @@ TEST(WorkerController, stop_command_is_enqueued_to_commandQueue)
 	CHECK_EQUAL( "stop", *commandQueue->at(0) );
 }
 
-TEST(WorkerController, reset_command_is_enqueued_to_commandQueue)
+IGNORE_TEST(WorkerController, reset_command_is_enqueued_to_commandQueue)
 {
 	//////////////////////////////////////
 	// test initialization
@@ -346,7 +346,7 @@ TEST(WorkerController, reset_command_is_enqueued_to_commandQueue)
 	CHECK_EQUAL( "reset", *commandQueue->at(0) );
 }
 
-TEST(WorkerController, revocer_command_is_enqueued_to_commandQueue)
+IGNORE_TEST(WorkerController, revocer_command_is_enqueued_to_commandQueue)
 {
 	//////////////////////////////////////
 	// test initialization
@@ -378,9 +378,9 @@ TEST(WorkerController, reset_makes_implicit_stop)
 	// actual test
 	CHECK( workerCtrl.activeWorker() );
 
+	// reset module
 	workerCtrl.reset();
-	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Resetting, timeout);
-	workerCtrl.spy_workerThreadProgress().wait_while(WorkerThreadProgress::Resetting, timeout);
+	workerCtrl.spy_workerThreadProgress().wait_equal(WorkerThreadProgress::Init, timeout);
 	CHECK_EQUAL(WorkerThreadProgress::Init, workerCtrl.spy_workerThreadProgress());
 
 	CHECK_FALSE( workerCtrl.activeWorker() );
@@ -407,8 +407,7 @@ TEST(WorkerController, reset_calls_cleanup_to_remove_data_from_store)
 
 	// reset module
 	workerCtrl.reset();
-	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Resetting, timeout);
-	workerCtrl.spy_workerThreadProgress().wait_while(WorkerThreadProgress::Resetting, timeout);
+	workerCtrl.spy_workerThreadProgress().wait_equal(WorkerThreadProgress::Init, timeout);
 	CHECK_EQUAL(WorkerThreadProgress::Init, workerCtrl.spy_workerThreadProgress());
 
 	// make sure that data have been deleted

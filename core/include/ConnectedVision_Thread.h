@@ -238,6 +238,34 @@ namespace ConnectedVision {
 			}
 		}
 
+
+		/**
+		* wait for state to become a given value (thread safe)
+		* @thread-safe
+		*
+		* This function waits while the internal state is not equal to the given state.
+		*
+		* @return true if state was changed / false on timeout
+		*/
+		bool wait_equal(
+			const T& state,				///< state to be checked
+			const int64_t timeout = 0	///< timeout in milliseconds (default: wait for ever)
+		) const
+		{
+			boost::unique_lock<boost::mutex> lock(this->mutex);
+			if ( this->value == state )
+				return true;	// the state is already reached
+			if ( timeout )
+			{
+				return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&](){ return (this->value == state); });
+			}
+			else
+			{
+				this->cond.wait(lock, [&](){ return (this->value == state); });
+				return true;	// we have no timeout, so every return means that the state has been reached
+			}
+		}
+
 	protected:
 		mutable std__condition_variable cond;
 		mutable std__mutex mutex;

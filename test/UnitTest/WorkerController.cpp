@@ -272,7 +272,8 @@ public:
 	bool activeWorker() const
 	{
 		auto progress = this->workerThreadProgress.get();
-		return ( progress >= WorkerThreadProgress::Starting && progress <= WorkerThreadProgress::Stopped );
+		bool active = progress >= WorkerThreadProgress::Starting && progress < WorkerThreadProgress::Stopped;
+		return ( active );
 	}
 
 
@@ -503,7 +504,7 @@ protected:
 				case WorkerThreadProgress::Terminating:
 				case WorkerThreadProgress::Terminated:
 					// exit if terminate flag is set
-					progress = WorkerThreadProgress::Terminated; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
+					progress = WorkerThreadProgress::Terminated; this->workerThreadProgress = progress; // update internal progress and set workerThreadProgress
 					return;
 
 				case WorkerThreadProgress::Starting:

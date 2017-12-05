@@ -308,7 +308,6 @@ TEST(thread_safe_progress, wait_while_should_timeout)
 	// test initialization
 	ConnectedVision::thread_safe_progress<int> a(1);
 	int timeout = 10;
-	int tol = 50;
 
 	//////////////////////////////////////
 	// actual test
@@ -319,7 +318,39 @@ TEST(thread_safe_progress, wait_while_should_timeout)
 	auto end = boost::chrono::high_resolution_clock::now();
 	auto runtime = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start).count();
 	
-	CHECK( runtime < (timeout + tol) );
+	CHECK( runtime > timeout );
+}
+
+TEST(thread_safe_progress, wait_equal_should_return_immediately_if_current_state)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVision::thread_safe_progress<int> a(10);
+
+	//////////////////////////////////////
+	// actual test
+	a.wait_equal(10); // does match current state
+
+	CHECK( true );
+}
+
+TEST(thread_safe_progress, wait_equal_should_timeout)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVision::thread_safe_progress<int> a(1);
+	int timeout = 10;
+
+	//////////////////////////////////////
+	// actual test
+	auto start = boost::chrono::high_resolution_clock::now();
+
+	a.wait_equal(10, timeout);
+
+	auto end = boost::chrono::high_resolution_clock::now();
+	auto runtime = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start).count();
+	
+	CHECK( runtime > timeout );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
