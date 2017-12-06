@@ -150,14 +150,49 @@ private:
 		Decoder();
 		virtual ~Decoder();
 
-		void registerContainterDemuxerParent(ContainerDemuxer *pContainerDemuxer);
+		/**
+		* registers the ContainerDemuxer instance
+		* @param pContainerDemuxer pointer to the ContainerDemuxer instance
+		*/
+		void registerContainerDemuxerParent(ContainerDemuxer *pContainerDemuxer);
+
+		/**
+		* sets the decoder params
+		* @param decoderParams input DecoderParams struct with the parameter values to use
+		*/
 		void setDecoderParams(const DecoderParams &decoderParams);
-		void open();		
+
+		/**
+		* opens the decoder
+		*/
+		void open();
+
+		/**
+		* initializes the filters (e.g. for deinterlacing)
+		*/
 		void initFilters();
+
+		/**
+		* frees the filters (e.g. for deinterlacing)
+		*/
 		void freeFilters();
-		void decode(AVFrame *pFrame);
+
+		/**
+		* decodes current video packet into frame
+		* @param pFrame pointer to an AVFrame (will be altered) and contain the new frame data on success
+		* @returns error return value of avcodec_receive_frame() function
+		*/
+		int decode(AVFrame *pFrame);
+
+		/**
+		* closes the decoder
+		*/
 		void close();
 
+		/**
+		* get the codec context of the codec used inside the container
+		* @returns pointer to the AVCodecContext of the codec used inside the container
+		*/
 		AVCodecContext* getCodecCtx() const { return(codecCtx); };
 
 	private:
@@ -183,71 +218,77 @@ private:
 		virtual ~ContainerDemuxer();
 
 		/**
-		*
-		* registers the used decoder instance
-		*		
+		* registers the parent VideoImport_FFmpeg instance		
+		* @param pParent pointer to the parent VideoImport_FFmpeg instance
+		*/
+		void registerParentInstance(VideoImport_FFmpeg *pParent);
+
+		VideoImport_FFmpeg* getParentInstance();
+
+		/**
+		* registers the used decoder instance	
 		* @param pDecoder pointer to the used decoder
-		*
 		*/
 		void registerDecoder(Decoder *pDecoder);
 
 		/**
-		*
-		* opens a file (container) for reading
-		*		
+		* opens a file (container) for reading	
 		* @param strFilename full path name of the file to open
-		*
 		*/
 		void open(const char *strFilename);
 
 		/**
-		*
-		* reads video frame or audio packet (what comes first) at a given timestamp
-		*
+		* reads video frame packet at a given timestamp
 		* @param [in] timestamp the timestamp of the desired frame
-		* @param [in] frameDist the frame distance in microseconds
 		* @param [out] decodedFrame the decoded frame
 		* @returns true if a new frame was found
 		*/
-		bool goToFrame(int64_t timestamp, int64_t frameDist, AVFrame *decodedFrame);
+		bool goToFrame(int64_t timestamp, AVFrame *decodedFrame);
 
 		/**
-		*
 		* reads the next video frame or audio packet (what comes first)
-		*
 		* @param [out] decodedFrame the decoded frame
 		* @returns true if a new frame was found
 		*/
 		bool nextFrame(AVFrame *decodedFrame);
 
 		/** 
-		*
 		* cleans up and destroys the given demux instance
-		*
 		*/
 		void close();
 
+		/**
+		* get the format context of the container
+		* @returns pointer to the AVFormatContext of the opened container
+		*/
 		AVFormatContext* getFormatCtx() const { return(pFormatCtx); };
 
+		/**
+		* get the latest processed video packet
+		* @returns the latest processed video packet
+		*/
 		AVPacket getVideoPacket() const { return(packetVideo); };
 
 	private:
 		/**
 		*
-		* reads the nearest keyframe video frame at a given timestamp (first backward search, then if no keyframe was found forward search)
+		* seeks the nearest keyframe video frame at a given timestamp (first backward search, then if no keyframe was found forward search)
 		*
 		* @param [in] timestamp the timestamp used for searching next key frame
 		* @returns true if a frame was found
 		*/
-		bool getKeyFrame(int64_t timestamp);
+		bool seekKeyFrame(int64_t timestamp);
 
 		/**
 		*
 		* reads the next video frame or audio packet (what comes first)
+		*		
+		* @return returns true on successful read of video frame
 		*
-		* @returns true if a new frame was found
 		*/
 		bool readNext();
+
+		VideoImport_FFmpeg *pParent;
 
 		Decoder *pDecoder;
 
@@ -259,18 +300,19 @@ private:
 	};
 
 	Decoder decoder;
-	ContainerDemuxer containerDemuxer;	
+	ContainerDemuxer containerDemuxer;
 	
 	AVFrame decodedFrame;
 
 	int64_t StartTime;
 	int64_t EndTime;
 	int64_t LengthTime;
-	double fps;
+	double fps;	
 	int64_t numberOfFrames;
-	int64_t frameDist;
+	double frameDist;
 	int64_t actual_timestamp;
-	int64_t latestFrameRequested;
+	int64_t latestFrameIndexRequested;
+	int streamIndexVideo;
 
 	AVFrame *picYUV420;
 	AVFrame *picBGR24;
@@ -279,7 +321,6 @@ private:
 	SwsContext *cSwScaleYUV420P;
 	SwsContext *cSwScaleBGR24;
 	SwsContext *cSwScaleRGB24;
-
 
 	void convertFrame(AVFrame *frame, int numCspDesired, VideoImport_FFmpeg_Frame *convertedFrame);
 };

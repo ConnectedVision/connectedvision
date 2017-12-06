@@ -44,8 +44,6 @@ public:
 	virtual void VideoImport_goToFrameNumber(const id_t configID, const int64_t index, unsigned int colorspace);
 	virtual void VideoImport_goToTimestamp(const id_t configID, const int64_t timestamp, unsigned int colorspace);
 
-	virtual void prepareVideoHandle(const Class_generic_config &config);	
-
 	static std::string FileMetadataEncoder(const id_t configID, const VideoImport* videoImport, const unsigned int colorSpace);
 	static std::string FrameMetadataEncoder(const id_t configID, const VideoImport* videoImport, const unsigned int colorSpace);
 	static std::string RAWEncoder(const id_t configID, const VideoImport* videoImport, const unsigned int colorSpace);
