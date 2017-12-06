@@ -38,16 +38,13 @@ protected:
 	void freeResources(); ///< function used to free up resources
 	virtual void run();
 
-	Class_RTPImporter_params params;
-
 	SwsContext *imgConvertCtx;
 	AVFormatContext* formatCtx;
 	AVCodecContext* codecCtx;
-	int videoStreamIndex;
-
-	boost::circular_buffer<AVPacket> rcvdGOPs;
-	boost::mutex rcvdGOPs_access;
-	boost::condition_variable rcvdGOPs_notEmpty;
+	uint8_t* pictureDst;
+	uint8_t* pictureSrc;
+	AVFrame* pic;
+	AVFrame* picrgb;
 };
 
 } // namespace RTPImporter
