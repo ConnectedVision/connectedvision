@@ -15,7 +15,9 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
+#include <ILogging.h>
 #include "ConnectedVision_Exceptions.h"
+
 
 namespace ConnectedVision {
 
@@ -91,12 +93,14 @@ namespace ConnectedVision {
 		*/
 		thread_safe_progress<T>(
 			const T& val	///< initial value
-		) : value(val), reset_count(0) {}
+		) : value(val), reset_count(0) {
+		}
 
 		/**
 		* copy constructor
 		*/
-		thread_safe_progress<T>(const thread_safe_progress<T>& other) : value(other.get()), reset_count(0) {}
+		thread_safe_progress<T>(const thread_safe_progress<T>& other) : value(other.get()), reset_count(0) {
+		}
 
 		/**
 		* assignment
@@ -187,8 +191,10 @@ namespace ConnectedVision {
 			// see http://blog.smartbear.com/c-plus-plus/c11-tutorial-lambda-expressions-the-nuts-and-bolts-of-functional-programming/
 
 			std__unique_lock lock(this->mutex);
-			if ( !(this->value < target) )
+			if ( this->value >= target )
+			{
 				return true;	// the state is reached already
+			}
 			auto _reset_count = this->reset_count;
 			if ( timeout )
 			{
@@ -196,7 +202,8 @@ namespace ConnectedVision {
 				{ 
 					if ( this->reset_count != _reset_count )
 						throw sequence_exception("thread_safe_progress::wait_until() progress was reset while waiting for a given value to be reached");
-					return !(this->value < target); 
+					
+					return (this->value >= target); 
 				});
 			}
 			else
@@ -205,8 +212,10 @@ namespace ConnectedVision {
 				{ 
 					if ( this->reset_count != _reset_count )
 						throw sequence_exception("thread_safe_progress::wait_until() progress was reset while waiting for a given value to be reached");
-					return !(this->value < target); 
+					
+					return (this->value >= target); 
 				});
+				
 				return true;	// we have no timeout, so every return means that the state was reached
 			}
 		}
@@ -226,7 +235,9 @@ namespace ConnectedVision {
 		{
 			boost::unique_lock<boost::mutex> lock(this->mutex);
 			if ( this->value != state )
+			{
 				return true;	// the state is changed already
+			}
 			if ( timeout )
 			{
 				return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&](){ return (this->value != state); });
@@ -234,6 +245,7 @@ namespace ConnectedVision {
 			else
 			{
 				this->cond.wait(lock, [&](){ return (this->value != state); });
+				
 				return true;	// we have no timeout, so every return means that the state was changed
 			}
 		}
@@ -254,7 +266,10 @@ namespace ConnectedVision {
 		{
 			boost::unique_lock<boost::mutex> lock(this->mutex);
 			if ( this->value == state )
+			{
+				
 				return true;	// the state is already reached
+			}
 			if ( timeout )
 			{
 				return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&](){ return (this->value == state); });
@@ -262,6 +277,7 @@ namespace ConnectedVision {
 			else
 			{
 				this->cond.wait(lock, [&](){ return (this->value == state); });
+				
 				return true;	// we have no timeout, so every return means that the state has been reached
 			}
 		}

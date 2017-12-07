@@ -92,6 +92,12 @@ bool operator< (const TestProgressDataClass &a, const TestProgressDataClass &b)
 {
 	return a() < b();
 }
+std::ostream& operator<< (std::ostream& os, const TestProgressDataClass& data)
+{  
+    os << data();
+    return os;  
+}
+
 boost::atomic<int> TestProgressDataClass::constructorCount(0);
 boost::atomic<int> TestProgressDataClass::copyConstructorCount(0);
 boost::atomic<int> TestProgressDataClass::moveConstructorCount(0);
