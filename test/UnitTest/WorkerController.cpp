@@ -4,8 +4,8 @@
 */
 
 #include <boost/thread/thread.hpp>
+#include <boost/thread/thread_guard.hpp> 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/thread/thread.hpp> 
 
 #include <unordered_set>
 #include "ConnectedVision_Thread.h"
@@ -28,10 +28,8 @@ namespace Module {
 
 static std__mutex DEBUG_mutex;
 
-//#define DEBUG(msg)	 {std::cout <<__FILE__<<"@"<< __LINE__<<": " << msg << std::endl << std::flush;}
-#define DEBUG(msg)	 { std__unique_lock DEBUG_lock(DEBUG_mutex); std::cout << boost::lexical_cast<std::string>(boost::this_thread::get_id()) << "@" << std::dec << __LINE__ <<": " << msg << std::endl << std::flush;}
-//#define DEBUG()
-#define TEST_MUTEX {int xxx; for (xxx = 0; xxx < 10000000; xxx++) if ( this->workerThreadProgress.mutex.try_lock() ) { this->workerThreadProgress.mutex.unlock(); break; } if ( xxx == 10000000 ) DEBUG("mutex locked !!!");}
+#define DEBUG(msg)	 
+//#define DEBUG(msg)	 { std__unique_lock DEBUG_lock(DEBUG_mutex); std::cout << boost::lexical_cast<std::string>(boost::this_thread::get_id()) << "@" << std::dec << __LINE__ <<": " << msg << std::endl << std::flush;}
 
 /**
 
@@ -503,7 +501,7 @@ public:
 	{
 		// save config and get shared pointer to const config
 		auto config = this->saveConfig(configOrig, module);
-		
+
 		// init worker manager
 		this->init(config->getconst_configID());
 	}
@@ -511,25 +509,18 @@ public:
 
 	virtual ~WorkerController()
 	{
-// TODO		DEBUG("<enter>");
 		// terminate controller and worker thread
 		auto stopCmd = ConnectedVision::make_shared<WorkerCommand::CommandStop>( this->workerThreadProgress, this->workerThread, this->workerTimeout );
 		ConnectedVision::shared_ptr<WorkerCommand::ICommand> terminateCmd = ConnectedVision::make_shared<WorkerCommand::CommandTerminate>( this->workerThreadProgress, this->progressBeforeTermination, stopCmd );
 		commandQueue.push( terminateCmd );
-// TODO		DEBUG("terminateCmd enqued");
 
 		// wait for the threads to terminate before destroying the class
 		// (This should be done before any other clean-up of the destructor.)
-// TODO		DEBUG("workerThread joining ...");
 		this->workerThread.join();
-// TODO		DEBUG("controllerThread joining ...");
 		this->controllerThread.join();
 
 		// remove from instance list
-// TODO		DEBUG("unregisterWorkerInstance");
 		this->module.unregisterWorkerInstance(this->configID, this);
-
-// TODO		DEBUG("<exit>");
 	}
 
 	/**
@@ -734,9 +725,7 @@ protected:
 				auto cmd = this->commandQueue.pop_wait();
 
 				// execute command
-				TEST_MUTEX;
 				cmd->execute();
-				TEST_MUTEX;
 			}
 		}
 		catch (std::exception e)
@@ -753,18 +742,15 @@ protected:
 
 	void workerThreadFunction()
 	{
-		// TODO in workerThread class: make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
-		boost::this_thread::disable_interruption interrupt_disabler;
 
 		// thread loop
 		DEBUG("workerThreadFunction");
 		for(;;)
 		{
 			bool error = false;
-TEST_MUTEX;
 			auto progress = this->workerThreadProgress.get();
 			DEBUG("got: " << progress);
-TEST_MUTEX;			switch (progress)
+			switch (progress)
 			{
 				case WorkerThreadProgress::Undefined:
 				case WorkerThreadProgress::Init:
@@ -784,16 +770,16 @@ TEST_MUTEX;			switch (progress)
 					try
 					{
 						DEBUG("createWorker");
-TEST_MUTEX;			
+						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+						boost::this_thread::disable_interruption interrupt_disabler;
+
 						// create worker
 						auto worker = this->workerFactory->createWorker(*this, this->getConfig());
 						DEBUG("worker created");
-TEST_MUTEX;						// start worker
+						// start worker
 						try
 						{
-TEST_MUTEX;
 							this->workerThreadProgress = WorkerThreadProgress::Running;
-TEST_MUTEX;
 							DEBUG("interrupt_enabler");
 							boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
 							DEBUG("run");
@@ -841,17 +827,27 @@ TEST_MUTEX;
 
 				case WorkerThreadProgress::Resetting:
 					// reset config / delete all data of config
-					module.deleteAllData( this->configID );	// one thread (workerThread) is writing / deleting data
-					progress = WorkerThreadProgress::Init; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
+					{
+						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+						boost::this_thread::disable_interruption interrupt_disabler;
+
+						module.deleteAllData( this->configID );	// one thread (workerThread) is writing / deleting data
+						progress = WorkerThreadProgress::Init; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
+					}
 					break;
 
 				case WorkerThreadProgress::Recovering:
 					// recover config
-					if ( this->module.processConfigRecover( this->configID ) ) 	// one thread (workerThread) is writing / deleting data
-						progress = WorkerThreadProgress::Stopped;
-					else
-						progress = WorkerThreadProgress::Error;
-					this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
+					{
+						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+						boost::this_thread::disable_interruption interrupt_disabler;
+
+						if ( this->module.processConfigRecover( this->configID ) ) 	// one thread (workerThread) is writing / deleting data
+							progress = WorkerThreadProgress::Stopped;
+						else
+							progress = WorkerThreadProgress::Error;
+						this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
+					}
 					break;
 
 
@@ -861,12 +857,8 @@ TEST_MUTEX;
 					return;
 			}
 
-TEST_MUTEX;
-
-			// wait on change of worker progress
+			// wait on change of worker progress (must be interruptable!)
 			this->workerThreadProgress.wait_while(progress);
-
-TEST_MUTEX;
 		}
 	}
 
@@ -946,9 +938,11 @@ TEST_MUTEX;
 
 		// start controller thread
 		this->controllerThread = boost::thread(&WorkerController::controllerThreadFunction, this);
+		this->controllerThreadGuard = boost::make_shared<boost::thread_guard<boost::interrupt_and_join_if_joinable>>(this->controllerThread);
 
 		// start worker thread
 		this->workerThread = boost::thread(&WorkerController::workerThreadFunction, this);
+		this->workerThreadGuard = boost::make_shared<boost::thread_guard<boost::interrupt_and_join_if_joinable>>(this->workerThread);
 
 		// notify module about new worker instance
 		this->module.registerWorkerInstance(this->configID, this); // TODO module ->	throw ConnectedVision::runtime_error("[WorkerController] there is already an instance for config: " + IDToStr(configID) );
@@ -968,11 +962,13 @@ TEST_MUTEX;
 	// command
 	WorkerCommand::CommandQueue commandQueue;
 	boost::thread controllerThread;
-
+	boost::shared_ptr<boost::thread_guard<boost::interrupt_and_join_if_joinable>> controllerThreadGuard;
 
 	// worker
 	DEBUG_thread_safe_progress workerThreadProgress;
 	boost::thread workerThread;
+	boost::shared_ptr<boost::thread_guard<boost::interrupt_and_join_if_joinable>> workerThreadGuard;
+
 	const ConnectedVision::shared_ptr</* TODO const */IWorkerFactory> workerFactory;
 	timestamp_t workerTimeout;
 

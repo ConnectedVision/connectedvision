@@ -10,7 +10,7 @@
 
 int main(int ac, char** av)
 {
-	MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+	// MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
 
 	std::locale::global(std::locale("C"));
 

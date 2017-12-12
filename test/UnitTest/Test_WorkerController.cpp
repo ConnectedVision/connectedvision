@@ -461,16 +461,11 @@ IGNORE_TEST(WorkerController, getStatus_caches_status)
 
 TEST(WorkerController, start_a_stopped_config_does_start_a_new_worker)
 {
-	{
-	std::cout << "start_a_stopped_config_does_start_a_new_worker <start>" << std::endl;
-
 	//////////////////////////////////////
 	// test initialization
 	const int timeout = 1000;
 	workerFactory_Mockup->runtime = 5000;
 	TestWrapper_WorkerController workerCtrl(configID, module, workerFactory);
-
-	std::cout << "start_a_stopped_config_does_start_a_new_worker <setup>" << std::endl;
 
 	//////////////////////////////////////
 	// actual test
@@ -479,7 +474,6 @@ TEST(WorkerController, start_a_stopped_config_does_start_a_new_worker)
 	//CHECK( workerCtrl.activeWorker() );
 
 	workerCtrl.stop();
-	std::cout << "start_a_stopped_config_does_start_a_new_worker <stop>" << std::endl;
 
 	// wait for config to stop
 	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Stopped, timeout);
@@ -493,10 +487,6 @@ TEST(WorkerController, start_a_stopped_config_does_start_a_new_worker)
 
 	// stop worker
 	workerCtrl.stop();
-
-	std::cout << "start_a_stopped_config_does_start_a_new_worker <end>" << std::endl;
-	}
-	std::cout << "start_a_stopped_config_does_start_a_new_worker <destructed>" << std::endl;
 }
 
 }} // namespace
