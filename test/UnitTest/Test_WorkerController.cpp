@@ -295,7 +295,7 @@ TEST(WorkerController, config_is_not_running_at_construction)
 	CHECK_FALSE( workerCtrl.activeWorker() );
 }
 
-IGNORE_TEST(WorkerController, start_command_is_enqueued_to_commandQueue)
+IGNORE_TEST(WorkerController, start_command_starts_worker)
 {
 	//////////////////////////////////////
 	// test initialization
@@ -304,15 +304,11 @@ IGNORE_TEST(WorkerController, start_command_is_enqueued_to_commandQueue)
 	//////////////////////////////////////
 	// actual test
 	auto status = workerCtrl.start();
-
-	auto commandQueue = status->getconst_commandQueue();
-
-	// command queue holds exactly one command
-	LONGS_EQUAL( 1, commandQueue->size() );
-	CHECK_EQUAL( "start", *commandQueue->at(0) );
+	
+	// TODO
 }
 
-IGNORE_TEST(WorkerController, stop_command_is_enqueued_to_commandQueue)
+IGNORE_TEST(WorkerController, stop_command_stops_worker)
 {
 	//////////////////////////////////////
 	// test initialization
@@ -329,7 +325,7 @@ IGNORE_TEST(WorkerController, stop_command_is_enqueued_to_commandQueue)
 	CHECK_EQUAL( "stop", *commandQueue->at(0) );
 }
 
-IGNORE_TEST(WorkerController, reset_command_is_enqueued_to_commandQueue)
+IGNORE_TEST(WorkerController, reset_command_stops_worker_and_calls_deleteAllData)
 {
 	//////////////////////////////////////
 	// test initialization
@@ -346,7 +342,7 @@ IGNORE_TEST(WorkerController, reset_command_is_enqueued_to_commandQueue)
 	CHECK_EQUAL( "reset", *commandQueue->at(0) );
 }
 
-IGNORE_TEST(WorkerController, revocer_command_is_enqueued_to_commandQueue)
+IGNORE_TEST(WorkerController, revocer_command_stops_worker_and_calls_processConfigRecover)
 {
 	//////////////////////////////////////
 	// test initialization

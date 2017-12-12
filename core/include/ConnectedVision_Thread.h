@@ -122,7 +122,7 @@ namespace ConnectedVision {
 		*/
 		bool operator== (T const& val)
 		{
-			boost::unique_lock<boost::mutex> lock(this->mutex);
+			std__unique_lock lock(this->mutex);
 			bool b = (this->value == val);
 			return b;
 		}
@@ -143,11 +143,12 @@ namespace ConnectedVision {
 		* @thread-safe
 		*/
 		void reset(
-			const T& val	///< new value
+			const T& newVal	///< new value
 		) {
 			std__unique_lock lock(this->mutex);
-			this->reset_count++;
-			this->value = val;
+			if ( newVal < this->value )
+				this->reset_count++;
+			this->value = newVal;
 			this->cond.notify_all();
 		}
 
@@ -156,18 +157,18 @@ namespace ConnectedVision {
 		* @thread-safe
 		*/
 		void set(
-			const T& val	///< new value
+			const T& newVal	///< new value
 		) throw(sequence_exception)
 		{
 			std__unique_lock lock(this->mutex);
 			// test if new value is greater than old one
-			if ( val < this->value )
+			if ( newVal < this->value )
 				throw sequence_exception("thread_safe_progress::set() progress has to be strictly growing, given value was less than stored value");
 
-			if ( this->value < val )
+			if ( this->value < newVal )
 			{
 				// update value
-				this->value = val;
+				this->value = newVal;
 				this->cond.notify_all();
 			}
 		}

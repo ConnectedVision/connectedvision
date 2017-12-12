@@ -47,245 +47,6 @@ namespace WorkerThreadProgress {
 }	// wrap in namespace to avoid ambiguity of enums
 
 
-class DEBUG_thread_safe_progress
-{
-public:
-	/**
-	* construct and initialize
-	*
-	* A thread safe variable must be initialized!
-	*/
-	DEBUG_thread_safe_progress(
-		const WorkerThreadProgress::WorkerThreadProgress& val	///< initial value
-	) : value(val), reset_count(0) {
-// TODO		DEBUG("default constructor");
-	}
-
-	/**
-	* copy constructor
-	*/
-	DEBUG_thread_safe_progress(const DEBUG_thread_safe_progress& other) : value(other.get()), reset_count(0) {
-// TODO		DEBUG("copy constructor");
-	}
-
-	/**
-	* assignment
-	*/
-	DEBUG_thread_safe_progress& operator= (const DEBUG_thread_safe_progress& other) throw(sequence_exception) { this->set( other.get() ); }
-
-	/**
-	* assignment is a setter shortcut
-	*/
-	DEBUG_thread_safe_progress& operator= (const WorkerThreadProgress::WorkerThreadProgress& val) throw(sequence_exception) { this->set(val); return *this; }
-
-	/**
-	* typecast to raw data type is a getter shortcut
-	*/
-	operator WorkerThreadProgress::WorkerThreadProgress() const { return this->get(); }
-
-	/**
-	* compare value
-	*/
-	bool operator== (WorkerThreadProgress::WorkerThreadProgress const& val)
-	{
-		boost::unique_lock<boost::mutex> lock(this->mutex);
-		bool b = (this->value == val);
-		return b;
-	}
-
-	/**
-	* get value (thread safe)
-	* @thread-safe
-	*/
-	WorkerThreadProgress::WorkerThreadProgress get() const
-	{
-		std__unique_lock lock(this->mutex);
-		WorkerThreadProgress::WorkerThreadProgress value( this->value );
-		return value;
-	}
-	
-	/**
-	* reset value (thread safe)
-	* @thread-safe
-	*/
-	void reset(
-		const WorkerThreadProgress::WorkerThreadProgress& newVal	///< new value
-	) {
-		DEBUG("reset lock");
-		std__unique_lock lock(this->mutex);
-		DEBUG("locked");
-		if ( newVal < this->value )
-			this->reset_count++;
-		DEBUG("reset: " << newVal << " old: " << this->value);
-		this->value = newVal;
-		this->cond.notify_all();
-	}
-
-	/**
-	* set value (thread safe)
-	* @thread-safe
-	*/
-	void set(
-		const WorkerThreadProgress::WorkerThreadProgress& newVal	///< new value
-	) throw(sequence_exception)
-	{
-		DEBUG("set lock");
-		std__unique_lock lock(this->mutex);
-		DEBUG("locked");
-		// test if new value is greater than old one
-		if ( newVal < this->value )
-			throw sequence_exception("DEBUG_thread_safe_progress::set() progress has to be strictly growing, given value was less than stored value");
-
-		if ( newVal > this->value )
-		{
-			// update value
-			DEBUG("set: " << newVal << " old: " << this->value);
-			this->value = newVal;
-			this->cond.notify_all();
-		}
-	}
-
-	/**
-	* wait for state to be reached (thread safe)
-	* @thread-safe
-	*
-	* This function waits until the internal state has reached or is beond the spezified target state.
-	*
-	* @return true if state was reached / false on timeout
-	*/
-	bool wait_until(
-		const WorkerThreadProgress::WorkerThreadProgress& target,			///< state to wait for
-		const int64_t timeout = 0	///< timeout in milliseconds (default: wait for ever)
-	) const throw(sequence_exception)
-	{
-		// avoid pitfalls of condition variables
-		// see https://www.justsoftwaresolutions.co.uk/threading/condition-variable-spurious-wakes.html
-		// for a lamda function introduction
-		// see http://blog.smartbear.com/c-plus-plus/c11-tutorial-lambda-expressions-the-nuts-and-bolts-of-functional-programming/
-
-		std__unique_lock lock(this->mutex);
-		DEBUG("wait_until: " << target);
-		if ( this->value >= target )
-		{
-			return true;	// the state is reached already
-		}
-		auto _reset_count = this->reset_count;
-		if ( timeout )
-		{
-			// TODO change wait_for -> wait_until
-			return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&]() throw(sequence_exception) -> bool
-			{ 
-				if ( this->reset_count != _reset_count )
-					throw sequence_exception("DEBUG_thread_safe_progress::wait_until() progress was reset while waiting for a given value to be reached");
-
-				DEBUG("wait_until wake: " << this->value << " >= " << target);
-				return (this->value >= target); 
-			});
-		}
-		else
-		{
-
-			this->cond.wait(lock, [&]() throw(sequence_exception) -> bool
-			{ 
-				//if ( this->reset_count != _reset_count )
-				//	throw sequence_exception("DEBUG_thread_safe_progress::wait_until() progress was reset while waiting for a given value to be reached");
-					
-				DEBUG("wait_until wake: " << this->value << " > " << target);
-				return (this->value >= target); 
-			});
-
-			/*
-			bool cond = false;
-			while(!cond)
-			{
-				lock.unlock();
-				boost::this_thread::sleep(boost::posix_time::milliseconds(10));
-				lock.lock();
-				cond = (this->value >= target);
-			}
-			*/
-			DEBUG("wait_until returned");
-
-			return true;	// we have no timeout, so every return means that the state was reached
-		}
-	}
-
-	/**
-	* wait for state to change (thread safe)
-	* @thread-safe
-	*
-	* This function waits while the internal state is equal to the given state.
-	*
-	* @return true if state was changed / false on timeout
-	*/
-	bool wait_while(
-		const WorkerThreadProgress::WorkerThreadProgress& state,				///< state to be checked
-		const int64_t timeout = 0	///< timeout in milliseconds (default: wait for ever)
-	) const
-	{
-		DEBUG("wait_while lock");
-		boost::unique_lock<boost::mutex> lock(this->mutex);
-		DEBUG("wait_while: " << state);
-		if ( this->value != state )
-		{
-			return true;	// the state is changed already
-		}
-		if ( timeout )
-		{
-			return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&](){ return (this->value != state); });
-		}
-		else
-		{
-			this->cond.wait(lock, [&]() -> bool{
-				DEBUG("wait_while wake: " << this->value << " != " << state);
-				return (this->value != state); 
-			});
-			DEBUG("wait_while returned");
-			return true;	// we have no timeout, so every return means that the state was changed
-		}
-	}
-
-
-	/**
-	* wait for state to become a given value (thread safe)
-	* @thread-safe
-	*
-	* This function waits while the internal state is not equal to the given state.
-	*
-	* @return true if state was changed / false on timeout
-	*/
-	bool wait_equal(
-		const WorkerThreadProgress::WorkerThreadProgress& state,				///< state to be checked
-		const int64_t timeout = 0	///< timeout in milliseconds (default: wait for ever)
-	) const
-	{
-		boost::unique_lock<boost::mutex> lock(this->mutex);
-		DEBUG("wait_equal: " << state);
-		if ( this->value == state )
-		{
-				
-			return true;	// the state is already reached
-		}
-		if ( timeout )
-		{
-			return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&](){ return (this->value == state); });
-		}
-		else
-		{
-			this->cond.wait(lock, [&](){ return (this->value == state); });
-				
-			return true;	// we have no timeout, so every return means that the state has been reached
-		}
-	}
-
-// protected:
-	mutable std__condition_variable cond;
-	mutable std__mutex mutex;
-	WorkerThreadProgress::WorkerThreadProgress value;
-	int reset_count;
-};
-
-
 
 namespace WorkerCommand {
 	
@@ -303,7 +64,7 @@ namespace WorkerCommand {
 	class CommandStart : public ICommand {
 	public:
 		CommandStart(
-			DEBUG_thread_safe_progress &workerThreadProgress	///< reference to thread safe worker progress
+			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &workerThreadProgress	///< reference to thread safe worker progress
 		) :	workerThreadProgress(workerThreadProgress) {}
 		virtual ~CommandStart() {}
 
@@ -321,7 +82,7 @@ namespace WorkerCommand {
 		}
 
 	protected:
-		DEBUG_thread_safe_progress &workerThreadProgress;
+		thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &workerThreadProgress;
 	};
 
 	/**
@@ -330,7 +91,7 @@ namespace WorkerCommand {
 	class CommandStop : public ICommand {
 	public:
 		CommandStop(
-			DEBUG_thread_safe_progress& workerThreadProgress,	///< reference to thread safe worker progress
+			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress,	///< reference to thread safe worker progress
 			boost::thread& workerThread,															///< reference to worker thread
 			const timestamp_t workerTimeout															///< timeout to wait for worker to stop cooperatively
 		) :	workerThreadProgress(workerThreadProgress), workerThread(workerThread), workerTimeout(workerTimeout) {}
@@ -357,7 +118,7 @@ namespace WorkerCommand {
 		}
 
 	protected:
-		DEBUG_thread_safe_progress& workerThreadProgress;
+		thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress;
 		boost::thread& workerThread;
 		const timestamp_t workerTimeout;
 	};
@@ -368,7 +129,7 @@ namespace WorkerCommand {
 	class CommandReset : public ICommand {
 	public:
 		CommandReset(
-			DEBUG_thread_safe_progress& workerThreadProgress,	///< reference to thread safe worker progress
+			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress,	///< reference to thread safe worker progress
 			const ConnectedVision::shared_ptr<CommandStop> &stopCmd				///< stop command
 		) :	workerThreadProgress(workerThreadProgress), stopCmd(stopCmd) {}
 		virtual ~CommandReset() {}
@@ -386,7 +147,7 @@ namespace WorkerCommand {
 		}
 
 	protected:
-		DEBUG_thread_safe_progress& workerThreadProgress;
+		thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress;
 		ConnectedVision::shared_ptr<CommandStop> stopCmd;
 	};
 
@@ -396,7 +157,7 @@ namespace WorkerCommand {
 	class CommandRecover : public ICommand {
 	public:
 		CommandRecover(
-			DEBUG_thread_safe_progress& workerThreadProgress	///< reference to thread safe worker progress
+			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress	///< reference to thread safe worker progress
 		) :	workerThreadProgress(workerThreadProgress) {}
 		virtual ~CommandRecover() {}
 
@@ -414,7 +175,7 @@ namespace WorkerCommand {
 		}
 
 	protected:
-		DEBUG_thread_safe_progress& workerThreadProgress;
+		thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress;
 	};
 
 
@@ -424,7 +185,7 @@ namespace WorkerCommand {
 	class CommandTerminate : public ICommand {
 	public:
 		CommandTerminate(
-			DEBUG_thread_safe_progress &workerThreadProgress,	///< reference to thread safe worker progress
+			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &workerThreadProgress,	///< reference to thread safe worker progress
 			boost::atomic<WorkerThreadProgress::WorkerThreadProgress> &progressBeforeTermination, ///< reference to progress before terminate in worker controller
 			const ConnectedVision::shared_ptr<CommandStop> &stopCmd										///< stop command
 		) : workerThreadProgress(workerThreadProgress), progressBeforeTermination(progressBeforeTermination), stopCmd(stopCmd) {}
@@ -445,7 +206,7 @@ namespace WorkerCommand {
 		}
 
 	protected:
-		DEBUG_thread_safe_progress &workerThreadProgress;
+		thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &workerThreadProgress;
 		boost::atomic<WorkerThreadProgress::WorkerThreadProgress> &progressBeforeTermination;
 		ConnectedVision::shared_ptr<CommandStop> stopCmd;
 	};
@@ -965,7 +726,7 @@ protected:
 	boost::shared_ptr<boost::thread_guard<boost::interrupt_and_join_if_joinable>> controllerThreadGuard;
 
 	// worker
-	DEBUG_thread_safe_progress workerThreadProgress;
+	thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> workerThreadProgress;
 	boost::thread workerThread;
 	boost::shared_ptr<boost::thread_guard<boost::interrupt_and_join_if_joinable>> workerThreadGuard;
 
@@ -975,7 +736,7 @@ protected:
 
 public:
 	// spy functions
-	const DEBUG_thread_safe_progress &spy_workerThreadProgress() { return this->workerThreadProgress; }
+	const thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &spy_workerThreadProgress() { return this->workerThreadProgress; }
 
 	boost::atomic<WorkerThreadProgress::WorkerThreadProgress> progressBeforeTermination;
 

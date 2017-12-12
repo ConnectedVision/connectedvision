@@ -92,6 +92,14 @@ bool operator< (const TestProgressDataClass &a, const TestProgressDataClass &b)
 {
 	return a() < b();
 }
+bool operator> (const TestProgressDataClass &a, const TestProgressDataClass &b)
+{
+	return a() > b();
+}
+bool operator== (const TestProgressDataClass &a, const TestProgressDataClass &b)
+{
+	return a() == b();
+}
 std::ostream& operator<< (std::ostream& os, const TestProgressDataClass& data)
 {  
     os << data();
