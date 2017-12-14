@@ -2,6 +2,7 @@ from conans import ConanFile
 from conans import tools
 from conans.tools import replace_in_file
 import os
+import platform
 import re
 
 
@@ -140,7 +141,7 @@ no_sha=False
 		if self.settings.compiler == "Visual Studio":
 			self.output.info("runtime   : " + str(self.settings.compiler.runtime))
 		
-		if self.settings.os == "Linux" and self.settings.compiler == "gcc" and self.settings.arch == "armv7hf":
+		if self.settings.os == "Linux" and self.settings.compiler == "gcc" and self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
 			self.output.warn("The tool makedepend is needed to build. Please enter sudo password if requested...")
 			self.run("sudo apt-get install -y xutils-dev")
 		
@@ -275,7 +276,7 @@ no_sha=False
 			self.run("del \\\\?\\" + os.path.join(os.getcwd(), "openssl-" + self.version, "NUL") + " 2> nul")
 
 		if self.settings.os == "Linux" or self.settings.os == "Macos":
-			if self.settings.compiler == "gcc" and self.settings.arch == "armv7hf":
+			if self.settings.compiler == "gcc" and self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
 				arm_make(config_options_string)
 			else:
 				unix_make(config_options_string)

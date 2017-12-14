@@ -1,5 +1,6 @@
 import glob
 import os
+import platform
 import re
 import shutil
 from conans import ConanFile, tools, model
@@ -170,7 +171,7 @@ class FFmpeg(ConanFile):
 				params += " --extra-ldflags=\"/NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrt.lib\""
 			else:
 				raise Exception("unsupported runtime: " + str(self.settings.compiler.runtime))
-		elif self.settings.arch == "armv7hf":
+		elif self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
 			if not os.environ.has_key("CC"):
 				raise Exception("failed to extract compiler from environment variable \"CC\" (variable is not set)")
 			

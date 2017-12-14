@@ -5,9 +5,11 @@
 2. `sudo apt-get install build-essential`
 3. `sudo apt-get install cmake` (version >= 3.0.0)
 4. `sudo apt-get install python-pip`
-possibly `sudo pip install --upgrade pip`
+
+	possibly: `sudo pip install --upgrade pip`
 5. `sudo pip install conan`
-`sudo pip install setuptools` (only necessary if a corresponding Conan error occurs)
+
+	possibly: `sudo pip install setuptools` (only necessary if a corresponding Conan error occurs)
 6. `conan search`
 7. `conan remote add covi https://api.bintray.com/conan/covi/ConnectedVision`
 8. build the Connected Vision Conan package either explicitly by calling

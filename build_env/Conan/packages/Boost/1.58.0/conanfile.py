@@ -1,6 +1,7 @@
 from conans import ConanFile
 from conans import tools
 import os
+import platform
 import re
 import sys
 
@@ -77,7 +78,9 @@ class BoostConan(ConanFile):
 		
 		if self.settings.compiler == "Visual Studio":
 			flags.append("toolset=msvc-%s.0" % self.settings.compiler.version)
-		elif self.settings.arch == "armv7hf":
+		elif self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
+			flags.append("toolset=gcc-arm")
+			
 			if not os.environ.has_key("CXX"):
 				raise Exception("failed to extract compiler from environment variable \"CXX\" (variable is not set)")
 			
@@ -94,8 +97,6 @@ class BoostConan(ConanFile):
 					f.seek(0)
 					f.write(content)
 					f.truncate()
-			
-			flags.append("toolset=gcc-arm")
 		
 		flags.append("link=%s" % ("static" if not self.options.shared else "shared"))
 		
