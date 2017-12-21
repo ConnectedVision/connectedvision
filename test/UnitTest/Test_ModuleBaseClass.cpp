@@ -353,4 +353,35 @@ TEST(inputPin, checkConfig_double_usage_of_same_inputPin_indexed)
 	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
 }
 
+/* TODO
+
+TEST(WorkerController, reset_calls_cleanup_to_remove_data_from_store)
+{
+	//////////////////////////////////////
+	// test initialization
+	const int timeout = 1000;
+	workerFactory_Mockup->runtime = 5000;
+	TestWrapper_WorkerController workerCtrl(configID, module, workerFactory);
+
+	workerCtrl.start();
+	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Running, timeout);
+
+	//////////////////////////////////////
+	// actual test
+	CHECK( workerCtrl.activeWorker() );
+
+	// add some data
+	for ( int i = 0; i < 10; ++i )
+		module.resultData.push_back(i);
+
+	// reset module
+	workerCtrl.reset();
+	workerCtrl.spy_workerThreadProgress().wait_equal(WorkerThreadProgress::Init, timeout);
+	CHECK_EQUAL(WorkerThreadProgress::Init, workerCtrl.spy_workerThreadProgress());
+
+	// make sure that data have been deleted
+	CHECK( module.resultData.empty() );
+}
+*/
+
 }} // namespace scope

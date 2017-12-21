@@ -18,6 +18,5 @@ int main(int ac, char** av)
 	boost::smatch matches;
 	boost::regex_match(std::string(""), matches, boost::regex("'([\\w\\.]+)'\\s(.*)"));
 
-	for(;;)
-		CommandLineTestRunner::RunAllTests(ac, av);
+	CommandLineTestRunner::RunAllTests(ac, av);
 }

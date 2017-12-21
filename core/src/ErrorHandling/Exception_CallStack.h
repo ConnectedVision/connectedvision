@@ -14,6 +14,7 @@
 */
 
 #include <stdexcept>
+#include <iostream>
 #include <string>
 #include <memory> // std::shared_ptr
 #include <ErrorHandling/CallStack.h>
@@ -62,7 +63,7 @@ public:
 		// print to console
 		if ( Exception_BaseClass_CallStack::printToStdOut )
 		{
-			printf( "\n%s", this->what(true) );
+			std::cout << this->what(true) << std::endl << std::flush;
 		}
 	}
 

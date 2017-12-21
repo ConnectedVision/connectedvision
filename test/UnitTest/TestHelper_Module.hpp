@@ -194,7 +194,7 @@ public:
 class Module_Mockup : public IModule
 {
 public:
-	Module_Mockup() : ready(false)
+	Module_Mockup() : ready(false), deleteAllDataCallCount(0), processConfigRecoverCallCount(0)
 	{}
 	virtual ~Module_Mockup() {}
 
@@ -470,6 +470,7 @@ public:
 	virtual void deleteAllData(
 		const id_t configID				///< [in] ID of config
 	) {
+		this->deleteAllDataCallCount++;
 		this->resultData.clear();
 	}
 
@@ -483,7 +484,8 @@ public:
 	virtual bool processConfigRecover(
 		const id_t configID				///< [in] ID of config
 	) { 
-		return false;
+		this->processConfigRecoverCallCount++;
+		return true;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////
@@ -514,6 +516,9 @@ public:
 
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_status> > statusStore;
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_config> > configStore;
+
+	int deleteAllDataCallCount;
+	int processConfigRecoverCallCount;
 };
 
 

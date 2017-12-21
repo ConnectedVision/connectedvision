@@ -297,48 +297,20 @@ public:
 	}
 
 
+
 	/**
 	* maps worker progress to config status
 	*
 	* @return config status string
 	*/
-	const boost::shared_ptr<std::string> getStatusFromProgress(WorkerThreadProgress::WorkerThreadProgress progress = WorkerThreadProgress::Undefined) const
+	const boost::shared_ptr<std::string> getStatusFromProgress() const
 	{
-		if ( progress == WorkerThreadProgress::Undefined ) // default path / call from outside
-		{
-			progress = this->workerThreadProgress.get();
-		}
-		else // recursive call from inside
-		{
-			if ( progress == WorkerThreadProgress::Terminating || progress == WorkerThreadProgress::Terminated )
-				throw ConnectedVision::invalid_argument("[WorkerController] infinitive recursive loop detected");
-		}
-
-		switch ( progress )
-		{
-			case WorkerThreadProgress::Init:
-				return Class_generic_status::status_init;
-			case WorkerThreadProgress::Starting:
-				return Class_generic_status::status_starting;
-			case WorkerThreadProgress::Running:
-				return Class_generic_status::status_running;
-			case WorkerThreadProgress::Stopping:
-			case WorkerThreadProgress::Cleanup:
-				return Class_generic_status::status_stopping;
-			case WorkerThreadProgress::Stopped:
-				return Class_generic_status::status_stopped;
-			case WorkerThreadProgress::Finished:
-				return Class_generic_status::status_finished;
-			case WorkerThreadProgress::Recovering:
-				return Class_generic_status::status_recovering;
-			case WorkerThreadProgress::Resetting:
-				return Class_generic_status::status_resetting;
-			case WorkerThreadProgress::Terminating:
-			case WorkerThreadProgress::Terminated:
-				return getStatusFromProgress(this->progressBeforeTermination); // recursive call
-			default:
-				return Class_generic_status::status_error;
-		}
+		WorkerThreadProgress::WorkerThreadProgress progress = this->workerThreadProgress.get();
+		
+		if ( progress == WorkerThreadProgress::Terminating || progress == WorkerThreadProgress::Terminated )
+			return mapProgressToStatus(this->progressBeforeTermination);
+		else
+			return mapProgressToStatus(progress);
 	}
 
 
@@ -489,7 +461,7 @@ protected:
 				cmd->execute();
 			}
 		}
-		catch (std::exception e)
+		catch (std::exception &e)
 		{
 			// TODO Log exception
 			std::cout << "CORE PANIC: [Exception in controller thread command] " << e.what();
@@ -506,120 +478,133 @@ protected:
 
 		// thread loop
 		DEBUG("workerThreadFunction");
-		for(;;)
+		try
 		{
-			bool error = false;
-			auto progress = this->workerThreadProgress.get();
-			DEBUG("got: " << progress);
-			switch (progress)
+			for(;;)
 			{
-				case WorkerThreadProgress::Undefined:
-				case WorkerThreadProgress::Init:
-				case WorkerThreadProgress::Stopped:
-				case WorkerThreadProgress::Finished:
-				case WorkerThreadProgress::Error:
-					// ignore and wait for next progress
-					break;
+				bool error = false;
+				auto progress = this->workerThreadProgress.get();
+				DEBUG("got: " << progress);
+				switch (progress)
+				{
+					case WorkerThreadProgress::Undefined:
+					case WorkerThreadProgress::Init:
+					case WorkerThreadProgress::Stopped:
+					case WorkerThreadProgress::Finished:
+					case WorkerThreadProgress::Error:
+						// ignore and wait for next progress
+						break;
 
-				case WorkerThreadProgress::Terminating:
-				case WorkerThreadProgress::Terminated:
-					// exit if terminate flag is set
-					progress = WorkerThreadProgress::Terminated; this->workerThreadProgress = progress; // update internal progress and set workerThreadProgress
-					return;
+					case WorkerThreadProgress::Terminating:
+					case WorkerThreadProgress::Terminated:
+						// exit if terminate flag is set
+						progress = WorkerThreadProgress::Terminated; this->workerThreadProgress = progress; // update internal progress and set workerThreadProgress
+						return;
 
-				case WorkerThreadProgress::Starting:
-					try
-					{
-						DEBUG("createWorker");
-						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
-						boost::this_thread::disable_interruption interrupt_disabler;
-
-						// create worker
-						auto worker = this->workerFactory->createWorker(*this, this->getConfig());
-						DEBUG("worker created");
-						// start worker
+					case WorkerThreadProgress::Starting:
 						try
 						{
-							this->workerThreadProgress = WorkerThreadProgress::Running;
-							DEBUG("interrupt_enabler");
-							boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
-							DEBUG("run");
-							worker->run();
-						}
-						catch (boost::thread_interrupted e)
-						{
-							error = true;
-							std::cout << "[Exception worker.run() did not return on stop request in time -> interrupted after timeout] ";
+							DEBUG("createWorker");
+							// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+							boost::this_thread::disable_interruption interrupt_disabler;
+
+							// create worker
+							auto worker = this->workerFactory->createWorker(*this, this->getConfig());
+							DEBUG("worker created");
+							// start worker
+							try
+							{
+								this->workerThreadProgress = WorkerThreadProgress::Running;
+								DEBUG("interrupt_enabler");
+								boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
+								DEBUG("run");
+								worker->run();
+							}
+							catch (boost::thread_interrupted e)
+							{
+								error = true;
+								std::cout << "[Exception worker.run() did not return on stop request in time -> interrupted after timeout] ";
+							}
+							catch (std::exception e)
+							{
+								// TODO Log exception
+								error = true;
+								std::cout << "[Exception in worker.run()] " << e.what();
+							}
+							bool stopped = !this->intermediateContinueCheck();	// was worker forced to stop?
+
+							// clean up worker -> destroy worker
+							this->workerThreadProgress = WorkerThreadProgress::Cleanup;
+							worker.reset();
+
+
+							// set status
+							if ( error )
+								progress = WorkerThreadProgress::Error;
+							else if ( stopped )
+								progress = WorkerThreadProgress::Stopped;
+							else
+								progress = WorkerThreadProgress::Finished;
+							this->workerThreadProgress = progress;
+
 						}
 						catch (std::exception e)
 						{
 							// TODO Log exception
-							error = true;
-							std::cout << "[Exception in worker.run()] " << e.what();
+							std::cout << "CORE PANIC: [Exception in controller thread command] " << e.what();
+
+							// terminate
+							this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
+							return;
 						}
-						bool stopped = !this->intermediateContinueCheck();	// was worker forced to stop?
-
-						// clean up worker -> destroy worker
-						this->workerThreadProgress = WorkerThreadProgress::Cleanup;
-						worker.reset();
+						break;
 
 
-						// set status
-						if ( error )
-							progress = WorkerThreadProgress::Error;
-						else if ( stopped )
-							progress = WorkerThreadProgress::Stopped;
-						else
-							progress = WorkerThreadProgress::Finished;
-						this->workerThreadProgress = progress;
+					case WorkerThreadProgress::Resetting:
+						// reset config / delete all data of config
+						{
+							// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+							boost::this_thread::disable_interruption interrupt_disabler;
 
-					}
-					catch (std::exception e)
-					{
-						// TODO Log exception
-						std::cout << "CORE PANIC: [Exception in controller thread command] " << e.what();
+							module.deleteAllData( this->configID );	// one thread (workerThread) is writing / deleting data
+							progress = WorkerThreadProgress::Init; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
+						}
+						break;
 
-						// terminate
+					case WorkerThreadProgress::Recovering:
+						// recover config
+						{
+							// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+							boost::this_thread::disable_interruption interrupt_disabler;
+
+							if ( this->module.processConfigRecover( this->configID ) ) 	// one thread (workerThread) is writing / deleting data
+								progress = WorkerThreadProgress::Stopped;
+							else
+								progress = WorkerThreadProgress::Error;
+							this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
+						}
+						break;
+
+
+					default:
+						std::cout << "CORE PANIC: [worker thread] unexpected worker progress in thread loop: " << progress;
 						this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
 						return;
-					}
-					break;
+				}
 
-
-				case WorkerThreadProgress::Resetting:
-					// reset config / delete all data of config
-					{
-						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
-						boost::this_thread::disable_interruption interrupt_disabler;
-
-						module.deleteAllData( this->configID );	// one thread (workerThread) is writing / deleting data
-						progress = WorkerThreadProgress::Init; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
-					}
-					break;
-
-				case WorkerThreadProgress::Recovering:
-					// recover config
-					{
-						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
-						boost::this_thread::disable_interruption interrupt_disabler;
-
-						if ( this->module.processConfigRecover( this->configID ) ) 	// one thread (workerThread) is writing / deleting data
-							progress = WorkerThreadProgress::Stopped;
-						else
-							progress = WorkerThreadProgress::Error;
-						this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
-					}
-					break;
-
-
-				default:
-					std::cout << "CORE PANIC: [worker thread] unexpected worker progress in thread loop: " << progress;
-					this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
-					return;
+				// wait on change of worker progress (must be interruptable!)
+				this->workerThreadProgress.wait_while(progress);
 			}
+		}
+		catch (std::exception &e)
+		{
+			// TODO Log exception
+			std::cout << "CORE PANIC: [Exception in controller thread command] " << e.what();
 
-			// wait on change of worker progress (must be interruptable!)
-			this->workerThreadProgress.wait_while(progress);
+			// terminate to worker
+			this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
+			this->workerThread.interrupt();
+			return;
 		}
 	}
 
@@ -710,6 +695,40 @@ protected:
 		DEBUG("init finished");
 	}
 
+	/**
+	* maps worker progress to config status
+	*
+	* @return config status string
+	*/
+	const boost::shared_ptr<std::string> mapProgressToStatus(WorkerThreadProgress::WorkerThreadProgress progress) const
+	{
+		switch ( progress )
+		{
+			case WorkerThreadProgress::Init:
+				return Class_generic_status::status_init;
+			case WorkerThreadProgress::Starting:
+				return Class_generic_status::status_starting;
+			case WorkerThreadProgress::Running:
+				return Class_generic_status::status_running;
+			case WorkerThreadProgress::Stopping:
+			case WorkerThreadProgress::Cleanup:
+				return Class_generic_status::status_stopping;
+			case WorkerThreadProgress::Stopped:
+				return Class_generic_status::status_stopped;
+			case WorkerThreadProgress::Finished:
+				return Class_generic_status::status_finished;
+			case WorkerThreadProgress::Recovering:
+				return Class_generic_status::status_recovering;
+			case WorkerThreadProgress::Resetting:
+				return Class_generic_status::status_resetting;
+			case WorkerThreadProgress::Terminating:
+			case WorkerThreadProgress::Terminated:
+				throw ConnectedVision::invalid_argument("[WorkerController] progress: terminate can not be mapped to status");
+			default:
+				return Class_generic_status::status_error;
+		}
+	}
+
 	// module
 	ConnectedVision::Module::IModule& module;
 
@@ -736,7 +755,7 @@ protected:
 
 public:
 	// spy functions
-	const thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &spy_workerThreadProgress() { return this->workerThreadProgress; }
+	thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &spy_workerThreadProgress() { return this->workerThreadProgress; }
 
 	boost::atomic<WorkerThreadProgress::WorkerThreadProgress> progressBeforeTermination;
 
