@@ -451,6 +451,32 @@ TEST(WorkerController, reset_command_stops_worker_and_calls_deleteAllData)
 }
 
 
+TEST(WorkerController, getStatus_returns_thread_progress_mapped_to_status)
+{
+	//////////////////////////////////////
+	// test initialization
+	const int timeout = 1000;
+	TestWrapper_WorkerController workerCtrl(configID, module, workerFactory);
+
+	//////////////////////////////////////
+	// actual test
+	auto status = workerCtrl.getStatus();
+	CHECK( status->is_status_init() );
+
+	// start and wait
+	workerCtrl.start();
+	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Running, timeout);
+	status = workerCtrl.getStatus();
+	CHECK( status->is_status_running() );
+
+	// stop and wait
+	workerCtrl.stop();
+	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Stopped, timeout);
+	status = workerCtrl.getStatus();
+	CHECK( status->is_status_stopped() );
+}
+
+
 // status.equals is not implemented, so this test will always fail
 IGNORE_TEST(WorkerController, getStatus_returns_the_same_object_if_status_has_not_changed)
 {

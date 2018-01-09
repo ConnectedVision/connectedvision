@@ -11,22 +11,11 @@
 #include <vector>
 #include <ConnectedVisionModule.h>
 #include <IModuleEnvironment.h>
+#include "TestHelper_Module.hpp"
 
 #include <CppUTest/TestHarness.h>
 
 namespace ConnectedVision {
-
-class TestMockupModuleEnvironment : public IModuleEnvironment{
-public:
-
-	virtual void registerModule( boost::shared_ptr<IConnectedVisionModule> module ) {};
-	virtual boost::shared_ptr<IConnectedVisionModule> getModule( std::string moduleName ) const { return(NULL); };
-	virtual std::string getModuleURL(std::string serverAddress, std::string moduleName ) const { return(""); };
-	virtual std::string getDataPath() const { return(""); };
-
-	virtual Class_HostStatus getHostStatus() { Class_HostStatus status; return(status); };
-
-};
 
 namespace Module {
 
@@ -1103,7 +1092,7 @@ TEST_GROUP(DynamicParameters_moduleDescriptions)
 		this->module.reset();
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	boost::shared_ptr<TestWrapper_DynamicParameters> module;
 };
 
@@ -1121,7 +1110,7 @@ TEST_GROUP(DynamicParameters_moduleAndConfigFeaturesRelatedToDynamicParameters)
 		this->module.reset();
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	boost::shared_ptr<TestWrapper_DynamicParameters> module;
 };
 
@@ -1140,7 +1129,7 @@ TEST_GROUP(DynamicParameters_configs)
 		this->module.reset();
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	boost::shared_ptr<TestWrapper_DynamicParameters> module;
 };
 
@@ -2449,7 +2438,7 @@ TEST_GROUP(DynamicParameters_moduleWithNonRequiredDynamicParameters)
 		this->module.reset();
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	boost::shared_ptr<TestWrapper_DynamicParameters> module;
 };
 

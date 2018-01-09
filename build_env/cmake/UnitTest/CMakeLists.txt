@@ -33,6 +33,7 @@ set(ConnectedVisionUnitTestHeaders
 
 set(ConnectedVisionUnitTestSources
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_ModuleBaseClass.cpp
+	${ConnectedVisionCppRoot}/test/UnitTest/Test_ModuleInputPins.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_Sample.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_SmartPointer.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_Store_Ringbuffer.cpp

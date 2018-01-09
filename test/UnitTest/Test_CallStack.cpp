@@ -75,6 +75,8 @@ public:
 	#define FUNCTION_EQUAL( expected, actual )
 #endif
 
+#ifdef CALL_STACK_ENABLED
+
 TEST_GROUP(CallStack)
 {
 	void setup()
@@ -111,7 +113,6 @@ TEST(CallStack, call_stack_of_function)
 //	FUNCTION_EQUAL( "foo", stack.at(1).function );
 }
 
-#ifdef _DEBUG
 TEST(CallStack, call_stack_of_class_methode)
 {
 	//////////////////////////////////////

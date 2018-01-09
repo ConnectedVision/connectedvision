@@ -22,6 +22,10 @@
 namespace ConnectedVision {
 namespace ErrorHandling {
 
+#ifdef _DEBUG
+	#define CALL_STACK_ENABLED
+#endif
+
 class Exception_BaseClass_CallStack
 {
 public:

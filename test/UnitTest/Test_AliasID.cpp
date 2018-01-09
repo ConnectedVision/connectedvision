@@ -11,22 +11,11 @@
 #include <vector>
 #include <ConnectedVisionModule.h>
 #include <IModuleEnvironment.h>
+#include "TestHelper_Module.hpp"
 
 #include <CppUTest/TestHarness.h>
 
 namespace ConnectedVision {
-
-class TestMockupModuleEnvironment : public IModuleEnvironment{
-public:
-
-	virtual void registerModule( boost::shared_ptr<IConnectedVisionModule> module ) {};
-	virtual boost::shared_ptr<IConnectedVisionModule> getModule( std::string moduleName ) const { return(NULL); };
-	virtual std::string getModuleURL(std::string serverAddress, std::string moduleName ) const { return(""); };
-	virtual std::string getDataPath() const { return(""); };
-
-	virtual Class_HostStatus getHostStatus() { Class_HostStatus status; return(status); };
-
-};
 
 namespace Module {
 
@@ -161,7 +150,7 @@ TEST_GROUP(aliasID_checkConfigCreation)
 		delete(this->module);
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	TestWrapper_AliasID* module;
 };
 
@@ -181,7 +170,7 @@ TEST_GROUP(aliasID_checkResolving)
 		delete(this->module);
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	TestWrapper_AliasID* module;
 };
 

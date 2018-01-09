@@ -16,6 +16,7 @@
 namespace ConnectedVision {
 namespace Module {
 
+
 /*
  * mock-up implementation of module environment
  */
@@ -74,6 +75,7 @@ public:
 	*/
 	virtual Class_HostStatus getHostStatus()
 	{ return Class_HostStatus(); }
+
 
 };
 
