@@ -13,10 +13,6 @@ set(packages "CppUTest/3.8@covi/stable")
 execute_conan_cmake_run_without_targets(${packages})
 execute_conan_cmake_run_with_targets(${packages})
 
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/${ConnectedVisionCppRoot}" CACHE PATH "default install path" FORCE)
-endif()
-
 set(ConnectedVisionUnitTestHeaders
 	${ConnectedVisionCppRoot}/test/UnitTest/TestHelper_DataHandling.hpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_IDataAllocator.hpp
@@ -112,6 +108,13 @@ set(ConnectedVisionUnitTestGeneratedStubSources
 	${ConnectedVisionCppRoot}/test/UnitTest/generated/stubs/Store_Manager_Ringbuffer_Stub_UnitTest_GeneratorTestCode.cpp	
 )
 
+set(PlatformSpecificSources)
+
+if(MSVC)
+	get_conan_variable("CONAN_INCLUDE_DIRS_STACKWALKER" StackWalkerIncludeDir)
+	set(PlatformSpecificSources ${StackWalkerIncludeDir}/StackWalker.cpp)
+endif()
+
 set(HEADERS
 	${ConnectedVisionUnitTestHeaders}
 	${ConnectedVisionUnitTestGeneratedHeaders}
@@ -125,12 +128,6 @@ set(SOURCES
 	${PlatformSpecificSources}
 )
 
-set(PlatformSpecificSources)
-
-if(MSVC)
-	get_conan_variable("CONAN_INCLUDE_DIRS_STACKWALKER" StackWalkerIncludeDir)
-	set(PlatformSpecificSources ${StackWalkerIncludeDir}/StackWalker.cpp)
-endif()
 
 source_group(Source\ Files\\generated FILES
 	${ConnectedVisionUnitTestGeneratedHeaders}
@@ -147,15 +144,25 @@ include_directories(
 	${ConnectedVisionCppRoot}/core/src
 )
 
-get_lib_directory(LibDirectory)
-
-if(NOT IS_ABSOLUTE ${LibDirectory})
-	set(LibDirectory "${ConnectedVisionCppRoot}/${LibDirectory}")
+if(NOT USE_CORE_AS_SUBPROJECT)
+	if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+		set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/${ConnectedVisionCppRoot}" CACHE PATH "default install path" FORCE)
+	endif()
+	
+	get_lib_directory(LibDirectory)
+	
+	if(NOT IS_ABSOLUTE ${LibDirectory})
+		set(LibDirectory "${ConnectedVisionCppRoot}/${LibDirectory}")
+	endif()
+	
+	link_directories(${LibDirectory})
 endif()
 
-link_directories(${LibDirectory})
-
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+
+if(USE_CORE_AS_SUBPROJECT)
+	add_subdirectory(../Core Core)
+endif()
 
 target_link_libraries(${PROJECT_NAME}
 	ConnectedVisionCore
@@ -170,8 +177,12 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 if(MSVC)
-	#set startup project
+	# set startup project
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+endif()
+
+if(USE_CORE_AS_SUBPROJECT AND CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/${ConnectedVisionCppRoot}" CACHE PATH "default install path" FORCE)
 endif()
 
 get_bin_install_directory(InstallDirectory)

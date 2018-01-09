@@ -29,9 +29,7 @@ int main(int argc, char **argv)
 	{
 		ModuleDispatcher::HttpServerParams httpServerParams;
 		httpServerParams.listeningPort = 2020;
-		httpServerParams.numThreads = 2;
-
-		ModuleDispatcher server(httpServerParams);
+		httpServerParams.numThreads = 2;		
 
 		std::string dataPath = "data";
 		
@@ -53,11 +51,17 @@ int main(int argc, char **argv)
 				{
 					dataPath = filename_config.get();
 				}
+
+				if (boost::optional<int> filename_config = pt.get_optional<int>("General.Port"))
+				{
+					httpServerParams.listeningPort = filename_config.get();
+				}
 			}
 			catch(...){}
 		}
 		
-		server.setDataPath(dataPath);
+		ModuleDispatcher server(httpServerParams);
+		server.setDataPath(dataPath);		
 
 		auto directoryIterator = DirectoryIterator::DirectoryIteratorModuleFactory::createModule();
 		server.registerModule(directoryIterator);

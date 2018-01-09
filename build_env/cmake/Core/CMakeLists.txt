@@ -31,7 +31,6 @@ set(ConnectedVisionIncludeHeaders
 	${ConnectedVisionCppRoot}/core/include/IStoreCV.h
 	${ConnectedVisionCppRoot}/core/include/ILogging.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision.h
-	${ConnectedVisionCppRoot}/core/include/ConnectedVision_ConcurrentQueue.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_Exceptions.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_SmartPointer.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_Thread.h

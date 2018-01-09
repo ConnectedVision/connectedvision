@@ -6,6 +6,7 @@
 #include "RTPImporterWorker.h"
 
 #include <string>
+#include <regex>
 #include <time.h>
 
 #include <helper.h>
@@ -60,11 +61,13 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 RTPImporterWorker::RTPImporterWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config) :
 ConnectedVisionAlgorithmWorker(env, module, config)
 {
-	params.parseJson(config->get_params());
-
-	imgConvertCtx	= NULL;
-	codecCtx		= NULL;
-	formatCtx		= NULL;
+	this->imgConvertCtx	= NULL;
+	this->codecCtx = NULL;
+	this->formatCtx = NULL;
+	this->pic = NULL;
+	this->picrgb = NULL;
+	this->pictureSrc = NULL;
+	this->pictureDst = NULL;
 
 #ifdef DISABLE_FFMPEG_LOG_MESSAGES
 	av_log_set_level(AV_LOG_QUIET);
@@ -90,10 +93,10 @@ void RTPImporterWorker::initResources()
 {
 	char *pParamRtpUrl;
 
-	freeResources();
+	this->freeResources();
 
-	formatCtx = avformat_alloc_context();
-	codecCtx = avcodec_alloc_context3(NULL);
+	this->formatCtx = avformat_alloc_context();
+	this->codecCtx = avcodec_alloc_context3(NULL);
 
 	av_register_all();
 	avformat_network_init();
@@ -103,40 +106,55 @@ void RTPImporterWorker::initResources()
 	av_log_set_callback(&log_callback);
 #endif
 #endif
-
-	pParamRtpUrl = (char *)params.getconst_url()->data();
-
-	if (! ((strstr(pParamRtpUrl, "rtsp://")) || (strstr(pParamRtpUrl, "RTSP://")) ) )
-	{
-		throw std::runtime_error("No RTSP url");
-	}
-
-	rcvdGOPs.set_capacity(5);
 }
 
 void RTPImporterWorker::freeResources()
 {
 	// clean up contexts
-	if (imgConvertCtx)
+	if (this->imgConvertCtx)
 	{
-		sws_freeContext(imgConvertCtx);
-		imgConvertCtx = NULL;
+		sws_freeContext(this->imgConvertCtx);
+		this->imgConvertCtx = NULL;
 	}
 
-	if (codecCtx)
+	if (this->codecCtx)
 	{
-		avcodec_close(codecCtx);
-		avcodec_free_context(&codecCtx);
-		codecCtx = NULL;
+		avcodec_close(this->codecCtx);
+		avcodec_free_context(&this->codecCtx);
+		this->codecCtx = NULL;
 	}
 
-	if (formatCtx)
+	if (this->formatCtx)
 	{
-		avformat_free_context(formatCtx);
-		formatCtx = NULL;
+		avformat_free_context(this->formatCtx);
+		this->formatCtx = NULL;
 	}
 
-	rcvdGOPs.clear();
+	// free frame structures
+	if(this->pic)
+	{
+		av_frame_free(&this->pic);
+		this->pic = NULL;
+	}
+
+	if(this->picrgb)
+	{
+		av_frame_free(&this->picrgb);
+		this->picrgb = NULL;
+	}
+	
+	// free frame data buffers
+	if(this->pictureSrc)
+	{
+		av_free(this->pictureSrc);
+		this->pictureSrc = NULL;
+	}
+
+	if(this->pictureDst)
+	{
+		av_free(this->pictureDst);
+		this->pictureDst = NULL;
+	}
 }
 
 
@@ -148,16 +166,15 @@ void RTPImporterWorker::run()
 	// get config ID
 	id_t configID = this->config->get_id();
 	timestamp_t tstamp = 0, oldtstamp = 0;
-	uint32_t encoderErrors = 0;
-	char* rtspUrl = (char *)params.getconst_url()->data();
-	unsigned int frameCnt = 0;
+	//uint32_t encoderErrors = 0;
+	//unsigned int frameCnt = 0;
 	unsigned int videoFrameCnt = 0;
 	unsigned int decodedPicCnt = 0;
 	unsigned int decoderErrorCnt = 0;
 	AVPacket packet;
 	AVStream *stream = NULL;
-	AVRational av_timeBase_Q = {1, AV_TIME_BASE};
-
+	//AVRational av_timeBase_Q = {1, AV_TIME_BASE};
+	int videoStreamIndex = 0;
 
 	LOG_SCOPE_CONFIG( configID );
 	LOG_INFO_CONFIG("worker start", configID);
@@ -165,14 +182,17 @@ void RTPImporterWorker::run()
 	// get status
 	auto statusStore = this->module->getStatusStore();
 	ConnectedVision::shared_ptr<Class_generic_status> status = statusStore->getByID(configID)->copy();
-	boost::shared_ptr<Class_generic_status_stableResults> stableResults = status->find_stableResultsByPinID( OutputPin_FrameMetadata::PinID() );
-
-	// get images store
-	auto storeImages = dynamic_cast<RTPImporterModule *>(this->module)->storeManagerImages->getReadWriteStore(configID);
-
 
 	try
 	{
+		boost::shared_ptr<Class_generic_status_stableResults> stableResults = status->find_stableResultsByPinID( OutputPin_FrameMetadata::PinID() );
+
+		// get images store
+		auto storeImages = dynamic_cast<RTPImporterModule *>(this->module)->storeManagerImages->getReadWriteStore(configID);
+
+		Class_RTPImporter_params params;
+		params.parseJson(config->get_params());
+
 		status->resetStableResults();
 		// delete previous results
 		this->module->deleteResults( this->config );
@@ -184,50 +204,185 @@ void RTPImporterWorker::run()
 
 		initResources();
 
+		// check if the URL starts with lower case rtsp://
+		if(!regex_match(params.getconst_url()->c_str(), std::regex("^rtsp://.*")))
+		{
+			throw std::runtime_error("invalid RTSP URL (needs to start with lower case rtsp://)" + *params.getconst_url());
+		}
+
 		// open input file (or rtsp url in our case)
-		if(avformat_open_input(&formatCtx, rtspUrl, NULL, NULL) != 0){
-			throw std::runtime_error("RTPImporter: Could not open RTSP Url");
+		if(avformat_open_input(&this->formatCtx, params.getconst_url()->c_str(), NULL, NULL) != 0){
+			throw std::runtime_error("failed to open RTSP URL " + *params.getconst_url());
 		}
 
 		// setup RTSP and find information necessary for decoding stream
-		if(avformat_find_stream_info(formatCtx,NULL) < 0){
-			throw std::runtime_error("RTPImporter: Could not find stream info");
+		if(avformat_find_stream_info(this->formatCtx,NULL) < 0){
+			throw std::runtime_error("failed to find stream info");
 		}
 
 		//search video stream index (to allow demultiplexing/ignoring audio packets)
-		for(unsigned int i =0;i<formatCtx->nb_streams;i++){
-			if(formatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+		for(unsigned int i =0;i<this->formatCtx->nb_streams;i++){
+			if(this->formatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
 				videoStreamIndex = i;
 		}
 
 		av_init_packet(&packet);
 		// send RTSP play command
-		av_read_play(formatCtx);
+		av_read_play(this->formatCtx);
 
 		// find correct codec and allocate codec context
-		stream = formatCtx->streams[videoStreamIndex];
+		stream = this->formatCtx->streams[videoStreamIndex];
 		AVCodec *codec = NULL;
-		codec = avcodec_find_decoder(stream->codecpar->codec_id);    
+		codec = avcodec_find_decoder(stream->codecpar->codec_id);
+
 		if (!codec) 
 		{
-			throw std::runtime_error("RTPImporter: Could find codec for stream");
+			throw std::runtime_error("failed to find decoder for stream at index " + intToStr(videoStreamIndex));
 		}
-		avcodec_get_context_defaults3(codecCtx, codec);
-	
-		avcodec_parameters_to_context(codecCtx, stream->codecpar);		
 
-		if (avcodec_open2(codecCtx, codec, NULL) < 0) 
+		avcodec_get_context_defaults3(this->codecCtx, codec);
+	
+		avcodec_parameters_to_context(this->codecCtx, stream->codecpar);
+
+		if (avcodec_open2(this->codecCtx, codec, NULL) < 0) 
 		{
-			throw std::runtime_error("RTPImporter: Could not open codec");
+			throw std::runtime_error("failed to open codec");
 		}
 
 		// allocate scaling context (scaling method also performs the colorspace conversion)
-		imgConvertCtx = sws_getContext(codecCtx->width, codecCtx->height, codecCtx->pix_fmt, codecCtx->width, codecCtx->height,
+		this->imgConvertCtx = sws_getContext(this->codecCtx->width, this->codecCtx->height, this->codecCtx->pix_fmt, this->codecCtx->width, this->codecCtx->height,
 			AV_PIX_FMT_BGR24, SWS_BICUBIC, NULL, NULL, NULL);
 
-	} catch(std::exception &e)
+		// allocate source and destination frame structures and data buffers
+		int sizeSrc = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, this->codecCtx->width, this->codecCtx->height, 1);
+		int sizeDst = av_image_get_buffer_size(AV_PIX_FMT_BGR24, this->codecCtx->width, this->codecCtx->height, 1);
+		this->pictureDst = (uint8_t*)(av_malloc(sizeDst));
+		this->pictureSrc = (uint8_t*)(av_malloc(sizeSrc));
+		this->pic = av_frame_alloc();
+		this->picrgb = av_frame_alloc();
+
+		// associate data buffers with frame structures
+		av_image_fill_arrays(this->pic->data, this->pic->linesize, this->pictureSrc, AV_PIX_FMT_YUV420P,this->codecCtx->width, this->codecCtx->height, 1);
+		av_image_fill_arrays(this->picrgb->data, this->picrgb->linesize, this->pictureDst, AV_PIX_FMT_BGR24, this->codecCtx->width, this->codecCtx->height, 1);
+
+		// read one frame into packet struct
+		while (av_read_frame(this->formatCtx, &packet) >=0  && this->go)
+		{
+			//frameCnt++;
+			
+			// only act on video frames
+			if (packet.stream_index == videoStreamIndex)
+			{
+				videoFrameCnt++;
+
+				// decode and retrieve image from frame			
+				int result = avcodec_send_packet(this->codecCtx, &packet);
+				if (result < 0)
+				{
+					decoderErrorCnt++;
+				}
+
+				int ret = avcodec_receive_frame(this->codecCtx, this->pic);
+				if (ret >= 0) 
+				{
+					// picture was decoded 
+					decodedPicCnt++;
+
+					// take timestamp for decoded frame
+					oldtstamp = tstamp;
+
+					/*
+					// TODO av_frame_get_best_effort_timestamp() does not seem to work
+					auto pts = av_frame_get_best_effort_timestamp (this->pic);
+					tstamp = av_rescale_q(pts, stream->time_base, av_timeBase_Q ); // timestamp is now in microseconds.
+					*/
+					tstamp = sysTime();
+						
+					// do the color space conversions
+					sws_scale(this->imgConvertCtx, this->pic->data, this->pic->linesize, 0, this->codecCtx->height, this->picrgb->data, this->picrgb->linesize);
+					this->picrgb->width	= this->pic->width;   // copy the sizes because sws_scale doesn't touch the frame structs, once would probably suffice
+					this->picrgb->height = this->pic->height;
+
+					// generate OpenCV matrix from image that is put into the ring buffer
+					cv::Mat matBGR(this->picrgb->height, this->picrgb->width, CV_8UC3, this->picrgb->data[0], this->picrgb->linesize[0]);
+					{
+						// get data container from ring buffer
+						auto data = storeImages->create();
+						
+						// if the allocation failed then retry (may occur on weak hardware platform such as Raspberry Pi)
+						for(int i = 0; i < 10 && !data; i++)
+						{
+							this->sleep_ms(10);
+							data = storeImages->create();
+						}
+					
+						if(!data)
+						{
+							throw ConnectedVision::runtime_error("failed to allocate output store result element");
+						}
+
+						data->set_id( boost::lexical_cast<id_t>(tstamp) );
+						data->set_timestamp( tstamp );
+
+						// write image
+						data->image = matBGR.clone();
+
+						// write meta data
+						data->set_framenumber( decodedPicCnt -1 );
+						data->set_encerrors( decoderErrorCnt );
+						data->set_height(this->picrgb->height);
+						data->set_width(this->picrgb->width);
+						if( oldtstamp )
+							data->set_framediff(std::abs(tstamp - oldtstamp));
+						else
+							data->set_framediff(0);
+
+						// save to store
+						storeImages->save_move( data );
+
+						// update status
+						stableResults->importFromStore( *storeImages );
+						status->set_stableResultsByPinID( stableResults, OutputPin_FramePNG::PinID() );
+						status->set_stableResultsByPinID( stableResults, OutputPin_FrameMetadata::PinID() );
+							
+						// FIXME
+						// compute progress
+						status->set_progress( 0.0 );
+
+						// compute ETA (we will finish when the prev. module is ready)
+						// FIXME status->set_estimatedFinishTime( detectionStatus.get_estimatedFinishTime() );
+						status->set_systemTimeProcessing( sysTime() );
+
+						// save status
+						statusStore->save_copy(status);
+					}
+				}
+			}
+			// clean up received packet
+			av_packet_unref(&packet);
+			av_init_packet(&packet);
+		}
+
+		av_read_pause(this->formatCtx);
+		avformat_close_input(&this->formatCtx);
+
+		// worker has finished
+		status->set_estimatedFinishTime( sysTime() );
+		status->set_systemTimeProcessing( sysTime() );
+		status->set_progress( 1.0 );
+		status->set_status_finished();
+		LOG_INFO_CONFIG("worker stopped", configID);
+		statusStore->save_copy(status);
+		
+		this->freeResources();
+	}
+	catch(const std::exception &e)
 	{
-		freeResources();
+		try
+		{
+			this->freeResources();
+		}
+		catch(...) { }
 
 		try
 		{
@@ -238,141 +393,9 @@ void RTPImporterWorker::run()
 			status->set_systemTimeProcessing( sysTime() );
 			status->set_estimatedFinishTime( -1 );
 			statusStore->save_copy(status);
-		} catch(...)
-		{
 		}
-
-		return;
+		catch(...) { }
 	}
-
-
-	// allocate source and destination frame structures and data buffers
-	int sizeSrc				= av_image_get_buffer_size(AV_PIX_FMT_YUV420P, codecCtx->width, codecCtx->height, 1);
-	int sizeDst				= av_image_get_buffer_size(AV_PIX_FMT_BGR24, codecCtx->width, codecCtx->height, 1);
-	uint8_t* pictureDst		= (uint8_t*)(av_malloc(sizeDst));
-	uint8_t* pictureSrc		= (uint8_t*)(av_malloc(sizeSrc));
-	AVFrame* pic			= av_frame_alloc();
-	AVFrame* picrgb			= av_frame_alloc();
-
-	// associate data buffers with frame structures
-	av_image_fill_arrays(pic->data, pic->linesize, pictureSrc, AV_PIX_FMT_YUV420P,codecCtx->width, codecCtx->height, 1);
-	av_image_fill_arrays(picrgb->data, picrgb->linesize, pictureDst, AV_PIX_FMT_BGR24, codecCtx->width, codecCtx->height, 1);
-
-	// read one frame into packet struct
-	while (av_read_frame(formatCtx,&packet) >=0  && go)
-	{
-		frameCnt++;
-			
-		// only act on video frames
-		if (packet.stream_index == videoStreamIndex)
-		{
-			videoFrameCnt++;
-
-			// decode and retrieve image from frame			
-			int result = avcodec_send_packet(codecCtx, &packet);
-			if (result < 0)
-			{
-				decoderErrorCnt++;
-			}
-
-			int ret = avcodec_receive_frame(codecCtx, pic);
-			if (ret >= 0) 
-			{
-				// picture was decoded 
-				decodedPicCnt++;
-
-				// take timestamp for decoded frame
-				oldtstamp = tstamp;
-
-				/*
-				// TODO av_frame_get_best_effort_timestamp() does not seem to work
-				auto pts = av_frame_get_best_effort_timestamp (pic);
-				tstamp = av_rescale_q(pts, stream->time_base, av_timeBase_Q ); // timestamp is now in microseconds.
-				*/
-				tstamp = sysTime();
-						
-				// do the color space conversions
-				sws_scale(imgConvertCtx, pic->data, pic->linesize, 0, codecCtx->height, picrgb->data, picrgb->linesize);
-				picrgb->width	= pic->width;   // copy the sizes because sws_scale doesn't touch the frame structs, once would probably suffice
-				picrgb->height	= pic->height;
-
-				// generate OpenCV matrix from image that is put into the ring buffer
-				cv::Mat matBGR(picrgb->height, picrgb->width, CV_8UC3, picrgb->data[0], picrgb->linesize[0]);
-				{
-					// get data container from ring buffer
-					auto data = storeImages->create();
-					if (!data)
-					{
-						throw ConnectedVision::runtime_error("error: storeImages->create() failed (null pointer returned)...");
-					}
-					data->set_id( boost::lexical_cast<id_t>(tstamp) );
-					data->set_timestamp( tstamp );
-
-					// write image
-					data->image = matBGR.clone();
-
-					// write meta data
-					data->set_framenumber( decodedPicCnt -1 );
-					data->set_encerrors( decoderErrorCnt );
-					data->set_height(picrgb->height);
-					data->set_width(picrgb->width);
-					if( oldtstamp )
-						data->set_framediff(std::abs(tstamp - oldtstamp));
-					else
-						data->set_framediff(0);
-
-					// save to store
-					storeImages->save_move( data );
-
-					// update status
-					stableResults->importFromStore( *storeImages );
-					status->set_stableResultsByPinID( stableResults, OutputPin_FramePNG::PinID() );
-					status->set_stableResultsByPinID( stableResults, OutputPin_FrameMetadata::PinID() );
-							
-					// FIXME
-					// compute progress
-					status->set_progress( 0.0 );
-
-					// compute ETA (we will finish when the prev. module is ready)
-					// FIXME status->set_estimatedFinishTime( detectionStatus.get_estimatedFinishTime() );
-					status->set_systemTimeProcessing( sysTime() );
-
-					// save status
-					statusStore->save_copy(status);				
-				}
-			}
-		}
-		// clean up received packet
-		av_packet_unref(&packet);
-		av_init_packet(&packet);
-	}
-
-	av_read_pause(formatCtx);
-	avformat_close_input(&formatCtx);
-
-	// free data buffers and frame structures
-	av_frame_free(&pic);
-	av_frame_free(&picrgb);
-	av_free(pictureSrc);
-	av_free(pictureDst);
-
-
-
-
-	try
-	{
-		status->set_estimatedFinishTime( sysTime() );
-		status->set_systemTimeProcessing( sysTime() );
-		// worker has finished
-		status->set_progress( 1.0 );
-		status->set_status_finished();
-		LOG_INFO_CONFIG("worker stopped", configID);
-		statusStore->save_copy(status);
-	} catch(...)
-	{
-	}
-
-	freeResources();
 }
 
 } // namespace RTPImporter
