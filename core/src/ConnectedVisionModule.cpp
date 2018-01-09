@@ -2469,12 +2469,17 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 	{
 		// read status and config
 		boost::shared_ptr< const Class_generic_config > config = configStore->getByID(resolvedConfigID);
-
 		if ( !config )
 		{
 			// not found
 			httpCode = writeErrorLog(response, HTTP_Status_NOT_FOUND, "control: config not found");
 		}
+
+		// config has been loaded -> get worker controller for config, or init new controller
+
+		
+
+
 		else if ( !algoDispatcher )
 		{
 			// server error

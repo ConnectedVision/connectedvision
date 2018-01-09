@@ -131,7 +131,7 @@ TEST(moduleControl, missing_status_store_returns_error)
 
 	auto http_code = module->control(ID_NULL, "", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_ERROR);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_ERROR, http_code);
 }
 
 TEST(moduleControl, missing_config_store_returns_error)
@@ -147,7 +147,7 @@ TEST(moduleControl, missing_config_store_returns_error)
 
 	auto http_code = module->control(ID_NULL, "", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_ERROR);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_ERROR, http_code);
 }
 
 TEST(moduleControl, missing_config_returns_error)
@@ -161,7 +161,7 @@ TEST(moduleControl, missing_config_returns_error)
 	// actual test
 	auto http_code = module->control(ID_NULL, "", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_NOT_FOUND);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_NOT_FOUND, http_code);
 }
 
 TEST(moduleControl, reset_config)
@@ -176,7 +176,7 @@ TEST(moduleControl, reset_config)
 	// actual test
 	auto http_code = module->control(config->getconst_configID(), "reset", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_OK);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
 TEST(moduleControl, start_config)
@@ -191,7 +191,7 @@ TEST(moduleControl, start_config)
 	// actual test
 	auto http_code = module->control(config->getconst_configID(), "start", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_OK);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
 TEST(moduleControl, stop_config)
@@ -207,7 +207,7 @@ TEST(moduleControl, stop_config)
 	module->control(config->getconst_configID(), "start", ID_NULL, response);
 	auto http_code = module->control(config->getconst_configID(), "stop", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_OK);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
 TEST(moduleControl, recover_config)
@@ -222,7 +222,7 @@ TEST(moduleControl, recover_config)
 	// actual test
 	auto http_code = module->control(config->getconst_configID(), "recover", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_OK);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
 TEST(moduleControl, resetThis_config)
@@ -237,7 +237,7 @@ TEST(moduleControl, resetThis_config)
 	// actual test
 	auto http_code = module->control(config->getconst_configID(), "resetThis", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_OK);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
 TEST(moduleControl, stopThis_config)
@@ -253,7 +253,7 @@ TEST(moduleControl, stopThis_config)
 	module->control(config->getconst_configID(), "start", ID_NULL, response);
 	auto http_code = module->control(config->getconst_configID(), "stopThis", ID_NULL, response);
 
-	CHECK_EQUAL(http_code, ConnectedVision::HTTP::HTTP_Status_OK);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
 

@@ -422,9 +422,14 @@ protected:
 	
 	DBConnection dbConn;
 
-	boost::shared_ptr<ConnectedVisionAlgorithmDispatcher> algoDispatcher;
+	boost::shared_ptr<ConnectedVisionAlgorithmDispatcher> algoDispatcher; // TODO remove -> mapWorkerControllers
 	//boost::shared_ptr<ConnectedVision::DataHandling::Store_SQLite_generic_status> statusStore;
 	//ConnectedVision::shared_ptr<ConnectedVision::DataHandling::Store_SQLite_generic_config> configStore;
+
+	/**
+	* map that holds already initialized worker controllers
+	*/
+	//ConnectedVision::thread_safe_map<id_t, std::unique_ptr<ConnectedVision::Module::WorkerController> mapWorkerControllers;
 
 	boost::shared_ptr<ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_status>> statusStore;
 	ConnectedVision::shared_ptr<ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_config>> configStore;
