@@ -214,13 +214,15 @@ set(ConnectedVisionCoreHTTPSources
 )
 
 set(ConnectedVisionCoreModuleHeaders
+	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.h
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerThread.h
 	${ConnectedVisionCppRoot}/core/src/Module/ConfigManager.h
-	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.h
+	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.h	
 )
 
 set(ConnectedVisionCoreModuleSources
-	${ConnectedVisionCppRoot}/core/src/Module/WorkerThread.cpp
+	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.cpp
+	${ConnectedVisionCppRoot}/core/src/Module/WorkerThread.cpp	
 	${ConnectedVisionCppRoot}/core/src/Module/ConfigManager.cpp
 )
 

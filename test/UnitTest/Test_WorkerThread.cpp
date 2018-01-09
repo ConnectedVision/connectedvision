@@ -3,12 +3,13 @@
 * MIT License
 */
 
-#include "Module/WorkerThread.h"
+#include <Module/WorkerThread.h>
 
 #include "TestHelper_Module.hpp"
 #include "TestHelper_Threads.hpp"
 
 #include <CppUTest/TestHarness.h>
+
 
 namespace ConnectedVision {
 namespace Module {

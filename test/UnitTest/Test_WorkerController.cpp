@@ -10,6 +10,7 @@
 #include <Module/Control/Class_generic_status.h>
 #include <DataHandling/Store_Ringbuffer.h>
 #include <Module/Module_BaseClass.h>
+#include <Module/WorkerController.h>
 
 #include "TestHelper_Module.hpp"
 #include "TestHelper_Threads.hpp"
@@ -17,11 +18,36 @@
 #include <CppUTest/TestHarness.h>
 
 
-#include "WorkerController.cpp"
-typedef ConnectedVision::Module::WorkerController TestWrapper_WorkerController;
-
 namespace ConnectedVision {
 namespace Module {
+
+class TestWrapper_WorkerController : public WorkerController
+{
+public:
+	TestWrapper_WorkerController(		
+		const id_t& configID,																///< config chain ID
+		ConnectedVision::Module::IModule& module,											///< ConnectedVision module
+		const ConnectedVision::shared_ptr</* TODO const */IWorkerFactory> workerFactory,	///< worker factory
+		const timestamp_t workerTimeout = 5000												///< timeout to wait for worker to stop cooperatively
+	) :	WorkerController(configID, module, workerFactory, workerTimeout)
+	{}
+
+	/**
+		constructor for new config, config(-chain) is saved to data store
+	*/
+	TestWrapper_WorkerController(		
+		const Class_generic_config& configOrig,												///< config chain
+		ConnectedVision::Module::IModule& module,											///< module
+		const ConnectedVision::shared_ptr</* TODO const */IWorkerFactory> workerFactory,	///< worker factory
+		const timestamp_t workerTimeout = 5000												///< timeout to wait for worker to stop cooperatively
+	) :	WorkerController(configOrig, module, workerFactory, workerTimeout)
+	{}
+	
+	// spy functions
+	thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &spy_workerThreadProgress() { return this->workerThreadProgress; }
+
+	boost::atomic<WorkerThreadProgress::WorkerThreadProgress> progressBeforeTermination;
+};
 
 static const std::string configStr =	"{"	
 									"	\"id\": \"\", \"name\": \"test config\", \"description\": \"\","

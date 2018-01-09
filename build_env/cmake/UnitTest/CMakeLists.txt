@@ -64,8 +64,7 @@ set(ConnectedVisionUnitTestSources
 	${ConnectedVisionCppRoot}/test/UnitTest/MixIn_IDataAllocator.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/MixIn_IStore.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_RapidJSON.cpp
-	${ConnectedVisionCppRoot}/test/UnitTest/Test_WorkerController.cpp
-	${ConnectedVisionCppRoot}/test/UnitTest/WorkerController.cpp
+	${ConnectedVisionCppRoot}/test/UnitTest/Test_WorkerController.cpp	
 )
 
 set(ConnectedVisionUnitTestGeneratedHeaders
