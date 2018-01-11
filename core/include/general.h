@@ -19,6 +19,7 @@
 
 #if (_MSC_VER == 1600) // check for Visual Studio 2010
 #define noexcept
+#pragma warning( disable : 4290 )
 #endif
 
 namespace ConnectedVision
