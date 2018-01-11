@@ -206,7 +206,7 @@ TEST(moduleControl, start_unknown_config_returns_error)
 	// actual test
 	auto http_code = module->control("123", "start", ID_NULL, response);
 
-	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_ERROR, http_code);
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_NOT_FOUND, http_code);
 }
 
 TEST(moduleControl, stop_config)

@@ -2469,7 +2469,7 @@ int Module_BaseClass::control(const id_t configID, const std::string& command, c
 		if ( !config )
 		{
 			// not found
-			httpCode = writeErrorLog(response, HTTP_Status_NOT_FOUND, "control: config not found");
+			return writeErrorLog(response, HTTP_Status_NOT_FOUND, "control: config not found");
 		}
 
 		// config has been loaded -> get worker controller for config, or init new controller
@@ -2750,14 +2750,14 @@ int Module_BaseClass::control(const id_t configID, const std::string& command, c
 		else
 		{
 			// not found
-			httpCode = writeErrorLog(response, HTTP_Status_NOT_FOUND, "unknown control command");
+			return writeErrorLog(response, HTTP_Status_NOT_FOUND, "unknown control command");
 		}
 		
 	}
 	catch (std::exception &e)
 	{
 		// internal server error
-		httpCode = writeErrorLog(response, HTTP_Status_ERROR, string(e.what()) );
+		return writeErrorLog(response, HTTP_Status_ERROR, string(e.what()) );
 	}
 
 
