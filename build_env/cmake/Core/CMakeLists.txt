@@ -138,7 +138,6 @@ set(ConnectedVisionCoreHeaders
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmDispatcher.h
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmWorker.h
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPin.h
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionModule.h
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionOutputPin.h
 	${ConnectedVisionCppRoot}/core/src/DataSource_Memory_BaseClass.h
 	${ConnectedVisionCppRoot}/core/src/DataSource_REST_BaseClass.h
@@ -164,7 +163,6 @@ set(ConnectedVisionCoreSources
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmWorker.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPinControl.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPinData.cpp
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionModule.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionOutputPin.cpp
 	${ConnectedVisionCppRoot}/core/src/DataSource_Memory_BaseClass.cpp
 	${ConnectedVisionCppRoot}/core/src/DataSource_Memory_BaseClass_specializations.cpp
@@ -224,6 +222,7 @@ set(ConnectedVisionCoreModuleSources
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.cpp
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerThread.cpp	
 	${ConnectedVisionCppRoot}/core/src/Module/ConfigManager.cpp
+	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.cpp	
 )
 
 set(ConnectedVisionCoreModuleDispatcherHeaders

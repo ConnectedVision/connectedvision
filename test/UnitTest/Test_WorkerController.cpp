@@ -27,7 +27,7 @@ public:
 	TestWrapper_WorkerController(		
 		const id_t& configID,																///< config chain ID
 		ConnectedVision::Module::IModule& module,											///< ConnectedVision module
-		const ConnectedVision::shared_ptr</* TODO const */IWorkerFactory> workerFactory,	///< worker factory
+		ConnectedVision::Module::IWorkerFactory &workerFactory,	///< worker factory
 		const timestamp_t workerTimeout = 5000												///< timeout to wait for worker to stop cooperatively
 	) :	WorkerController(configID, module, workerFactory, workerTimeout)
 	{}
@@ -38,7 +38,7 @@ public:
 	TestWrapper_WorkerController(		
 		const Class_generic_config& configOrig,												///< config chain
 		ConnectedVision::Module::IModule& module,											///< module
-		const ConnectedVision::shared_ptr</* TODO const */IWorkerFactory> workerFactory,	///< worker factory
+		ConnectedVision::Module::IWorkerFactory &workerFactory,	///< worker factory
 		const timestamp_t workerTimeout = 5000												///< timeout to wait for worker to stop cooperatively
 	) :	WorkerController(configOrig, module, workerFactory, workerTimeout)
 	{}

@@ -97,9 +97,9 @@ namespace WorkerCommand {
 }	// namespace WorkerCommand
 
 WorkerController::WorkerController(
-	const id_t& configID,
-	ConnectedVision::Module::IModule& module,
-	const ConnectedVision::shared_ptr<IWorkerFactory> workerFactory,
+	const id_t &configID,
+	ConnectedVision::Module::IModule &module,
+	ConnectedVision::Module::IWorkerFactory &workerFactory,
 	const timestamp_t workerTimeout
 ) : module(module), workerFactory(workerFactory), workerTimeout(workerTimeout), workerThreadProgress(WorkerThreadProgress::Finished)
 {
@@ -108,9 +108,9 @@ WorkerController::WorkerController(
 }
 
 WorkerController::WorkerController(		
-	const Class_generic_config& configOrig,
-	ConnectedVision::Module::IModule& module,
-	const ConnectedVision::shared_ptr<IWorkerFactory> workerFactory,
+	const Class_generic_config &configOrig,
+	ConnectedVision::Module::IModule &module,
+	ConnectedVision::Module::IWorkerFactory &workerFactory,
 	const timestamp_t workerTimeout
 ) : module(module), workerFactory(workerFactory), workerTimeout(workerTimeout), workerThreadProgress(WorkerThreadProgress::Finished)
 {
@@ -287,7 +287,7 @@ void WorkerController::workerThreadFunction()
 						boost::this_thread::disable_interruption interrupt_disabler;
 
 						// create worker
-						auto worker = this->workerFactory->createWorker(*this, this->getConfig());
+						auto worker = this->workerFactory.createWorker(*this, this->getConfig());
 						// start worker
 						try
 						{
@@ -411,9 +411,6 @@ void WorkerController::init(id_t configID)
 	// intentional set to error: if progressBeforeTermination is used in getStatusFromProgress() before it is set in CommandTerminate execute()
 	progressBeforeTermination = WorkerThreadProgress::Error;
 
-	if ( !this->workerFactory )
-		throw ConnectedVision::invalid_argument("[WorkerController] invalid workerFactory (null pointer)");
-
 	// get config
 	this->configID = configID;
 	if ( this->configID.empty() )
@@ -460,8 +457,10 @@ void WorkerController::init(id_t configID)
 	this->workerThread = boost::thread(&WorkerController::workerThreadFunction, this);
 	this->workerThreadGuard = boost::make_shared<boost::thread_guard<boost::interrupt_and_join_if_joinable>>(this->workerThread);
 
-	// notify module about new worker instance
-	this->module.registerWorkerInstance(this->configID, this); // TODO module ->	throw ConnectedVision::runtime_error("[WorkerController] there is already an instance for config: " + IDToStr(configID) );
+	// notify module about new worker instance (may fail with intended out_of_range exception in case of a race condition)
+	// so the calling constructor which invokes this init() function will also throw
+	// (and eventually enforcing a single WorkerController instance for each config ID)
+	this->module.registerWorkerInstance(this->configID, this);
 }
 
 const boost::shared_ptr<std::string> WorkerController::mapProgressToStatus(WorkerThreadProgress::WorkerThreadProgress progress) const

@@ -152,8 +152,8 @@ public:
 
 
 
-	virtual void registerWorkerInstance(const id_t configID, const ConnectedVision::Module::IWorkerController *workerController);
-	virtual void unregisterWorkerInstance(const id_t configID, const ConnectedVision::Module::IWorkerController *workerController);
+	virtual void registerWorkerInstance(const id_t configID, const ConnectedVision::Module::IWorkerControllerCallbacks *workerController);
+	virtual void unregisterWorkerInstance(const id_t configID, const ConnectedVision::Module::IWorkerControllerCallbacks *workerController);
 	virtual void deleteResults(const boost::shared_ptr<const Class_generic_config> config) = 0;
 	virtual bool processConfigRecover(const id_t configID) { return false; }
 

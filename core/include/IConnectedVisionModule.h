@@ -172,7 +172,7 @@ namespace ConnectedVision
 
 	};
 
-	class IConnectedVisionModule
+	class IConnectedVisionModule // TODO -> replaced by ConnectedVision::Module::IModule
 	{
 	public:
 		/** constructor */
@@ -439,7 +439,7 @@ namespace ConnectedVision
 	};
 
 	namespace Module {
-		class IWorkerController;
+		class IWorkerControllerCallbacks;
 
 		class IModule
 		{
@@ -686,7 +686,7 @@ namespace ConnectedVision
 			 */
 			virtual void registerWorkerInstance(
 				const id_t configID,						///< [in] ID of config
-				const IWorkerController *workerController	///< [in] worker controller instance
+				const IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
 			) = 0;
 
 			/**
@@ -694,7 +694,7 @@ namespace ConnectedVision
 			 */
 			virtual void unregisterWorkerInstance(
 				const id_t configID,						///< [in] ID of config
-				const IWorkerController *workerController	///< [in] worker controller instance
+				const IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
 			) = 0;
 
 
@@ -738,13 +738,13 @@ namespace ConnectedVision
 			virtual IModule* getModule() = 0; 
 		};
 
-		class IWorkerController
+		class IWorkerControllerCallbacks
 		{
 		public:
 			/** constructor */
-			IWorkerController() {}
+			IWorkerControllerCallbacks() {}
 			/** virtual destructor */
-			virtual ~IWorkerController() {}
+			virtual ~IWorkerControllerCallbacks() {}
 
 			//////////////////////////////////////////////////////////////////////////////////
 			// callback functions for worker
@@ -796,7 +796,7 @@ namespace ConnectedVision
 			* @return worker instance
 			*/
 			virtual std::unique_ptr<IWorker> createWorker(
-				IWorkerController &controller,									///< reference to worker controller
+				IWorkerControllerCallbacks &controller,									///< reference to worker controller
 				ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
 			) = 0;
 		};

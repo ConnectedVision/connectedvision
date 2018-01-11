@@ -129,7 +129,7 @@ namespace WorkerCommand {
 	typedef ConnectedVision::thread_safe_queue< ConnectedVision::shared_ptr<WorkerCommand::ICommand> > CommandQueue;
 }
 
-class WorkerController : public IWorkerController
+class WorkerController : public IWorkerControllerCallbacks
 {
 public:
 	typedef boost::unique_lock<boost::mutex> Lock;
@@ -138,9 +138,9 @@ public:
 		constructor for existing config, access by configID
 	*/
 	WorkerController(		
-		const id_t& configID,																///< config chain ID
-		ConnectedVision::Module::IModule& module,											///< ConnectedVision module
-		const ConnectedVision::shared_ptr</* TODO const */IWorkerFactory> workerFactory,	///< worker factory
+		const id_t &configID,																///< config chain ID
+		ConnectedVision::Module::IModule &module,											///< ConnectedVision module
+		ConnectedVision::Module::IWorkerFactory &workerFactory,	///< worker factory
 		const timestamp_t workerTimeout = 5000												///< timeout to wait for worker to stop cooperatively
 	);
 
@@ -148,9 +148,9 @@ public:
 		constructor for new config, config(-chain) is saved to data store
 	*/
 	WorkerController(		
-		const Class_generic_config& configOrig,												///< config chain
-		ConnectedVision::Module::IModule& module,											///< module
-		const ConnectedVision::shared_ptr</* TODO const */IWorkerFactory> workerFactory,	///< worker factory
+		const Class_generic_config &configOrig,												///< config chain
+		ConnectedVision::Module::IModule &module,											///< module
+		ConnectedVision::Module::IWorkerFactory &workerFactory,	///< worker factory
 		const timestamp_t workerTimeout = 5000												///< timeout to wait for worker to stop cooperatively
 	);
 
@@ -219,8 +219,15 @@ public:
 	*/
 	virtual ConnectedVision::shared_ptr<const Class_generic_config> getConfig();
 
+	/**
+	* get current config ID
+	*
+	* @returns current config ID
+	*/
+	const id_t getConfigID() const { return this->configID; };
 
-	// IWorkerController callbacks
+
+	// IWorkerControllerCallbacks
 
 	/**
 	* should the worker continue running
@@ -292,7 +299,7 @@ protected:
 	boost::thread workerThread;
 	boost::shared_ptr<boost::thread_guard<boost::interrupt_and_join_if_joinable>> workerThreadGuard;
 
-	const ConnectedVision::shared_ptr</* TODO const */IWorkerFactory> workerFactory;
+	ConnectedVision::Module::IWorkerFactory &workerFactory;
 	timestamp_t workerTimeout;
 	boost::atomic<WorkerThreadProgress::WorkerThreadProgress> progressBeforeTermination;
 };

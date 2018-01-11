@@ -220,7 +220,7 @@ destroy WorkerThread
 @enduml
 */
 
-class WorkerThread : IWorkerController
+class WorkerThread : IWorkerControllerCallbacks
 {
 public:
 	typedef ThreadState::ThreadState ThreadState;

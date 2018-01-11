@@ -21,7 +21,7 @@ namespace Module {
 
 using namespace std;
 
-class TestWrapper_AliasID : public ConnectedVisionModule
+class TestWrapper_AliasID : public ConnectedVisionModule // TODO obsolate module interface
 {
 public:
 	TestWrapper_AliasID(const char moduleDescription[], const char inputPinDescription[], const char outputPinDescription[]) :

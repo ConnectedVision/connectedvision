@@ -89,7 +89,7 @@ public:
 	/** constructor */
 	Worker_Mockup(
 		IModule* module,	///< [in] associated module
-		IWorkerController &workerThread,	///< [in] reference to controller
+		IWorkerControllerCallbacks &workerThread,	///< [in] reference to controller
 		uint64_t runtime,	///< [in] runtime of worker.run() in milliseconds
 		bool cooperative	///< [in] cooperative worker
 	) : pModule(module), runtime(runtime), workerThread(workerThread), cooperative(cooperative)
@@ -143,7 +143,7 @@ public:
 	{ return this->pModule; }
 
 protected:
-	IWorkerController &workerThread;
+	IWorkerControllerCallbacks &workerThread;
 	const bool cooperative;
 	uint64_t runtime;
 	IModule* pModule;
@@ -177,7 +177,7 @@ public:
 	* @return worker instance
 	*/
 	virtual std::unique_ptr<IWorker> createWorker(
-		IWorkerController &controller,									///< reference to controller
+		IWorkerControllerCallbacks &controller,									///< reference to controller
 		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
 	)
 	{
@@ -428,14 +428,16 @@ public:
 	// config / worker specific
 
 
+
+
 	/**
 		* register worker instance for specific config
 		*/
 	virtual void registerWorkerInstance(
 		const id_t configID,						///< [in] ID of config
-		const IWorkerController *workerController	///< [in] worker controller instance
+		const IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
 	)  {
-		if ( !this->workerMap.insert ( std::pair<id_t, const IWorkerController*>(configID, workerController)).second )
+		if ( !this->workerMap.insert ( std::pair<id_t, const IWorkerControllerCallbacks*>(configID, workerController)).second )
 		{
 			throw ConnectedVision::runtime_error("config: " + IDToStr(configID) + " already in worker list");
 		}
@@ -446,7 +448,7 @@ public:
 		*/
 	virtual void unregisterWorkerInstance(
 		const id_t configID,						///< [in] ID of config
-		const IWorkerController *workerController	///< [in] worker controller instance
+		const IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
 	) {
 		try 
 		{
@@ -514,7 +516,7 @@ public:
 	bool ready;
 	IModuleEnvironment *pEnv;
 	std::vector<int> resultData;
-	std::map<id_t, const IWorkerController*> workerMap;
+	std::map<id_t, const IWorkerControllerCallbacks*> workerMap;
 
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_status> > statusStore;
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_config> > configStore;

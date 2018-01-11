@@ -445,12 +445,12 @@ namespace ConnectedVision {
 		*
 		* Returns the desired element in the map with key k
 		*
-		* @return a copy of the queried elements
+		* @return a reference of the queried elements
 		*/
-		T at (const Key& k)
+		T& at (const Key& k)
 		{
 			std__unique_lock lock(this->mutex);
-			return T(this->q.at(k));
+			return q.at(k);
 		}
 
 		/**
@@ -459,14 +459,35 @@ namespace ConnectedVision {
 		*
 		* Returns the desired element in the map with key k
 		*
-		* @return a copy of the queried elements
+		* @return a reference of the queried elements
 		*/
-		const T at (const Key& k) const
+		const T& at (const Key& k) const
 		{
 			std__unique_lock lock(this->mutex);
-			return T(this->q.at(k));
+			return this->q.at(k);
 		}
 		
+		/**
+		* get (and create) element in map with key k and returns a REFERENCE to the element USE THIS FUNCTION WITH CARE!
+		* @thread-safe
+		*
+		* If k matches the key of an element in the container, the function returns a reference to its mapped value.
+		*
+		* If k does not match the key of any element in the container, the function inserts a new element with that key
+		* and returns a reference to its mapped value. Notice that this always increases the container size by one, 
+		* even if no mapped value is assigned to the element (the element is constructed using its default constructor).
+		*
+		* A similar member function, map::at, has the same behavior when an element with the key exists, 
+		* but throws an exception when it does not.
+		*
+		* @return a reference of the queried elements
+		*/
+		T operator[] (const Key& k) const
+		{
+			std__unique_lock lock(this->mutex);
+			return this->q[k];
+		}
+
 		/**
 		* insert element into map (thread safe)
 		* @thread-safe
@@ -478,7 +499,11 @@ namespace ConnectedVision {
 		void insert (const std::pair<Key,T>& val)
 		{
 			std__unique_lock lock(this->mutex);
-			this->q.insert(val);
+			auto ret = this->q.insert(val);
+			if ( !ret.second )
+			{
+				throw std::out_of_range("key already in use");
+			}
 		}
 
 		/**
@@ -493,6 +518,34 @@ namespace ConnectedVision {
 		{
 			std__unique_lock lock(this->mutex);
 			this->q.erase(k);
+		}
+
+		/**
+		* erases an element of map if it is identical to the given item (thread safe)
+		* @thread-safe
+		*
+		* erases an element of the map with key k
+		*
+		* @param k		Key of the element to be removed from the map. Member type Key is the type of the elements in the container, 
+		* defined in map as an alias of its first template parameter (the key).
+		* @param item	actual item for comparison
+		*/
+		void erase (const Key& k, const T& item)
+		{
+			std__unique_lock lock(this->mutex);
+			auto it = this->q.find(k);
+			if ( it != this->q.end() && it->second == item )
+				this->q.erase(it);
+		}
+
+		/**
+		* Removes all elements from the map container (which are destroyed), leaving the container with a size of 0.
+		* @thread-safe
+		*/
+		void clear ()
+		{
+			std__unique_lock lock(this->mutex);
+			this->q.clear();
 		}
 
 		/**
@@ -515,6 +568,31 @@ namespace ConnectedVision {
 			{
 				this->q.insert(val);
 			}
+		}
+
+		/**
+		* applies a filtering function to the whole map and returns a list of matched return values
+		* @thread-safe
+		*
+		* @param filterFunction	function that is applied to each item of the map
+		*							function signature: id_t filterFunction(T &item)
+		* @param nullValue		if the filterFunction returns the nullValue, it will not be added to the list
+		*
+		* @return vector of matched return values
+		*/
+		std::vector<id_t> filter(std::function<id_t (const T&)> filterFunction, id_t nullValue = NULL) // TODO replace id_t with template type
+		{
+			std::vector<id_t>	results;
+			std__unique_lock lock(this->mutex);
+			typedef typename std::map<Key,T>::iterator MapIterator;
+			for (MapIterator it = this->q.begin(); it != this->q.end(); ++it)
+			{
+				T& item = it->second;
+				id_t value = filterFunction(item);
+				if ( value != nullValue )
+					results.push_back(value);
+			}
+			return results;
 		}
 
 	protected:
