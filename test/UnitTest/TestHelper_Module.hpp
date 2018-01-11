@@ -32,7 +32,7 @@ public:
 	* register module
 	*/
 	virtual void registerModule( 
-		boost::shared_ptr<IConnectedVisionModule> module ///< module instance
+		boost::shared_ptr<ConnectedVision::Module::IModule> module ///< module instance
 	) {}
 
 	/**
@@ -40,10 +40,10 @@ public:
 	*
 	* @return module instance
 	*/
-	virtual boost::shared_ptr<IConnectedVisionModule> getModule(
+	virtual boost::shared_ptr<ConnectedVision::Module::IModule> getModule(
 		std::string moduleID	///< module ID
 	) const
-	{ return boost::shared_ptr<IConnectedVisionModule>(); }
+	{ return boost::shared_ptr<ConnectedVision::Module::IModule>(); }
 
 
 	/**
@@ -168,7 +168,7 @@ public:
 	*
 	* @return module 
 	*/
-	virtual IModule* getModule() const
+	virtual IModule* getModule()
 	{ return this->pModule; }
 
 	/**
@@ -271,6 +271,14 @@ public:
 		ConnectedVisionResponse &response	///< [out] response containing module description
 	) { throw ConnectedVision::runtime_error("not implemented"); }
 
+	/** get moduleLogo as ConnectedVisionResponse
+	* @param[out] response the ConnectedVisionResponse result which will contain the module logo if successful
+	* @return status code (analog to HTTP codes)
+	*/
+	virtual int getModuleLogo(
+		ConnectedVisionResponse &response	///< [out] response containing module description
+	) { throw ConnectedVision::runtime_error("not implemented"); }
+			
 	/**
 	* get input pins description as JSON response
 	*
@@ -424,10 +432,33 @@ public:
 		ConnectedVisionResponse &response	///< [out] response containing status
 	) { throw ConnectedVision::runtime_error("not implemented"); }
 
+
+	/**
+	* process parameter command after HTTP-GET request and return status as JSON response
+	*
+	* @return status code (analog to HTTP codes)
+	*/
+	virtual int processParameterCommand(
+		const id_t configID, 				///< [in] ID of config
+		const std::string& command,			///< [in] command		command: "parameter/name=", "parameter/name", ...
+		ConnectedVisionResponse &response	///< [out] response		status of configuration / job
+	) { throw ConnectedVision::runtime_error("not implemented"); }
+
+	/**
+	* process parameter command after HTTP-PUT/-POST request and return status as JSON response
+	*
+	* @return status code (analog to HTTP codes)
+	*/
+	virtual int processParameterCommand(
+		const id_t configID, 				///< [in] ID of config
+		const std::string& command,			///< [in] command		command: "parameter/name"
+		const std::string& payload,			///< [in] payload		the payload of the put/post request
+		ConnectedVisionResponse &response	///< [out] response		status of configuration / job
+	) { throw ConnectedVision::runtime_error("not implemented"); }
+
+			
 	//////////////////////////////////////////////////////////////////////////////////
 	// config / worker specific
-
-
 
 
 	/**
@@ -435,7 +466,7 @@ public:
 		*/
 	virtual void registerWorkerInstance(
 		const id_t configID,						///< [in] ID of config
-		const IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
+		IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
 	)  {
 		if ( !this->workerMap.insert ( std::pair<id_t, const IWorkerControllerCallbacks*>(configID, workerController)).second )
 		{
@@ -448,7 +479,7 @@ public:
 		*/
 	virtual void unregisterWorkerInstance(
 		const id_t configID,						///< [in] ID of config
-		const IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
+		IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
 	) {
 		try 
 		{

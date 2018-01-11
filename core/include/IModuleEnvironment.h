@@ -8,12 +8,13 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <Module/Control/Class_HostStatus.h>
+#include "Module/Control/Class_HostStatus.h"
+#include "Module/Module_BaseClass.h"
 #include "ILogging.h"
 
 namespace ConnectedVision
 {
-	class IConnectedVisionModule;
+	class ::ConnectedVision::Module::IModule;
 
 class IModuleEnvironment : public Logging::ILogable {
 public:
@@ -27,7 +28,7 @@ public:
 	* register module
 	*/
 	virtual void registerModule( 
-		boost::shared_ptr<IConnectedVisionModule> module ///< module instance
+		boost::shared_ptr<Module::IModule> module ///< module instance
 	) = 0;
 
 	/**
@@ -35,7 +36,7 @@ public:
 	*
 	* @return module instance
 	*/
-	virtual boost::shared_ptr<IConnectedVisionModule> getModule(
+	virtual boost::shared_ptr<Module::IModule> getModule(
 		std::string moduleID	///< module ID
 	) const = 0;
 

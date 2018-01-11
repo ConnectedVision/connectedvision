@@ -148,7 +148,7 @@ TEST_GROUP(WorkerController)
 };
 
 // helper to cast WorkerFactory_Mockup to Interface: IWorkerFactory
-#define workerFactory	boost::static_pointer_cast<IWorkerFactory>(workerFactory_Mockup)
+#define workerFactory	*(dynamic_cast<IWorkerFactory*>(workerFactory_Mockup.get()))
 
 TEST(WorkerController, constructor_checks_parameters)
 {
@@ -161,7 +161,6 @@ TEST(WorkerController, constructor_checks_parameters)
 	// actual test
 
 	// constructor with config ID
-	CHECK_THROWS( std::invalid_argument, TestWrapper_WorkerController(configID, module, NULL) );
 	module.configStore.reset();
 	module.statusStore = statusStore;
 	CHECK_THROWS( std::invalid_argument, TestWrapper_WorkerController(configID, module, workerFactory) );
@@ -170,7 +169,6 @@ TEST(WorkerController, constructor_checks_parameters)
 	CHECK_THROWS( std::invalid_argument, TestWrapper_WorkerController(configID, module, workerFactory) );
 
 	// constructor with config object
-	CHECK_THROWS( std::invalid_argument, TestWrapper_WorkerController(configObj, module, NULL) );
 	module.configStore.reset();
 	module.statusStore = statusStore;
 	CHECK_THROWS( std::invalid_argument, TestWrapper_WorkerController(configObj, module, workerFactory) );

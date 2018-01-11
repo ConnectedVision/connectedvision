@@ -10,6 +10,10 @@
 
 #include "ConnectedVisionAlgorithmWorker.h"
 #include "Module/Control/Store_SQLite_generic_status.h"
+#include "Module/Module_BaseClass.h"
+
+
+#error("TODO remove this file !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 namespace ConnectedVision
 {
@@ -31,7 +35,7 @@ void ConnectedVisionAlgorithmWorker::sleep_ms(int ms)
 /**
  * algorithm worker thread constructor
  */
-ConnectedVisionAlgorithmWorker::ConnectedVisionAlgorithmWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config) :
+ConnectedVisionAlgorithmWorker::ConnectedVisionAlgorithmWorker(IModuleEnvironment *env, Module_BaseClass *module, boost::shared_ptr<const Class_generic_config> config) :
 	env(env), module(module)
 {
 	this->logName = module->getModuleID();

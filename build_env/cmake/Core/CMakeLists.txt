@@ -135,8 +135,6 @@ set(ConnectedVisionCoreHeaders
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_PinDescription_properties.h
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_RawData.h
 	${ConnectedVisionCppRoot}/core/src/CNamedResourcesPool.h
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmDispatcher.h
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmWorker.h
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPin.h
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionOutputPin.h
 	${ConnectedVisionCppRoot}/core/src/DataSource_Memory_BaseClass.h
@@ -159,8 +157,6 @@ set(ConnectedVisionCoreSources
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_generic_status.cpp
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_RawData.cpp
 	${ConnectedVisionCppRoot}/core/src/CNamedResourcesPool.cpp
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmDispatcher.cpp
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmWorker.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPinControl.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPinData.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionOutputPin.cpp

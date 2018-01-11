@@ -9,7 +9,7 @@
 #include <boost/thread/thread.hpp>  // used for boost::this_thread::sleep(boost::posix_time::milliseconds(msecs));
 
 #include <vector>
-#include <ConnectedVisionModule.h>
+#include <Module/Module_BaseClass.h>
 #include <IModuleEnvironment.h>
 #include "TestHelper_Module.hpp"
 
@@ -21,22 +21,22 @@ namespace Module {
 
 using namespace std;
 
-class TestWrapper_AliasID : public ConnectedVisionModule // TODO obsolate module interface
+class TestWrapper_AliasID : public Module_BaseClass // TODO use TestHelper Mockup ???
 {
 public:
 	TestWrapper_AliasID(const char moduleDescription[], const char inputPinDescription[], const char outputPinDescription[]) :
-		ConnectedVisionModule(moduleDescription, inputPinDescription, outputPinDescription) {}
+		Module_BaseClass(moduleDescription, inputPinDescription, outputPinDescription) {}
 
 	// make function public
 	void checkConfig(const Class_generic_config &config)
 	{
-		ConnectedVisionModule::checkConfig(config);
+		Module_BaseClass::checkConfig(config);
 	}
 
 	// dummy implementation of abstract functions
 
-	void deleteResults(const boost::shared_ptr<const Class_generic_config> config) {}
-	
+	void deleteAllData(const id_t configID) {}
+
 	void prepareStores() { }
 
 	void connectDB() 
@@ -59,9 +59,9 @@ public:
 		return nullPtr;
 	}
 
-	boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+	std::unique_ptr<IWorker> createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config)
 	{
-		boost::shared_ptr<IConnectedVisionAlgorithmWorker> nullPtr;
+		std::unique_ptr<IWorker> nullPtr;
 		return nullPtr;
 	}
 

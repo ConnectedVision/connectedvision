@@ -48,7 +48,7 @@ void DataSource_Memory_BaseClass<TDataObject>::init(const IModuleEnvironment *pE
 	this->outputPinID = outputPinID;
 
 	// get current output pin
-	boost::shared_ptr<IConnectedVisionModule> pModule = pEnv->getModule(moduleID);
+	boost::shared_ptr<ConnectedVision::Module::IModule> pModule = pEnv->getModule(moduleID);
 	if (pModule != NULL)
 	{
 		this->pOutputPin = pModule->getOutputPin(configID, outputPinID);

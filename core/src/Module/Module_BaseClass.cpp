@@ -35,14 +35,6 @@ using namespace ConnectedVision;
 using namespace ConnectedVision::HTTP;
 using namespace ConnectedVision::Module;
 
-#define LOG_CONFIG( level, msg, configID )	{ this->log()->write( (level), this->logName, std::string(__FUNCTION__) + std::string("()@") + ConnectedVision::intToStr(__LINE__), (msg), (configID) ); }
-#define LOG_DEBUG_CONFIG( msg, configID )	LOG_CONFIG( Logging::Debug, msg, configID )
-#define LOG_INFO_CONFIG( msg, configID )	LOG_CONFIG( Logging::Info, msg, configID )
-#define LOG_WARN_CONFIG( msg, configID )	LOG_CONFIG( Logging::Warning, msg, configID )
-#define LOG_ERROR_CONFIG( msg, configID )	LOG_CONFIG( Logging::Error, msg, configID )
-#define LOG_FATAL_CONFIG( msg, configID )	LOG_CONFIG( Logging::Fatal, msg, configID )
-#define LOG_SCOPE_CONFIG( configID )		Logging::LoggingScope _log_scope( this->log(), Logging::Debug, this->logName, std::string(__FUNCTION__) + std::string("()@") + ConnectedVision::intToStr(__LINE__), ( configID ) );
-
 /**
  * module constructor
  */
@@ -1456,7 +1448,7 @@ int Module_BaseClass::deleteConfigOnlyThis(const id_t configID, ConnectedVisionR
 		if ( config )
 		{
 			// delete DB results
-			this->deleteResults( config );
+			this->deleteAllData( resolvedConfigID );
 
 			// delete status
 			this->statusStore->deleteByID( resolvedConfigID );

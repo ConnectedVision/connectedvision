@@ -3,6 +3,8 @@
 * MIT License
 */
 
+#error("TODO remove this file !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
 #pragma once
 
 #include <string>
@@ -16,8 +18,8 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/assign/list_of.hpp>
 
-#include <IModuleEnvironment.h>
-#include "ConnectedVisionModule.h"
+#include "IModuleEnvironment.h"
+#include "Module/Module_BaseClass.h"
 #include "ConnectedVisionAlgorithmDispatcher.h"
 
 #include "Module/Control/Class_generic_config.h"
@@ -37,7 +39,7 @@ typedef boost::interprocess::scoped_lock<boost::timed_mutex> scoped_prepare_lock
 class ConnectedVisionAlgorithmWorker : public IConnectedVisionAlgorithmWorker, public Logging::ILogable
 {
 public:
-	ConnectedVisionAlgorithmWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config);
+	ConnectedVisionAlgorithmWorker(IModuleEnvironment *env, Module_BaseClass *module, boost::shared_ptr<const Class_generic_config> config);
     virtual ~ConnectedVisionAlgorithmWorker();
 
 	virtual id_t getID();
@@ -46,7 +48,7 @@ public:
 	virtual void stop();
 	virtual bool isRunning();
 
-	virtual ConnectedVisionModule* getModule() { return module; }; 
+	virtual Module_BaseClass* getModule() { return module; }; 
 
 	virtual boost::shared_ptr<Logging::ILogWriter> log() const;
 
@@ -60,7 +62,7 @@ protected:
 
 	boost::shared_ptr<boost::thread> t;
 	IModuleEnvironment *env;
-	ConnectedVisionModule *module;
+	Module_BaseClass *module;
 	boost::shared_ptr<Class_generic_config> config;
 
 	volatile bool go;		///< Used to control thread instance. Set to false to stop / abort computation.

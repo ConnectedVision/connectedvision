@@ -3,6 +3,8 @@
 * MIT License
 */
 
+#error("TODO remove this file !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -16,7 +18,7 @@
 #include <rapidjson/document.h>
 
 #include "ConnectedVisionAlgorithmDispatcher.h"
-#include "ConnectedVisionModule.h"
+#include "Module/Module_BaseClass.h"
 
 #include "Module/Control/Store_SQLite_generic_status.h"
 
@@ -24,7 +26,7 @@ namespace ConnectedVision {
 
 using namespace std;
 
-ConnectedVisionAlgorithmDispatcher::ConnectedVisionAlgorithmDispatcher(IModuleEnvironment *env, IConnectedVisionWorkerFactory *workerFactory, IConnectedVisionModule* module)
+ConnectedVisionAlgorithmDispatcher::ConnectedVisionAlgorithmDispatcher(IModuleEnvironment *env, IConnectedVisionWorkerFactory *workerFactory, ConnectedVision::Module::IModule* module)
 {
 	this->env = env;
 	this->workerFactory = workerFactory;

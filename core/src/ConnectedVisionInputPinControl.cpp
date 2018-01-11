@@ -241,7 +241,7 @@ Class_generic_config ConnectedVisionInputPinControl::deleteConfig()
 	}
 	else if ( protocol.compare("local") == 0 && this->env )
 	{
-		boost::shared_ptr<IConnectedVisionModule> module = this->env->getModule( name );
+		boost::shared_ptr<ConnectedVision::Module::IModule> module = this->env->getModule( name );
 		if ( !module )
 			throw ::ConnectedVision::runtime_error("ConnectedVisionInputPinControl: cannot find: " + *this->config.get_moduleURI() );
 
@@ -316,7 +316,7 @@ Class_generic_status& ConnectedVisionInputPinControl::control(std::string comman
 	/*
 	else if ( protocol.compare("local") == 0 && env )
 	{
-		boost::shared_ptr<IConnectedVisionModule> module = env->getModule( name );
+		boost::shared_ptr<ConnectedVision::Module::IModule> module = env->getModule( name );
 		if ( !module )
 			throw ConnectedVision::runtime_error("ConnectedVisionInputPinControl: cannot find: " + *this->config.get_moduleURI() );
 

@@ -16,6 +16,15 @@
 namespace ConnectedVision
 {
 
+#define LOG_CONFIG( level, msg, configID )	{ this->log()->write( (level), this->logName, std::string(__FUNCTION__) + std::string("()@") + ConnectedVision::intToStr(__LINE__), (msg), (configID) ); }
+#define LOG_DEBUG_CONFIG( msg, configID )	LOG_CONFIG( Logging::Debug, msg, configID )
+#define LOG_INFO_CONFIG( msg, configID )	LOG_CONFIG( Logging::Info, msg, configID )
+#define LOG_WARN_CONFIG( msg, configID )	LOG_CONFIG( Logging::Warning, msg, configID )
+#define LOG_ERROR_CONFIG( msg, configID )	LOG_CONFIG( Logging::Error, msg, configID )
+#define LOG_FATAL_CONFIG( msg, configID )	LOG_CONFIG( Logging::Fatal, msg, configID )
+#define LOG_SCOPE_CONFIG( configID )		Logging::LoggingScope _log_scope( this->log(), Logging::Debug, this->logName, std::string(__FUNCTION__) + std::string("()@") + ConnectedVision::intToStr(__LINE__), ( configID ) );
+
+
 pinID_t getIndexedPinID(const pinID_t& pinID, int index = -1);
 
 pinID_t getTypedPinID(const pinID_t& pinID);

@@ -3,6 +3,8 @@
 * MIT License
 */
 
+#error("TODO remove this file !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
 #pragma once
 
 #include <string>
@@ -16,7 +18,7 @@
 namespace ConnectedVision
 {
 
-class ConnectedVisionModule;
+class Module_BaseClass;
 
 class IConnectedVisionAlgorithmWorker
 {
@@ -29,7 +31,7 @@ public:
 	virtual void stop() = 0;
 	virtual bool isRunning()= 0;
 
-	virtual ConnectedVisionModule* getModule() = 0; 
+	virtual Module_BaseClass* getModule() = 0; 
 };
 
 class IConnectedVisionWorkerFactory
@@ -37,7 +39,7 @@ class IConnectedVisionWorkerFactory
 public:
 	virtual ~IConnectedVisionWorkerFactory() {};
 
-	virtual ConnectedVisionModule* getModule() = 0; 
+	virtual Module_BaseClass* getModule() = 0; 
 
 	virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config) = 0;
 };
@@ -45,9 +47,9 @@ public:
 class ConnectedVisionAlgorithmDispatcher
 {
 public:
-	ConnectedVisionAlgorithmDispatcher(IModuleEnvironment *env, IConnectedVisionWorkerFactory *workerFactory, IConnectedVisionModule* module);
+	ConnectedVisionAlgorithmDispatcher(IModuleEnvironment *env, IConnectedVisionWorkerFactory *workerFactory, ConnectedVision::Module::IModule* module);
     ~ConnectedVisionAlgorithmDispatcher();
-	IConnectedVisionModule* getModule(); 
+	ConnectedVision::Module::IModule* getModule(); 
 
 	void start( boost::shared_ptr<const Class_generic_config> config);
 	void stop( boost::shared_ptr<const Class_generic_config> config);
@@ -65,7 +67,7 @@ protected:
 
 	IModuleEnvironment *env;
 	IConnectedVisionWorkerFactory *workerFactory;
-	IConnectedVisionModule* module; 
+	ConnectedVision::Module::IModule* module; 
 	
 	boost::mutex mutexCriticalSectionWorkerCreation; ///< mutex to protect creation of worker threads - used to prevent parallel create requests to create more than one thread and also preventing mutexWorkerList to be locked longer than necessary
 

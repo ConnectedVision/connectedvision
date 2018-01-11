@@ -29,8 +29,6 @@
 
 #include "Module/Control/Class_PinDescription.h"
 #include "CNamedResourcesPool.h"
-#include "ConnectedVisionAlgorithmDispatcher.h"	// TODO -> replace with Worker Controller
-#include <ConnectedVision_Thread.h>	// TODO -> replace with Worker Controller
 #include "Module/WorkerController.h"
 
 namespace cv {
@@ -64,7 +62,7 @@ public:
 	virtual bool isModuleReady() const { return this->ready; };
 	virtual IModuleEnvironment *getEnv() { return this->env; };
 
-	virtual Module_BaseClass* getModule() { return this; };
+	virtual IModule* getModule() { return static_cast<IModule*>(this); };
 	virtual std::string getModuleName() const { return this->moduleName; };
 	virtual std::string getModuleID() const { return this->moduleID; };
 	virtual std::string getModuleURI() const { return this->moduleURI; };
@@ -139,7 +137,8 @@ public:
 
 	virtual void registerWorkerInstance(const id_t configID, ConnectedVision::Module::IWorkerControllerCallbacks *workerController);
 	virtual void unregisterWorkerInstance(const id_t configID, ConnectedVision::Module::IWorkerControllerCallbacks *workerController);
-	virtual void deleteResults(const boost::shared_ptr<const Class_generic_config> config) = 0;
+
+	virtual void deleteAllData(const id_t configID) = 0;
 	virtual bool processConfigRecover(const id_t configID) { return false; }
 
 
