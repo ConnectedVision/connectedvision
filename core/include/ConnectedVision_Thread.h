@@ -516,8 +516,20 @@ namespace ConnectedVision {
 		*/
 		void erase (const Key& k)
 		{
-			std__unique_lock lock(this->mutex);
-			this->q.erase(k);
+			T item;
+			{
+				std__unique_lock lock(this->mutex);
+				auto it = this->q.find(k);
+				if ( it != this->q.end() ) 
+				{
+					// move element to local copy
+					item = std::move(it->second);
+					// delete element from map
+					this->q.erase(it);
+				}
+				// exit scope -> unlock mutex
+			}
+			// clear local copy (item) when exiting scope
 		}
 
 		/**
@@ -528,14 +540,24 @@ namespace ConnectedVision {
 		*
 		* @param k		Key of the element to be removed from the map. Member type Key is the type of the elements in the container, 
 		* defined in map as an alias of its first template parameter (the key).
-		* @param item	actual item for comparison
+		* @param target	actual item for comparison
 		*/
-		void erase (const Key& k, const T& item)
+		void erase (const Key& k, const T& target)
 		{
-			std__unique_lock lock(this->mutex);
-			auto it = this->q.find(k);
-			if ( it != this->q.end() && it->second == item )
-				this->q.erase(it);
+			T item;
+			{
+				std__unique_lock lock(this->mutex);
+				auto it = this->q.find(k);
+				if ( it != this->q.end() && it->second == target ) 
+				{
+					// move element to local copy
+					item = std::move(it->second);
+					// delete element from map
+					this->q.erase(it);
+				}
+				// exit scope -> unlock mutex
+			}
+			// clear local copy (item) when exiting scope
 		}
 
 		/**
@@ -544,8 +566,15 @@ namespace ConnectedVision {
 		*/
 		void clear ()
 		{
-			std__unique_lock lock(this->mutex);
-			this->q.clear();
+			std::map<Key,T> localMap;
+			{
+				std__unique_lock lock(this->mutex);
+				// move elements to local map to avoid potential problems with <T> destructor (e.g. shared pointers -> dead lock due to recursive mutex locking)
+				localMap.swap( this->q );
+				// exit scope -> unlock mutex
+			}
+			// clear local map after unlocking mutex
+			localMap.clear();
 		}
 
 		/**

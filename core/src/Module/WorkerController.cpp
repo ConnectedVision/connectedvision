@@ -288,9 +288,12 @@ void WorkerController::workerThreadFunction()
 
 						// create worker
 						auto worker = this->workerFactory.createWorker(*this, this->getConfig());
-						// start worker
 						try
 						{
+							if ( !worker )
+								throw new std::runtime_error("workerFactory cannot create worker for config ID: " + IDToStr(this->getConfig()->getconst_configID()) );
+
+							// start worker
 							this->workerThreadProgress = WorkerThreadProgress::Running;
 							boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
 							worker->run();

@@ -52,8 +52,8 @@ public:
 
 	std::unique_ptr<IWorker> createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config)
 	{
-		std::unique_ptr<IWorker> nullPtr;
-		return nullPtr;
+		std::unique_ptr<Worker_Mockup> worker( new Worker_Mockup( this, controller, 5000, true ) );
+		return std::move(worker);
 	}
 
 	// test helper
@@ -192,6 +192,21 @@ TEST(moduleControl, start_config)
 	auto http_code = module->control(config->getconst_configID(), "start", ID_NULL, response);
 
 	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
+}
+
+TEST(moduleControl, start_unknown_config_returns_error)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
+
+	//////////////////////////////////////
+	// actual test
+	auto http_code = module->control("123", "start", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_ERROR, http_code);
 }
 
 TEST(moduleControl, stop_config)

@@ -2754,7 +2754,7 @@ int Module_BaseClass::control(const id_t configID, const std::string& command, c
 		}
 		
 	}
-	catch (std::runtime_error& e)
+	catch (std::exception &e)
 	{
 		// internal server error
 		httpCode = writeErrorLog(response, HTTP_Status_ERROR, string(e.what()) );
