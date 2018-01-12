@@ -24,7 +24,7 @@ class ConnectedVision(ConanFile):
 		("RapidJSON/1.0.2@covi/stable"),
 		("StackWalker/2014.12.28@covi/stable"),
 		("SQLite/3.15.1@covi/stable"),
-		("zlib/1.2.8@covi/stable"))
+		("zlib/1.2.11@covi/stable"))
 
 
 

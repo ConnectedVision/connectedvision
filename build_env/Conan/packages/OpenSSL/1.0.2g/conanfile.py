@@ -108,7 +108,7 @@ no_sha=False
 				del self.requires["electric-fence"]
 
 		if not self.options.no_zlib:
-			self.requires.add("zlib/1.2.8@covi/stable", private=False)
+			self.requires.add("zlib/1.2.11@covi/stable", private=False)
 			self.options["zlib"].shared = self.options.zlib_dynamic
 
 		else:

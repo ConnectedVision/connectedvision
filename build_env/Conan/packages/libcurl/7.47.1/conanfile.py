@@ -46,7 +46,7 @@ class LibCurlConan(ConanFile):
 			except:
 				pass
 		
-		self.requires.add("zlib/1.2.8@covi/stable", private=False)
+		self.requires.add("zlib/1.2.11@covi/stable", private=False)
 	
 	
 	
