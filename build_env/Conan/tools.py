@@ -38,9 +38,13 @@ if sys.version_info > (3, 0, 0):
 				
 				url = "https://dl.bintray.com/covi/ConnectedVision/covi/" + packageName + "/" + packageVersion + "/stable/export/conanfile.py"
 				
-				with urllib.request.urlopen(url) as response:
-					encoding = response.headers.get_content_charset("utf-8")
-					recipeBintrayContent = response.read().decode(encoding)
+				try:
+					with urllib.request.urlopen(url) as response:
+						encoding = response.headers.get_content_charset("utf-8")
+						recipeBintrayContent = response.read().decode(encoding)
+				except:
+					print("\nerror: failed to obtain Conan package recipe " + packageName + " " + packageVersion + " from " + url + "\n")
+					raise
 				
 				# make sure that line endings are LF
 				recipeBintrayContent = recipeBintrayContent.replace("\r\n", "\n")
