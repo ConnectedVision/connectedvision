@@ -19,9 +19,9 @@ if sys.version_info > (3, 0, 0):
 		This method is supposed to be used by the build server for detecting mismatches between the two instances of the same recipe when accidentally not updating one of the two recipe storage locations.
 		"""
 		
-		rootDir = os.getcwd()
+		rootDir = os.path.join(os.getcwd(), "packages")
 		
-		for packageName in [d for d in os.listdir(rootDir) if os.path.isdir(d)]:
+		for packageName in [d for d in os.listdir(rootDir) if os.path.isdir(os.path.join(rootDir, d))]:
 			packageDir = os.path.join(rootDir, packageName)
 			
 			for packageVersion in [d for d in os.listdir(packageDir) if os.path.isdir(packageDir)]:
