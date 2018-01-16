@@ -10,9 +10,9 @@ namespace ConnectedVision {
 namespace Module {
 namespace ThumbnailGenerator {
 
-ConnectedVision::shared_ptr<IConnectedVisionModule> ThumbnailGeneratorModuleFactory::createModule()
+ConnectedVision::shared_ptr<IModule> ThumbnailGeneratorModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> moduleInstance( new ThumbnailGeneratorModule() );
+	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<ThumbnailGeneratorModule>();
 	if ( !moduleInstance ) 
 		throw std::runtime_error("ThumbnailGeneratorModuleFactory: error creating instance for module: Thumbnail Generator");
 

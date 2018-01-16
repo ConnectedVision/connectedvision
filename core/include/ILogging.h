@@ -26,7 +26,10 @@ namespace Logging
 		virtual void write( const Logging::LogLevel_t level, const std::string domainName, const std::string scopeName, const std::string message, const id_t configID = ID_NULL ) = 0;
 	};
 
-	/// interface implemented by classes using the logging functionality
+	/** interface implemented by classes using the logging functionality
+	*
+	*	@warning: All implementations of ILogable must be thread-safe!
+	*/
 	class ILogable {
 	public:
 		/// log writer

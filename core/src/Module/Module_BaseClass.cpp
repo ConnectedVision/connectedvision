@@ -3718,7 +3718,7 @@ boost::shared_ptr<Logging::ILogWriter> Module_BaseClass::log() const
 	}
 	else 
 	{
-		boost::shared_ptr<Logging::ILogWriter> log( new Logging::LogWriterNULL() );
+		boost::shared_ptr<Logging::ILogWriter> log = boost::make_shared<Logging::LogWriterNULL>();
 		return log;
 	}
 }

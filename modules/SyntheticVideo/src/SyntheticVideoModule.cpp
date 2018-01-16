@@ -28,7 +28,7 @@ using namespace std;
 /**
  * module constructor
  */
-SyntheticVideoModule::SyntheticVideoModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+SyntheticVideoModule::SyntheticVideoModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
 	priv.reset( new SyntheticVideoModule_priv() );
 	if (!priv)
@@ -42,45 +42,6 @@ SyntheticVideoModule::~SyntheticVideoModule()
 	priv->syntheticVideoMap.clear();
 }
 
-/**
- * init module
- *
- * @param server  module server
- */
-void SyntheticVideoModule::initModule( IModuleEnvironment *env ) 
-{
-	LOG_SCOPE;
-
-	// clean up module before init
-	this->releaseModule();
-
-	// set up factories
-// TODO --> your factories come HERE! <--
-
-	// call parent init
-	ConnectedVisionModule::initModule(env);
-
-// TODO --> do some additional initialization HERE! <--
-
-}
-
-/**
- * destroy module
- *
- * @param server  module server
- */
-void SyntheticVideoModule::releaseModule() 
-{
-	LOG_SCOPE;
-
-	// call parent init
-	ConnectedVisionModule::releaseModule();
-
-	// clean-up
-// TODO --> reset your factories HERE! <--
-// TODO --> do additional clean-up HERE! <--
-
-}
 
 /**
  * prepare module specific stores
@@ -147,24 +108,21 @@ boost::shared_ptr<IConnectedVisionOutputPin > SyntheticVideoModule::generateOutp
  *
  * @return new algorithm worker object
  */
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> SyntheticVideoModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+std::unique_ptr<IWorker> SyntheticVideoModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config) 
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
+	// create worker instance
+	std::unique_ptr<IWorker> ptr;
 
-	// this module does not use Workers
-	return boost::shared_ptr<IConnectedVisionAlgorithmWorker>();
+	return ptr;
 }
-
 
 /**
  * delete results of a config chain
  *
  * @param config	config chain
  */
-void SyntheticVideoModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
+void SyntheticVideoModule::deleteAllData(const id_t configID)
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
-
 	// nothing to do
 }
 

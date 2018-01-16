@@ -58,8 +58,8 @@ void log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 }
 #endif
 
-RTPImporterWorker::RTPImporterWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config) :
-ConnectedVisionAlgorithmWorker(env, module, config)
+RTPImporterWorker::RTPImporterWorker(RTPImporterModule &module,	IWorkerControllerCallbacks &controller,	ConnectedVision::shared_ptr<const Class_generic_config> config) :
+	Worker_BaseClass(module, controller, config), module(module)
 {
 	this->imgConvertCtx	= NULL;
 	this->codecCtx = NULL;
@@ -79,15 +79,6 @@ ConnectedVisionAlgorithmWorker(env, module, config)
 
 };
 
-void RTPImporterWorker::start()
-{
-	ConnectedVisionAlgorithmWorker::start();
-}
-
-void RTPImporterWorker::stop()
-{
-	ConnectedVisionAlgorithmWorker::stop();
-}
 
 void RTPImporterWorker::initResources()
 {
@@ -180,7 +171,7 @@ void RTPImporterWorker::run()
 	LOG_INFO_CONFIG("worker start", configID);
 
 	// get status
-	auto statusStore = this->module->getStatusStore();
+	auto statusStore = this->module.getStatusStore();
 	ConnectedVision::shared_ptr<Class_generic_status> status = statusStore->getByID(configID)->copy();
 
 	try
@@ -188,14 +179,14 @@ void RTPImporterWorker::run()
 		boost::shared_ptr<Class_generic_status_stableResults> stableResults = status->find_stableResultsByPinID( OutputPin_FrameMetadata::PinID() );
 
 		// get images store
-		auto storeImages = dynamic_cast<RTPImporterModule *>(this->module)->storeManagerImages->getReadWriteStore(configID);
+		auto storeImages = this->module.storeManagerImages->getReadWriteStore(configID);
 
 		Class_RTPImporter_params params;
 		params.parseJson(config->get_params());
 
 		status->resetStableResults();
 		// delete previous results
-		this->module->deleteResults( this->config );
+		this->module.deleteAllData(configID);
 
 		// update status timestamps
 		status->set_estimatedFinishTime( -1 ); // how long do we need?
@@ -266,7 +257,7 @@ void RTPImporterWorker::run()
 		av_image_fill_arrays(this->picrgb->data, this->picrgb->linesize, this->pictureDst, AV_PIX_FMT_BGR24, this->codecCtx->width, this->codecCtx->height, 1);
 
 		// read one frame into packet struct
-		while (av_read_frame(this->formatCtx, &packet) >=0  && this->go)
+		while (av_read_frame(this->formatCtx, &packet) >=0  && this->controller.nextIterationStep())
 		{
 			//frameCnt++;
 			
@@ -312,7 +303,7 @@ void RTPImporterWorker::run()
 						// if the allocation failed then retry (may occur on weak hardware platform such as Raspberry Pi)
 						for(int i = 0; i < 10 && !data; i++)
 						{
-							this->sleep_ms(10);
+							sleep_ms(10);
 							data = storeImages->create();
 						}
 					

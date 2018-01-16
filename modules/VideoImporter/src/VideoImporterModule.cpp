@@ -36,7 +36,7 @@ using namespace ConnectedVision;
 /**
  * module constructor
  */
-VideoImporterModule::VideoImporterModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+VideoImporterModule::VideoImporterModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
 	priv.reset( new VideoImporterModule_priv() );
 	if (!priv)
@@ -63,34 +63,6 @@ VideoImporterModule::~VideoImporterModule()
 	priv->videoImportMap.clear();
 }
 
-/**
- * init module
- *
- * @param server  module server
- */
-void VideoImporterModule::initModule( IModuleEnvironment *env ) 
-{
-	LOG_SCOPE;
-
-	// clean up module before init
-	this->releaseModule();
-
-	// call parent init
-	ConnectedVisionModule::initModule(env);
-}
-
-/**
- * destroy module
- *
- * @param server  module server
- */
-void VideoImporterModule::releaseModule() 
-{
-	LOG_SCOPE;
-
-	// call parent init
-	ConnectedVisionModule::releaseModule();
-}
 
 /**
  * generate input pin
@@ -157,7 +129,7 @@ void VideoImporterModule::prepareStores()
 void VideoImporterModule::checkConfig(const Class_generic_config &config)
 {
 	// call parent function
-	ConnectedVisionModule::checkConfig(config);
+	Module_BaseClass::checkConfig(config);
 
 	// make sure that file is readable
 	Class_VideoImporter_params configParams;	
@@ -175,32 +147,21 @@ void VideoImporterModule::checkConfig(const Class_generic_config &config)
 }
 
 
-/**
- * create algorithm worker object
- *
- * @param env	ConnectedVision module environment
- * @param db	SQLite DB
- * @param config	job / config
- *
- * @return new algorithm worker object
- */
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> VideoImporterModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+std::unique_ptr<IWorker> VideoImporterModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config) 
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
+	// create worker instance
+	std::unique_ptr<IWorker> ptr( new VideoImporterWorker(*this, controller, config) );
 
-	return boost::make_shared<VideoImporterWorker>(env, this, config);
+	return ptr;
 }
-
 
 /**
  * delete results of a config chain
  *
  * @param config	config chain
  */
-void VideoImporterModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
+void VideoImporterModule::deleteAllData(const id_t configID)
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
-
 	// nothing to do
 }
 

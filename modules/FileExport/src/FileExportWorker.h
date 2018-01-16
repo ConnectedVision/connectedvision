@@ -12,13 +12,10 @@
 
 #pragma once
 
-#include <IModuleEnvironment.h>
-#include <ConnectedVisionModule.h>
-#include <ConnectedVisionAlgorithmDispatcher.h>
-#include <ConnectedVisionAlgorithmWorker.h>
+//TODO do we need env? #include <IModuleEnvironment.h>
+#include <Module/Worker_BaseClass.h>
 
 #include "FileExportModule.h"
-
 #include "Class_FileExport_params.h"
 #include "Class_FileExport_output_FileExportTrigger.h"
 
@@ -35,33 +32,26 @@ namespace FileExport {
 /**
 * worker class of file export module
 */
-class FileExportWorker : public ConnectedVisionAlgorithmWorker
+class FileExportWorker : public Worker_BaseClass
 {
 	friend class FileExportModule;
 	friend class FileExportTriggerOutputPin;
 public:
 	/**
 	* constructor of FileExportWorker
-	* @params env a pointer to @ref IModuleEnvironment (inherited from constructor of class ConnectedVisionAlgorithmWorker), pointer to environment
-	* @params module a pointer to @ref ConnectedVisionModule (inherited from constructor of class ConnectedVisionAlgorithmWorker), pointer to module
-	* @params config a boost shared pointer of @ref Class_generic_config (inherited from constructor of class ConnectedVisionAlgorithmWorker), boost shared pointer to module config
 	*/
-	FileExportWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config);
+	FileExportWorker(
+		FileExportModule &module,		///< [in] reference to "parent" module; This is the explicit FileExportWorker (no interface) so it is ok to use the explicit FileExportModule class.
+		IWorkerControllerCallbacks &controller,					///< [in] worker controller (for callbacks)
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	) : Worker_BaseClass(module, controller, config), module(module), exportElementRunningUniqueID(0) {}
 
-	/**
-	* destructor of FileExportWorker
-	*/
-	~FileExportWorker();
-
-	virtual void stop(); // overwrite stop function
-
-protected:
-	/**
-	* inherited function (from class ConnectedVisionAlgorithmWorker) is overwritten and implements the functionality of the module implementation
-	*/
 	virtual void run();
+	virtual void stop(); // overwrite stop function to notify condExportJoblist
 
-private:
+	
+protected:
+	FileExportModule &module;
 	
 	/*
 	* an ExportJob defines information needed to perform file export of data elements in worker thread

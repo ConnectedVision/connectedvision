@@ -6,9 +6,9 @@
 #pragma once
 
 #include <IConnectedVisionModule.h>
-#include <ConnectedVisionModule.h>
+#include <Module/Module_BaseClass.h>
 
-#include <ConnectedVisionAlgorithmDispatcher.h>
+
 
 //#include "WinDef.h" 
 typedef unsigned char       BYTE;
@@ -19,22 +19,23 @@ namespace SyntheticVideo {
 
 class SyntheticVideoModule_priv;
 
-class SyntheticVideoModule: public ConnectedVisionModule
+class SyntheticVideoModule: public Module_BaseClass
 {
 public:
 	SyntheticVideoModule();
 	virtual ~SyntheticVideoModule();
 
 public:
-	// module init / release
-	virtual void initModule( IModuleEnvironment *env );
-	virtual void releaseModule();
-
 	// worker
-	virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config);
+	virtual std::unique_ptr<IWorker> createWorker(
+		IWorkerControllerCallbacks &controller,									///< reference to worker controller
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
+	);
 
 	// data handling
-	virtual void deleteResults(const boost::shared_ptr<const Class_generic_config> config);
+	virtual void deleteAllData(
+		const id_t configID		///< [in] config ID of data to be deleted
+	);
 
 public:
 	boost::shared_ptr<SyntheticVideoModule_priv> priv;

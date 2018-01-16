@@ -10,7 +10,7 @@
 
 
 
-#include <ConnectedVisionModule.h>
+#include <Module/Module_BaseClass.h>
 
 #include "SyntheticVideoDataOutputPin.h"
 

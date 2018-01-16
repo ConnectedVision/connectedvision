@@ -116,7 +116,7 @@ void DirectoryIteratorWorker::run()
 		status->set_estimatedFinishTime(sysTime());
 		status->set_systemTimeProcessing(sysTime());
 
-		if ( controller.nextIterationStep() )
+		if ( controller.intermediateContinueCheck() )
 		{
 			// worker has finished
 			status->set_progress(1.0);

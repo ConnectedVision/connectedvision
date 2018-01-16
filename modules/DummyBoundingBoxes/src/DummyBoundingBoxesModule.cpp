@@ -39,7 +39,7 @@ using namespace std;
 /**
  * module constructor
  */
-DummyBoundingBoxesModule::DummyBoundingBoxesModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+DummyBoundingBoxesModule::DummyBoundingBoxesModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
 }
 
@@ -57,7 +57,7 @@ void DummyBoundingBoxesModule::initModule( IModuleEnvironment *env )
 	releaseModule();
 
 	// call parent init
-	ConnectedVisionModule::initModule(env);
+	Module_BaseClass::initModule(env);
 }
 
 /**
@@ -70,7 +70,7 @@ void DummyBoundingBoxesModule::releaseModule()
 	LOG_SCOPE;
 
 	// call parent clean-up
-	ConnectedVisionModule::releaseModule();
+	Module_BaseClass::releaseModule();
 
 	// module specific clean-up
 	this->detectionsStoreManager.reset();
@@ -127,20 +127,12 @@ boost::shared_ptr<IConnectedVisionOutputPin > DummyBoundingBoxesModule::generate
 }
 
 
-/**
- * create algorithm worker object
- *
- * @param env	ConnectedVision module environment
- * @param db	SQLite DB
- * @param config	job / config
- *
- * @return new algorithm worker object
- */
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> DummyBoundingBoxesModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+std::unique_ptr<IWorker> DummyBoundingBoxesModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config) 
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
+	// create worker instance
+	std::unique_ptr<IWorker> ptr( new DummyBoundingBoxesWorker(*this, controller, config) );
 
-	return boost::shared_ptr<IConnectedVisionAlgorithmWorker>( new DummyBoundingBoxesWorker(env, this, config) );
+	return ptr;
 }
 
 /**
@@ -148,14 +140,12 @@ boost::shared_ptr<IConnectedVisionAlgorithmWorker> DummyBoundingBoxesModule::cre
  *
  * @param config	config chain
  */
-void DummyBoundingBoxesModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
+void DummyBoundingBoxesModule::deleteAllData(const id_t configID)
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
-
 	// delete all results for configID
-	auto detectionsStore = this->detectionsStoreManager->getReadWriteStore( config->getconst_id() );
+	auto detectionsStore = this->detectionsStoreManager->getReadWriteStore( configID );
 	detectionsStore->deleteAll();
-	auto objectsStore = this->objectsStoreManager->getReadWriteStore( config->getconst_id() );
+	auto objectsStore = this->objectsStoreManager->getReadWriteStore( configID );
 	objectsStore->deleteAll();
 }
 

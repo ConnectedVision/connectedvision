@@ -28,45 +28,16 @@ namespace RTPImporter {
 
 using namespace std;
 
-std::unordered_map<HANDLE,boost::shared_ptr<IConnectedVisionAlgorithmWorker>> RTPImporterModule::umHandleWorker;
+std::unordered_map<HANDLE,boost::shared_ptr<IWorker>> RTPImporterModule::umHandleWorker;
 boost::shared_mutex  RTPImporterModule::umHandleWorker_access;
 /**
  * module constructor
  */
-RTPImporterModule::RTPImporterModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+RTPImporterModule::RTPImporterModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
 
 }
 
-/**
- * init module
- *
- * @param env  Connected Vision Module environment
- */
-void RTPImporterModule::initModule( IModuleEnvironment *env ) 
-{
-	LOG_SCOPE;
-
-	// clean up module before init
-	releaseModule();
-
-	// call parent init
-	ConnectedVisionModule::initModule(env);
-	// No own resources in this module at the current state
-}
-
-/**
- * destroy module
- *
- */
-void RTPImporterModule::releaseModule() 
-{
-	LOG_SCOPE;
-
-	// call parent release
-	ConnectedVisionModule::releaseModule();
-	// No own resources in this module at the current state.
-}
 
 /**
  * prepare module specific stores
@@ -118,56 +89,24 @@ boost::shared_ptr<IConnectedVisionOutputPin > RTPImporterModule::generateOutputP
 	throw runtime_error("invalid pinID: " + pinID);
 }
 
-/**
- * create algorithm worker object
- *
- * @param env	ConnectedVision module environment
- * @param config	job / config
- *
- * @return new algorithm worker object
- */
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> RTPImporterModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+std::unique_ptr<IWorker> RTPImporterModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config) 
 {
-	LOG_SCOPE;
+	// create worker instance
+	std::unique_ptr<IWorker> ptr( new RTPImporterWorker(*this, controller, config) );
 
-// TODO --> create your worker object HERE! <--
-	return (boost::shared_ptr<IConnectedVisionAlgorithmWorker>(new RTPImporterWorker(env, this, config)));
+	return ptr;
 }
-/**
- * find the worker object for a given configuration.
- *
- * @param configID	configuration identification
- *
- * @return Reference to the given worker Object (dynamic_cast if you need access to local custom members) 
- */
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> RTPImporterModule::getWorkerByConfigID(const id_t configID)
-{
-	std::vector< boost::shared_ptr<IConnectedVisionAlgorithmWorker> > workers = algoDispatcher->getRunningWorkers();
-	if (workers.size() > 0)
-	{
-		for (std::vector< boost::shared_ptr<IConnectedVisionAlgorithmWorker> >::iterator it = workers.begin(); it != workers.end(); ++it) 
-		{
-			if ((*it)->getID() == configID)
-			{
-				return(*it);
-			}
-		}
-	}
-	throw ConnectedVision::runtime_error("did not find running IConnectedVisionAlgorithmWorker with config id" + IDToStr(configID));
-}
+
 /**
  * deletes results in a specific database of the given configuration
  *
  * @param config	The configuration of which results shall be deleted.
  *
  */
-void RTPImporterModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
+void RTPImporterModule::deleteAllData(const id_t configID)
 {
-	id_t configID = config->get_id();
-	LOG_SCOPE_CONFIG( configID );
-
 	// delete all results for configID
-	this->storeManagerImages->getReadWriteStore( config->getconst_id() )->deleteAll();
+	this->storeManagerImages->getReadWriteStore( configID )->deleteAll();
 }
 
 } // namespace RTPImporter

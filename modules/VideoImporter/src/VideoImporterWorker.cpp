@@ -168,12 +168,12 @@ void VideoImporterWorker::run()
 	LOG_INFO_CONFIG("worker start", configID);
 
 	// get status
-	auto statusStore = this->module->getStatusStore();
+	auto statusStore = this->module.getStatusStore();
 	auto status = statusStore->getByID(configID)->copy();
 
 	try
 	{
-		status = static_cast<VideoImporterModule*>(this->module)->init(this->config);
+		status = this->module.init(this->config);
 
 		// start algorithm
 
@@ -186,9 +186,9 @@ void VideoImporterWorker::run()
 		ConnectedVision::shared_ptr<InputPin_VideoImporter_input_Trigger> inputTriggerPin;
 		
 		// start the Trigger input pin if it is connected
-		if(this->module->getInputPinCount(this->config, InputPin_VideoImporter_input_Trigger::PinID()) > 0)
+		if(this->module.getInputPinCount(this->config, InputPin_VideoImporter_input_Trigger::PinID()) > 0)
 		{
-			inputTriggerPin = boost::dynamic_pointer_cast<InputPin_VideoImporter_input_Trigger>(this->module->getInputPin(this->config, InputPin_VideoImporter_input_Trigger::PinID()));
+			inputTriggerPin = boost::dynamic_pointer_cast<InputPin_VideoImporter_input_Trigger>(this->module.getInputPin(this->config, InputPin_VideoImporter_input_Trigger::PinID()));
 		}
 
 		// start processing small chunks of data.
@@ -198,7 +198,7 @@ void VideoImporterWorker::run()
 		{
 			inputTriggerPin->start();
 
-			auto metadataOutputPin = this->module->getOutputPin(config, OutputPin_VideoImporter_output_FrameMetadata::PinID());
+			auto metadataOutputPin = this->module.getOutputPin(config, OutputPin_VideoImporter_output_FrameMetadata::PinID());
 
 			// make a backup of the finished stable results
 			auto stableResultsFinished = status->find_stableResultsByPinID(OutputPin_VideoImporter_output_FrameMetadata::PinID());
@@ -231,7 +231,7 @@ void VideoImporterWorker::run()
 			int64_t indexEnd = min(indexStart + triggerIndexEnd, stableResultsFinished->get_indexEnd());
 			timestamp_t timestampStart = frameMetadataVec.front()->get_timestamp();
 
-			while(inputTriggerStatus.is_status_running() && (indexEnd < 0 || indexEnd < stableResultsFinished->get_indexEnd()) && this->go)
+			while(inputTriggerStatus.is_status_running() && (indexEnd < 0 || indexEnd < stableResultsFinished->get_indexEnd()) && this->controller.nextIterationStep())
 			{
 				bool newResultsFlag = false;
 
@@ -245,7 +245,7 @@ void VideoImporterWorker::run()
 						sleep_ms(10);
 					}
 				}
-				while(!newResultsFlag && inputTriggerStatus.is_status_running() && this->go);
+				while(!newResultsFlag && inputTriggerStatus.is_status_running() && this->controller.intermediateContinueCheck());
 
 				// get the newest Trigger input end index
 				triggerIndexEndPrev = triggerIndexEnd;
@@ -295,7 +295,7 @@ void VideoImporterWorker::run()
 		status->set_estimatedFinishTime( sysTime() );
 		status->set_systemTimeProcessing( sysTime() );
 
-		if ( this->go )
+		if ( this->controller.intermediateContinueCheck() )
 		{
 			// worker has finished
 			status->set_progress( 1.0 );

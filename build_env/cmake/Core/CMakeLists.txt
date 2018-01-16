@@ -210,11 +210,13 @@ set(ConnectedVisionCoreHTTPSources
 set(ConnectedVisionCoreModuleHeaders
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.h
 	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.h	
+	${ConnectedVisionCppRoot}/core/src/Module/Worker_BaseClass.h	
 )
 
 set(ConnectedVisionCoreModuleSources
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.cpp
 	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.cpp	
+	${ConnectedVisionCppRoot}/core/src/Module/Worker_BaseClass.cpp
 )
 
 set(ConnectedVisionCoreModuleDispatcherHeaders

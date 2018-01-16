@@ -10,9 +10,9 @@ namespace ConnectedVision {
 namespace Module {
 namespace FileImporter {
 
-ConnectedVision::shared_ptr<IConnectedVisionModule> FileImporterModuleFactory::createModule()
+ConnectedVision::shared_ptr<IModule> FileImporterModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> moduleInstance( new FileImporterModule() );
+	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<FileImporterModule>();
 	if ( !moduleInstance ) 
 		throw std::runtime_error("FileImporterModuleFactory: error creating instance for module: FileImporter");
 

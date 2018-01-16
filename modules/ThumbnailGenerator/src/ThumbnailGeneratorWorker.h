@@ -5,23 +5,29 @@
 
 #pragma once
 
-#include <IModuleEnvironment.h>
-#include <ConnectedVisionModule.h>
-#include <ConnectedVisionAlgorithmWorker.h>
+//TODO do we need env? #include <IModuleEnvironment.h>
+#include <Module/Worker_BaseClass.h>
+
+#include "ThumbnailGeneratorModule.h"
+
 
 namespace ConnectedVision {
 namespace Module {
 namespace ThumbnailGenerator {
 
-class ThumbnailGeneratorWorker : public ConnectedVisionAlgorithmWorker
+class ThumbnailGeneratorWorker : public Worker_BaseClass
 {
 public:
-	ThumbnailGeneratorWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config) :
-		ConnectedVisionAlgorithmWorker(env, module, config) {};
+	ThumbnailGeneratorWorker(
+		ThumbnailGeneratorModule &module,		///< [in] reference to "parent" module; This is the explicit ThumbnailGeneratorWorker (no interface) so it is ok to use the explicit ThumbnailGeneratorModule class.
+		IWorkerControllerCallbacks &controller,					///< [in] worker controller (for callbacks)
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	) : Worker_BaseClass(module, controller, config), module(module) {}
 
-protected:
 	virtual void run();
 
+protected:
+	ThumbnailGeneratorModule &module;
 };
 
 } // namespace ThumbnailGenerator

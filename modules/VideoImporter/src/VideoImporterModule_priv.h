@@ -8,7 +8,7 @@
 #include <string>
 #include <map>
 
-#include <ConnectedVisionModule.h>
+#include <Module/Module_BaseClass.h>
 
 #include "VideoDataOutputPin.h"
 

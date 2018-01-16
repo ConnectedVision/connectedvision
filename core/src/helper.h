@@ -9,6 +9,7 @@
 #include <string>
 #include <math.h>
 
+#include <boost/thread/thread_time.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 #include <IConnectedVisionModule.h>
@@ -53,6 +54,16 @@ static inline int64_t round_int64(double number)
 {
     int64_t i = static_cast<int64_t>(number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5));
 	return i;
+}
+
+/**
+ * sleep for x milliseconds
+ *
+ * @param ms	(minimal) time in milliseconts to sleep
+ */
+static inline void sleep_ms(int ms)
+{
+	boost::this_thread::sleep( boost::posix_time::milliseconds( ms ) );
 }
 
 } // namespace ConnectedVision

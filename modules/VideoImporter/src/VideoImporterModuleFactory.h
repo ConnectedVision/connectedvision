@@ -22,7 +22,7 @@ public:
 	/**
 	* factory for VideoImporter
 	*/
-	static ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> createModule();
+	static ConnectedVision::shared_ptr<ConnectedVision::Module::IModule> createModule();
 };
 
 } // namespace VideoImporter
