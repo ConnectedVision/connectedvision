@@ -31,18 +31,15 @@ void DirectoryIteratorWorker::run()
 	// get config ID
 	id_t configID = this->config->get_id();
 
-	LOG_SCOPE_CONFIG( configID );
-	LOG_INFO_CONFIG("worker start", configID);
-
 	// get status
-	auto statusStore = this->module->getStatusStore();
+	auto statusStore = this->module.getStatusStore();
 	auto status = statusStore->getByID(configID)->copy();
 
 	// reset status
 	status->resetStableResults();
 
 	// delete previous results
-	this->module->deleteResults( this->config );
+	this->module.deleteAllData(configID);
 
 	// update status timestamps
 	status->set_estimatedFinishTime(sysTime() + 1000);
@@ -56,14 +53,12 @@ void DirectoryIteratorWorker::run()
 		params.parseJson(this->config->get_params());
 
 		// get output store
-		auto fileMetadataStore = dynamic_cast<DirectoryIteratorModule *>(this->module)->storeManagerFileMetadata->getReadWriteStore(configID);
+		auto fileMetadataStore = this->module.storeManagerFileMetadata->getReadWriteStore(configID);
 
 		// reset stable results
 		status->set_stableResultsByPinID(Class_generic_status_stableResults::createFromStore(*fileMetadataStore), OutputPin_DirectoryIterator_output_FileMetadata::PinID());
 
 		// start processing small chunks of data.
-		LOG_INFO_CONFIG("start processing", configID);
-
         // load file types
         auto filetypes = params.get_fileTypes();
 
@@ -112,24 +107,25 @@ void DirectoryIteratorWorker::run()
             status->set_progress(static_cast<float>(i) / static_cast<float>(vecPath.size()));
 			status->set_systemTimeProcessing(sysTime());
 			statusStore->save_copy(status);
+
+			if ( !controller.nextIterationStep() )
+				break;
 		}
 
 		// update status
 		status->set_estimatedFinishTime(sysTime());
 		status->set_systemTimeProcessing(sysTime());
 
-		if(this->go)
+		if ( controller.nextIterationStep() )
 		{
 			// worker has finished
 			status->set_progress(1.0);
 			status->set_status_finished();
-			LOG_INFO_CONFIG("worker finished", configID);
 		}
 		else
 		{
 			// worker has been stopped
 			status->set_status_stopped();
-			LOG_INFO_CONFIG("worker forced to stop", configID);
 		}
 
 		statusStore->save_copy(status);
@@ -138,8 +134,6 @@ void DirectoryIteratorWorker::run()
 	{
 		try
 		{
-			LOG_ERROR_CONFIG(e.what(), configID);
-
 			status->set_status_error();
 			status->set_message(e.what());
 			status->set_systemTimeProcessing(sysTime());

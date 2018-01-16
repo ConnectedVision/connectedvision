@@ -501,7 +501,7 @@ namespace ConnectedVision
 			*
 			* @return module 
 			*/
-			virtual IModule* getModule() = 0; 
+			virtual IModule* getModule() = 0;
 		};
 
 		class IWorkerControllerCallbacks

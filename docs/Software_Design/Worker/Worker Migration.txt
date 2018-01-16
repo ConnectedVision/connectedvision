@@ -1,0 +1,128 @@
+Module / Worker Migration
+=========================
+
+
+xxxModule.h
+------------
+
+#include <ConnectedVisionModule.h>	->	#include <Module/Module_BaseClass.h>
+#include <ConnectedVisionAlgorithmDispatcher.h>	-> remove
+
+class xxxModule: public ConnectedVisionModule
+	->
+class xxxModule: public Module_BaseClass	(make sure that ConnectedVision::Module is in namespace)
+
+
+virtual void initModule();	->	optional
+virtual void releaseModule();	->	optional
+
+
+
+virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(
+	IModuleEnvironment *env,								///< [in] general environment
+	boost::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+);
+	->
+virtual std::unique_ptr<IWorker> createWorker(
+	IWorkerControllerCallbacks &controller,									///< reference to worker controller
+	ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
+) (see IWorkerFactory)
+
+
+virtual void deleteResults(
+	const boost::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+);
+	->
+virtual void deleteAllData(
+	const id_t configID		///< [in] config ID of data to be deleted
+);
+
+
+
+xxxModuleFactory.h
+------------
+static ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> createModule();
+	->
+static ConnectedVision::shared_ptr<ConnectedVision::Module::IModule> createModule();
+
+
+xxxModuleFactory.cpp
+------------
+ConnectedVision::shared_ptr<IModule> xxxModuleFactory::createModule()
+
+{
+	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<xxxModule>();
+	if ( !moduleInstance ) 
+		throw std::runtime_error("xxxModuleFactory: error creating instance for module");
+
+	return moduleInstance;
+}
+
+
+xxxModule.cpp
+------------
+
+
+// _moduleDescription, _inputPinDescription, _outputPinDescription are static strings from "xxx_ModuleDescription.h" (auto generated header)
+xxxModule::xxxModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
+
+
+std::unique_ptr<IWorker> xxxModule::createWorker(IWorkerControllerCallbacks &controller, {
+	// create worker instance
+	std::unique_ptr<IWorker> ptr( new DirectoryIteratorWorker(*this, controller, config) );
+
+	return ptr;
+}
+
+void deleteAllData(const id_t configID)
+{
+	// delete all results for configID
+	xxx->getReadWriteStore(configID)->deleteAll();
+}
+
+
+
+xxxWorker.h
+------------------
+
+#include <IModuleEnvironment.h>	-> remove
+#include <ConnectedVisionModule.h>	->	#include <IConnectedVisionModule.h>
+#include <ConnectedVisionAlgorithmWorker.h>	-> remove
+
+
+class DirectoryIteratorWorker : public ConnectedVisionAlgorithmWorker
+	->
+class DirectoryIteratorWorker : public IWorker
+
+
+xxxWorker()
+	->
+xxxWorker(
+	xxxModule &module,										///< [in] reference to "parent" module 
+															///		This is the explicit xxxWorker (no interface) so it is ok to use the explicit xxxModule class.
+	IWorkerControllerCallbacks &controller,					///< [in] worker controller (for callbacks)
+	ConnectedVision::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	) : module(module), controller(controller), config(config) {}
+
+
+-> change 	virtual void run();	from protected to public
+	
+	-> add:
+protected:
+	xxxModule &module;
+	IWorkerControllerCallbacks &controller;
+	ConnectedVision::shared_ptr<const Class_generic_config> config;	
+
+
+xxxWorker.cpp
+------------------
+	
+this->module->deleteResults( this->config );	->		this->module.deleteAllData(configID);
+
+this->module->xxx()	->	this-Module.xxx()
+
+this->go	->		controller.nextIterationStep()
+
+
+
+	

@@ -24,35 +24,35 @@ namespace DirectoryIterator {
 
 using namespace ConnectedVision;
 
-DirectoryIteratorModule::DirectoryIteratorModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+// _moduleDescription, _inputPinDescription, _outputPinDescription are static strings from "DirectoryIterator_ModuleDescription.h" (auto generated header)
+DirectoryIteratorModule::DirectoryIteratorModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
 }
 
-void DirectoryIteratorModule::initModule(IModuleEnvironment *env) 
-{
-	LOG_SCOPE;
-
-	// clean up module before init
-	releaseModule();
-
-	// call parent init
-	ConnectedVisionModule::initModule(env);
-}
 
 void DirectoryIteratorModule::releaseModule() 
 {
-	LOG_SCOPE;
-
-	// call parent release
-	ConnectedVisionModule::releaseModule();
-
 	// reset store managers
 	this->storeManagerFileMetadata.reset();	
 }
 
+
+std::unique_ptr<IWorker> DirectoryIteratorModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config)
+{
+	// create worker instance
+	std::unique_ptr<IWorker> ptr( new DirectoryIteratorWorker(*this, controller, config) );
+
+	return ptr;
+}
+
+void DirectoryIteratorModule::deleteAllData(const id_t configID)
+{
+	// delete all results for configID
+	this->storeManagerFileMetadata->getReadWriteStore(configID)->deleteAll();
+}
+
 void DirectoryIteratorModule::prepareStores() 
 {
-	LOG_SCOPE;
 
 	// module specific stores
 #if STORE_USE_RINGBUFFER
@@ -90,21 +90,7 @@ boost::shared_ptr<IConnectedVisionOutputPin > DirectoryIteratorModule::generateO
 	throw ConnectedVision::runtime_error("failed to generate output pin (invalid pin ID: " + pinID + ")");
 }
 
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> DirectoryIteratorModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
-{
-	LOG_SCOPE;
 
-	// create worker instance
-	return boost::make_shared<DirectoryIteratorWorker>(env, this, config);
-}
-
-void DirectoryIteratorModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
-{
-	LOG_SCOPE_CONFIG(config->getconst_id());
-
-	// delete all results for configID
-	this->storeManagerFileMetadata->getReadWriteStore(config->getconst_id())->deleteAll();
-}
 
 } // namespace DirectoryIterator
 } // namespace Module
