@@ -208,7 +208,7 @@ no_sha=False
 				run_in_src("make")
 		
 		def arm_make(config_options_string):
-			if not os.environ.has_key("CXX"):
+			if not "CXX" in os.environ:
 				raise Exception("failed to extract compiler from environment variable \"CXX\" (variable is not set)")
 			
 			result = re.search(r"(.*)g\+\+$", os.environ.get("CXX"), re.M|re.I)

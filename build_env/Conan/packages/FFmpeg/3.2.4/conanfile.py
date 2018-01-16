@@ -172,7 +172,7 @@ class FFmpeg(ConanFile):
 			else:
 				raise Exception("unsupported runtime: " + str(self.settings.compiler.runtime))
 		elif self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
-			if not os.environ.has_key("CC"):
+			if not "CC" in os.environ:
 				raise Exception("failed to extract compiler from environment variable \"CC\" (variable is not set)")
 			
 			result = re.search("(.*)gcc$", os.environ.get("CC"), re.M|re.I)

@@ -81,7 +81,7 @@ class BoostConan(ConanFile):
 		elif self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
 			flags.append("toolset=gcc-arm")
 			
-			if not os.environ.has_key("CXX"):
+			if not "CXX" in os.environ:
 				raise Exception("failed to extract compiler from environment variable \"CXX\" (variable is not set)")
 			
 			result = re.search(r"(.*g\+\+)$", os.environ.get("CXX"), re.M|re.I)
