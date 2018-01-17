@@ -224,7 +224,20 @@ public:
 	*
 	* @returns current config ID
 	*/
-	const id_t getConfigID() const { return this->configID; };
+	const id_t getConfigID() const { return this->configID; }
+
+
+	/**
+	* get shared pointer to active worker
+	* @warning may return NULL pointer
+	* @warning Caller must take care of synchronization on his own, when using this pointer!
+	*
+	* This function will return a pointer for currently running workers only.
+	* -> If workerThreadProgress is "Running" one can expect a valid worker pointer.
+	*
+	* @returns active worker
+	*/
+	ConnectedVision::shared_ptr<ConnectedVision::Module::IWorker> getWorker() const { return this->worker; }
 
 
 	// IWorkerControllerCallbacks
@@ -302,6 +315,7 @@ protected:
 	ConnectedVision::Module::IWorkerFactory &workerFactory;
 	timestamp_t workerTimeout;
 	boost::atomic<WorkerThreadProgress::WorkerThreadProgress> progressBeforeTermination;
+	ConnectedVision::shared_ptr<ConnectedVision::Module::IWorker> worker;
 };
 
 

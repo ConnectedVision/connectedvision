@@ -141,6 +141,16 @@ public:
 	virtual void deleteAllData(const id_t configID) = 0;
 	virtual bool processConfigRecover(const id_t configID) { return false; }
 
+	/**
+	 * returns worker for a given config ID (if existing)
+	 *
+	 * @throws out_of_range if worker does not exist / is not running
+	*/
+	virtual ConnectedVision::shared_ptr<ConnectedVision::Module::IWorker> getWorker(
+		const id_t configID ///< config ID
+	) const;
+
+
 
 	virtual DBConnection& getDB() { return dbConn; };
 
@@ -171,6 +181,7 @@ public:
 	* @return status code (analog to HTTP codes)
 	*/
 	virtual int getModuleLogo(ConnectedVisionResponse &response);
+
 
 protected:
 	virtual void prepareStores() = 0;
@@ -389,6 +400,7 @@ protected:
 	virtual void stop(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController);
 	virtual void reset(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController);
 	virtual void recover(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController);
+
 
 protected:
 	IModuleEnvironment *env;

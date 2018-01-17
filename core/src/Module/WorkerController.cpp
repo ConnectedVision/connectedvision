@@ -287,7 +287,7 @@ void WorkerController::workerThreadFunction()
 						boost::this_thread::disable_interruption interrupt_disabler;
 
 						// create worker
-						auto worker = this->workerFactory.createWorker(*this, this->getConfig());
+						this->worker = std::move(this->workerFactory.createWorker(*this, this->getConfig()));
 						if ( worker )
 						{
 							try

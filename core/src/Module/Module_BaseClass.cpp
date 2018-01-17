@@ -3694,6 +3694,14 @@ void Module_BaseClass::unregisterWorkerInstance(const id_t configID, ConnectedVi
 	}
 }
 
+ConnectedVision::shared_ptr<ConnectedVision::Module::IWorker> Module_BaseClass::getWorker(const id_t configID) const
+{
+	auto controller = this->mapWorkerControllers.at(configID);
+	auto ptr = controller->getWorker();
+	if ( !ptr )
+		throw std::out_of_range("cannot get worker for config ID: " + IDToStr(configID) + " (worker is not running)");
+	return ptr;
+}
 
 
 /**

@@ -272,6 +272,40 @@ TEST(moduleControl, stopThis_config)
 }
 
 
+TEST_GROUP(workerAccess)
+{
+	void setup()
+	{
+		// Init stuff
+		this->module = std::make_shared<TestWrapper_ConnectedVisionModule>(moduleDescription, inputPinDescription, outputPinDescription);
+	}
+
+	void teardown()
+	{
+		// Uninit stuff
+	}
+
+	ModuleEnvironment_Mockup env;
+	std::shared_ptr<TestWrapper_ConnectedVisionModule> module;
+};
+
+
+TEST(workerAccess, getworker_returns_pointer_for_config)
+{
+	//////////////////////////////////////
+	// test initialization
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
+
+	//////////////////////////////////////
+	// actual test
+	auto http_code = module->control(config->getconst_configID(), "start", ID_NULL, response);
+	
+	auto worker = module->getWorker( config->getconst_id() );
+}
+
+
 /* TODO
 
 TEST(moduleInternal, deleteAllData_clears_DB)

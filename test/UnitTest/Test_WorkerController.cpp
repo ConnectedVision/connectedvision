@@ -43,6 +43,7 @@ public:
 	) :	WorkerController(configOrig, module, workerFactory, workerTimeout)
 	{}
 	
+
 	// spy functions
 	thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &spy_workerThreadProgress() { return this->workerThreadProgress; }
 
@@ -575,5 +576,33 @@ TEST(WorkerController, start_a_stopped_config_does_start_a_new_worker)
 	// stop worker
 	workerCtrl.stop();
 }
+
+
+TEST(WorkerController, getWorker_returns_running_worker)
+{
+	//////////////////////////////////////
+	// test initialization
+	const int timeout = 1000;
+	workerFactory_Mockup->runtime = 5000;
+	TestWrapper_WorkerController workerCtrl(configID, module, workerFactory);
+
+	//////////////////////////////////////
+	// actual test
+	auto worker = workerCtrl.getWorker();
+	CHECK_FALSE( worker );
+
+	workerCtrl.start();
+	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Running, timeout);
+	worker = workerCtrl.getWorker();
+	CHECK( worker );
+
+	workerCtrl.stop();
+	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Stopped, timeout);
+	worker = workerCtrl.getWorker();
+	CHECK_FALSE( worker );
+
+}
+
+
 
 }} // namespace
