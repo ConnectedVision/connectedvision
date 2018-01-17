@@ -121,7 +121,7 @@ def deleteCacheDirectories(exportCommandOutput):
 
 
 def exportPackage(user, channel):
-	cmd = ("conan export -k " + user + "/" + channel).split(" ")
+	cmd = ("conan export -k . " + user + "/" + channel).split(" ")
 	output = subprocess.check_output(cmd, universal_newlines=True)
 	
 	print(output)
