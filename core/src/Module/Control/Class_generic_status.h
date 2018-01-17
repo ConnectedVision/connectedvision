@@ -49,6 +49,11 @@ public:
 		return equal;
 	}
 
+	inline bool processing_pending() const
+	{
+		return (this->is_status_init() || is_status_starting() || is_status_running() || is_status_stopping());
+	}
+
 	// helper functions
 	Class_generic_status(const id_t& configID, const std::string& moduleID, const std::string& moduleURI, const std::vector<pinID_t> outputPinIDs);
 

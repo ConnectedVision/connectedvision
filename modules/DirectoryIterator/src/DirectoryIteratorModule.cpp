@@ -41,6 +41,8 @@ std::unique_ptr<IWorker> DirectoryIteratorModule::createWorker(IWorkerController
 {
 	// create worker instance
 	std::unique_ptr<IWorker> ptr( new DirectoryIteratorWorker(*this, controller, config) );
+	if ( !ptr )
+		throw std::runtime_error( "cannot create worker for " + this->moduleName + " / configID: " + config->getconst_configID() );
 
 	return ptr;
 }

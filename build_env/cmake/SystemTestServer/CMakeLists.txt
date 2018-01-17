@@ -50,7 +50,7 @@ if(USE_CORE_AS_SUBPROJECT)
 		Core
 		Modules/DirectoryIterator
 		Modules/DummyBoundingBoxes
-		Modules/FileExport
+		# Modules/FileExport
 		Modules/FileImporter
 		Modules/RTPImporter
 		Modules/SyntheticVideo
@@ -66,7 +66,7 @@ endif()
 target_link_libraries(${PROJECT_NAME}
 	DirectoryIterator
 	DummyBoundingBoxes
-	FileExport
+	# FileExport
 	FileImporter
 	RTPImporter
 	SyntheticVideo

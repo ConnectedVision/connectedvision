@@ -31,10 +31,6 @@ class RTPImporterModule: public Module_BaseClass
 public:
 	RTPImporterModule();
 
-	// module init / release
-	virtual void initModule( IModuleEnvironment *env );
-	virtual void releaseModule();
-
 	// worker
 	virtual std::unique_ptr<IWorker> createWorker(
 		IWorkerControllerCallbacks &controller,									///< reference to worker controller

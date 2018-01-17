@@ -288,48 +288,53 @@ void WorkerController::workerThreadFunction()
 
 						// create worker
 						auto worker = this->workerFactory.createWorker(*this, this->getConfig());
-						try
+						if ( worker )
 						{
-							if ( !worker )
-								throw new std::runtime_error("workerFactory cannot create worker for config ID: " + IDToStr(this->getConfig()->getconst_configID()) );
+							try
+							{
+								// start worker
+								this->workerThreadProgress = WorkerThreadProgress::Running;
+								boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
+								worker->run();
+							}
+							catch (boost::thread_interrupted e)
+							{
+								error = true;
+								std::cout << "[Exception worker.run() did not return on stop request in time -> interrupted after timeout] ";
+							}
+							catch (std::exception e)
+							{
+								// TODO Log exception
+								error = true;
+								std::cout << "[Exception in worker.run()] " << e.what();
+							}
+							bool stopped = !this->intermediateContinueCheck();	// was worker forced to stop?
 
-							// start worker
-							this->workerThreadProgress = WorkerThreadProgress::Running;
-							boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
-							worker->run();
-						}
-						catch (boost::thread_interrupted e)
+							// clean up worker -> destroy worker
+							this->workerThreadProgress = WorkerThreadProgress::Cleanup;
+							worker.reset();
+
+							// set status
+							if ( error )
+								progress = WorkerThreadProgress::Error;
+							else if ( stopped )
+								progress = WorkerThreadProgress::Stopped;
+							else
+								progress = WorkerThreadProgress::Finished;
+						} 
+						else 
 						{
-							error = true;
-							std::cout << "[Exception worker.run() did not return on stop request in time -> interrupted after timeout] ";
-						}
-						catch (std::exception e)
-						{
-							// TODO Log exception
-							error = true;
-							std::cout << "[Exception in worker.run()] " << e.what();
-						}
-						bool stopped = !this->intermediateContinueCheck();	// was worker forced to stop?
-
-						// clean up worker -> destroy worker
-						this->workerThreadProgress = WorkerThreadProgress::Cleanup;
-						worker.reset();
-
-
-						// set status
-						if ( error )
-							progress = WorkerThreadProgress::Error;
-						else if ( stopped )
-							progress = WorkerThreadProgress::Stopped;
-						else
+							// module has no worker -> skip running
 							progress = WorkerThreadProgress::Finished;
-						this->workerThreadProgress = progress;
+						}
 
+						// finally set workerThreadProgress
+						this->workerThreadProgress = progress;
 					}
 					catch (std::exception e)
 					{
 						// TODO Log exception
-						std::cout << "CORE PANIC: [Exception in controller thread command] " << e.what();
+						std::cout << "CORE PANIC: [Exception in worker thread] " << e.what();
 
 						// terminate
 						this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);

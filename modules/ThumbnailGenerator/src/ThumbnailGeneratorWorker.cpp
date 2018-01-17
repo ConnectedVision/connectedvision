@@ -119,12 +119,12 @@ void ThumbnailGeneratorWorker::run()
 			}
 
 			// update the status every x seconds, i.e. sleep for this time
-			if((boundingBoxStatus.is_status_running() || pngStatus.is_status_running()) && this->controller.intermediateContinueCheck())
+			if((boundingBoxStatus.processing_pending() || pngStatus.processing_pending()) && this->controller.intermediateContinueCheck())
 			{
-				sleep_ms(1000);
+				sleep_ms(500);
 			}
 		}
-		while((boundingBoxStatus.is_status_running() || pngStatus.is_status_running()) && this->controller.nextIterationStep());
+		while((boundingBoxStatus.processing_pending() || pngStatus.processing_pending()) && this->controller.nextIterationStep());
 
 		// worker has finished
 		if(this->controller.intermediateContinueCheck() && boundingBoxStatus.is_status_finished() && pngStatus.is_status_finished())
@@ -136,7 +136,6 @@ void ThumbnailGeneratorWorker::run()
 		else if(!this->controller.intermediateContinueCheck() || boundingBoxStatus.is_status_stopped() || pngStatus.is_status_stopped())
 		{
 			status->set_status_stopped();
-			status->set_progress(0.0);
 			LOG_INFO_CONFIG("worker forced to stop", configID);
 		}
 		// error

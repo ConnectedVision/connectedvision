@@ -2529,7 +2529,14 @@ int Module_BaseClass::control(const id_t configID, const std::string& command, c
 
 			if (senderID!=ID_NULL) // additional info: the id can be ID_NULL if no senderID was specified in url (e.g. a gui will issue a stop command without a senderID)
 			{
-				runningSuccessorList.insert(make_pair(senderID, true)); // a successor module sent the start command, so add it in the running successor list
+				try
+				{
+					runningSuccessorList.insert(make_pair(senderID, true)); // a successor module sent the start command, so add it in the running successor list
+				}
+				catch (std::out_of_range)
+				{
+					// ignore already registered senderID
+				}
 			}
 
 			// start processing
