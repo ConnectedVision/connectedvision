@@ -1,5 +1,7 @@
 import glob
 import os
+import platform
+import re
 import shutil
 from conans import ConanFile, tools, model
 
@@ -10,16 +12,16 @@ class FFmpeg(ConanFile):
 	version = "3.2.4"
 	license = "GNU Lesser General Public License (LGPL) version 2.1, GNU General Public License (GPL) version 2, https://ffmpeg.org/legal.html"
 	url = "https://ffmpeg.org"
-	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64"], "build_type": ["Debug", "Release"]}
+	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	
 	
 	
 	def copyFiles(self, src, dst, ext):
 		files = glob.iglob(os.path.join(src, ext))
 		
-		for file in files:
-			if os.path.isfile(file):
-				shutil.copy(file, dst)
+		for f in files:
+			if os.path.isfile(f):
+				shutil.copy(f, dst)
 
 
 
@@ -115,8 +117,9 @@ class FFmpeg(ConanFile):
 			self.output.info("runtime   : " + str(self.settings.compiler.runtime))
 		
 		if self.settings.os == "Linux":
-			self.output.warn("Some libraries are needed to build " + self.name + ". Please enter sudo password if requested...")
-			self.run("sudo apt-get install -y yasm")
+			cmdStr = "sudo apt-get install -y yasm"
+			self.output.warn("yasm is required for building " + self.name + ". If requested, please enter the sudo password for executing the following command \"" + cmdStr + "\"")
+			self.run(cmdStr)
 		
 		ffmpegInstallDir = self.getInstallDir()
 		
@@ -168,6 +171,16 @@ class FFmpeg(ConanFile):
 				params += " --extra-ldflags=\"/NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrt.lib\""
 			else:
 				raise Exception("unsupported runtime: " + str(self.settings.compiler.runtime))
+		elif self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
+			if not "CC" in os.environ:
+				raise Exception("failed to extract compiler from environment variable \"CC\" (variable is not set)")
+			
+			result = re.search("(.*)gcc$", os.environ.get("CC"), re.M|re.I)
+			
+			if not result:
+				raise Exception("failed to extract compiler from environment variable \"CC\" (variable value does not end with \"gcc\", e.g. \"arm-linux-gnueabihf-gcc\")")
+			
+			params += " --enable-cross-compile --cross-prefix=" + result.group(1) + " --arch=armhf --target-os=linux"
 		
 		with tools.chdir(self.name):
 			command = ""
@@ -194,10 +207,10 @@ class FFmpeg(ConanFile):
 			if self.settings.os == "Windows":
 				libDir = os.path.join(ffmpegInstallDir, "lib")
 
-				for file in os.listdir(libDir):
-					if file.endswith(".a"):
-						base = os.path.splitext(file)[0]
-						src = os.path.join(libDir, file)
+				for f in os.listdir(libDir):
+					if f.endswith(".a"):
+						base = os.path.splitext(f)[0]
+						src = os.path.join(libDir, f)
 						dst = os.path.join(libDir, base + ".lib")
 						os.rename(src, dst)
 			
@@ -228,3 +241,6 @@ class FFmpeg(ConanFile):
 			self.cpp_info.libs = ["libavcodec", "libavfilter", "libavformat", "libavutil", "libswresample", "libswscale", "Secur32"]
 		else:
 			self.cpp_info.libs = ["avformat", "avfilter", "avcodec", "swscale", "avutil", "swresample"]
+			
+			if model.version.Version(str(self.settings.compiler.version)) < "4.8":
+				self.cpp_info.defines = ["__STDC_CONSTANT_MACROS"]

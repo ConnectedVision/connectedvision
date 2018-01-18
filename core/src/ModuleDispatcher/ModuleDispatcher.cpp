@@ -256,7 +256,8 @@ bool ModuleDispatcher::handleRequest(const ConnectedVision::HTTP::HTTPServerRequ
 	// remove trailing slash characters
 	while (!uri.empty() && uri.back() == '/')
 	{
-		uri.pop_back();
+		//uri.pop_back();
+		uri = uri.substr(0, uri.size()-1);
 	}
 
 	std::vector<std::string> uriPath;

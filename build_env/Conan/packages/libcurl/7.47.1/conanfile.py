@@ -1,5 +1,8 @@
-from conans import AutoToolsBuildEnvironment, ConanFile, tools
 import os
+import platform
+import re
+
+from conans import AutoToolsBuildEnvironment, ConanFile, tools
 from conans.tools import download
 from conans.tools import unzip, replace_in_file
 from conans import CMake
@@ -43,7 +46,7 @@ class LibCurlConan(ConanFile):
 			except:
 				pass
 		
-		self.requires.add("zlib/1.2.8@covi/stable", private=False)
+		self.requires.add("zlib/1.2.11@covi/stable", private=False)
 	
 	
 	
@@ -74,6 +77,9 @@ class LibCurlConan(ConanFile):
 			suffix += " --without-libssh2 " if not self.options.with_libssh2 else "--with-libssh2"
 			suffix += " --without-librtmp " if not self.options.with_librtmp else "--with-librtmp"
 			suffix += " --without-libmetalink " if not self.options.with_libmetalink else "--with-libmetalink"
+			
+			if self.settings.compiler == "gcc" and self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
+				suffix += " --host=arm-linux-gnueabihf "
 			
 			if self.options.with_openssl:
 				if self.settings.os == "Macos" and self.options.darwin_ssl:

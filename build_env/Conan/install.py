@@ -28,7 +28,7 @@ def installPackages():
 		])
 	
 	packages.extend([
-		"Boost/1.57.0",
+		"Boost/1.58.0",
 		"CppUTest/3.8",
 		"FFmpeg/3.2.4",
 		"libcurl/7.47.1",
@@ -39,11 +39,11 @@ def installPackages():
 		"RapidJSON/1.0.2",
 		"SQLite/3.15.1",
 		"StackWalker/2014.12.28",
-		"zlib/1.2.8"
+		"zlib/1.2.11"
 	])
 	
 	for package in packages:
-		dirPathList = [os.getcwd()] + package.split("/")
+		dirPathList = [os.path.join(os.getcwd(), "packages")] + package.split("/")
 		dirPath = os.path.abspath(os.path.join(*dirPathList))
 		
 		with conanTools.chdir(dirPath):

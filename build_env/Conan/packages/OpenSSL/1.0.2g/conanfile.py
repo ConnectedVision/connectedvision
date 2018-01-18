@@ -2,6 +2,8 @@ from conans import ConanFile
 from conans import tools
 from conans.tools import replace_in_file
 import os
+import platform
+import re
 
 
 class OpenSSLConan(ConanFile):
@@ -9,7 +11,7 @@ class OpenSSLConan(ConanFile):
 	version = "1.0.2g"
 	license = "https://www.openssl.org/source/license.html, https://license.openssl.org/"
 	url = "https://www.openssl.org"
-	settings = {"os": ["Windows", "Linux", "Macos"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64"], "build_type": ["Debug", "Release"]}
+	settings = {"os": ["Windows", "Linux", "Macos"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	# https://github.com/openssl/openssl/blob/OpenSSL_1_0_2c/INSTALL
 	options = {"no_threads": [True, False],
 				"no_electric_fence": [True, False],
@@ -106,7 +108,7 @@ no_sha=False
 				del self.requires["electric-fence"]
 
 		if not self.options.no_zlib:
-			self.requires.add("zlib/1.2.8@covi/stable", private=False)
+			self.requires.add("zlib/1.2.11@covi/stable", private=False)
 			self.options["zlib"].shared = self.options.zlib_dynamic
 
 		else:
@@ -138,7 +140,11 @@ no_sha=False
 		
 		if self.settings.compiler == "Visual Studio":
 			self.output.info("runtime   : " + str(self.settings.compiler.runtime))
-
+		
+		if self.settings.os == "Linux" and self.settings.compiler == "gcc" and self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
+			self.output.warn("The tool makedepend is needed to build. Please enter sudo password if requested...")
+			self.run("sudo apt-get install -y xutils-dev")
+		
 		config_options_string = ""
 
 		if self.deps_cpp_info.include_paths:
@@ -200,7 +206,27 @@ no_sha=False
 				replace_in_file("./openssl-%s/Makefile.shared" % self.version, old_str, new_str)
 				self.output.warn("----------MAKE OPENSSL %s-------------" % self.version)
 				run_in_src("make")
-
+		
+		def arm_make(config_options_string):
+			if not "CXX" in os.environ:
+				raise Exception("failed to extract compiler from environment variable \"CXX\" (variable is not set)")
+			
+			result = re.search(r"(.*)g\+\+$", os.environ.get("CXX"), re.M|re.I)
+			
+			if not result:
+				raise Exception("Failed to extract compiler from environment variable \"CXX\". Variable value \"" + os.environ.get("CXX") + "\" does not end with \"g++\", e.g. \"arm-linux-gnueabihf-g++\".")
+			
+			verbose=False
+			self.output.warn("----------CONFIGURING OPENSSL %s-------------" % self.version)
+			# CAUTION: We intentionally set CC and CXX in order to satisfy the Configure script!!!
+			command = "CC=gcc CXX=g++ CROSS_COMPILE=" + result.group(1) + " ./Configure linux-armv4 -march=armv7-a %s" % config_options_string
+			self.output.info("command: %s" % command)
+			run_in_src(command, show_output=verbose)
+			# run_in_src("printenv", show_output=True) # test CC and CXX having original values
+			run_in_src("make depend", show_output=verbose)
+			self.output.warn("----------MAKE OPENSSL %s-------------" % self.version)
+			run_in_src("make", show_output=verbose)
+		
 		def windows_make(config_options_string):
 			self.output.warn("----------CONFIGURING OPENSSL FOR WINDOWS. %s-------------" % self.version)
 			debug = "debug-" if self.settings.build_type == "Debug" else ""
@@ -250,7 +276,10 @@ no_sha=False
 			self.run("del \\\\?\\" + os.path.join(os.getcwd(), "openssl-" + self.version, "NUL") + " 2> nul")
 
 		if self.settings.os == "Linux" or self.settings.os == "Macos":
-			unix_make(config_options_string)
+			if self.settings.compiler == "gcc" and self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
+				arm_make(config_options_string)
+			else:
+				unix_make(config_options_string)
 		elif self.settings.os == "Windows":
 			windows_make(config_options_string)
 

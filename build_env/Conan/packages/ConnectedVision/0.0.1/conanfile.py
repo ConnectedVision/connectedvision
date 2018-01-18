@@ -10,9 +10,11 @@ class ConnectedVision(ConanFile):
 	version = "0.0.1"
 	license = "MIT"
 	url = "https://github.com/ConnectedVision"
-	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64"], "build_type": ["Debug", "Release"]}
+	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	generators = "cmake"
-	requires = (("Boost/1.57.0@covi/stable"),
+	options = { "toolchain": "ANY" }
+	default_options = "toolchain="
+	requires = (("Boost/1.58.0@covi/stable"),
 		("FFmpeg/3.2.4@covi/stable"),
 		("libcurl/7.47.1@covi/stable"),
 		("Node.js/7.9.0@covi/stable"),
@@ -22,7 +24,7 @@ class ConnectedVision(ConanFile):
 		("RapidJSON/1.0.2@covi/stable"),
 		("StackWalker/2014.12.28@covi/stable"),
 		("SQLite/3.15.1@covi/stable"),
-		("zlib/1.2.8@covi/stable"))
+		("zlib/1.2.11@covi/stable"))
 
 
 
@@ -64,6 +66,15 @@ class ConnectedVision(ConanFile):
 		# cmake.build(target="install")
 		
 		cmakeStr = re.sub(" *-DCONAN_EXPORTED=\"1\" *", " ", cmake.command_line)
+		
+		if self.options.toolchain:
+			toolchain = str(self.options.toolchain)
+			
+			if not os.path.exists(toolchain) or not os.path.isfile(toolchain):
+				raise Exception("the specified toolchain is not a valid file: " + toolchain)
+			
+			cmakeStr += " -DCMAKE_TOOLCHAIN_FILE=" + toolchain
+		
 		cmd = "cd " + buildDir
 		cmd += " && cmake " + cmakeStr + " -DCMAKE_INSTALL_PREFIX=" + installDir + " " + sourceDir
 		cmd += " && cmake --build . --target install --config " + str(self.settings.build_type)
