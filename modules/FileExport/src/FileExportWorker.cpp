@@ -41,10 +41,8 @@ using namespace std;
 
 #define DEFAULT_DESIGNATED_RINGBUFFER_MEMORY_IN_BYTES 250000000
 
-void FileExportWorker::stop()
+void FileExportWorker::wakeUpWorker()
 {
-	Worker_BaseClass::stop();
-
 	boost::mutex::scoped_lock scoped_lock(this->mutexExportJobList);
 	this->condExportJoblist.notify_one();
 	scoped_lock.unlock();
@@ -288,7 +286,7 @@ void FileExportWorker::run()
 		std::string outputPathFormat;
 		std::string outputFilenameFormat;
 
-		int pathSeparatiorPos = filepathToParse.find_last_of("/\\"); // search for last backslash or slash (split filename from path)
+		size_t pathSeparatiorPos = filepathToParse.find_last_of("/\\"); // search for last backslash or slash (split filename from path)
 		if (pathSeparatiorPos != string::npos) // if found (directory of zip archive != working directory -> ) 
 		{						
 			outputPathFormat = filepathToParse.substr(0, pathSeparatiorPos+1);

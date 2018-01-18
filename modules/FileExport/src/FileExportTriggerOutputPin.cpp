@@ -24,7 +24,6 @@ using namespace std;
 
 FileExportTriggerOutputPin::FileExportTriggerOutputPin(IModuleEnvironment *env, FileExportModule *pModule) : env(env)
 {
-	this->logName = "FileExportTriggerOutputPin";
 	this->pModule = pModule;
 }
 
@@ -52,7 +51,7 @@ int FileExportTriggerOutputPin::getByID(const id_t id, ConnectedVisionResponse &
 {
 	id_t configID = this->config.get_id();
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -108,7 +107,7 @@ int FileExportTriggerOutputPin::getByIndex(const int64_t index, ConnectedVisionR
 {
 	id_t configID = this->config.get_id();
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -155,7 +154,7 @@ int FileExportTriggerOutputPin::getByTimestamp(const timestamp_t timestamp, Conn
 {
 	id_t configID = this->config.get_id();
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -188,7 +187,7 @@ int FileExportTriggerOutputPin::getBeforeTimestamp(const timestamp_t timestamp, 
 {
 	id_t configID = this->config.get_id();
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -221,7 +220,7 @@ int FileExportTriggerOutputPin::getAfterTimestamp(const timestamp_t timestamp, C
 {
 	id_t configID = this->config.get_id();
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context

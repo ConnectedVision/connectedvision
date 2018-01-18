@@ -7,7 +7,7 @@
 
 #include "../../../modules/DirectoryIterator/src/DirectoryIteratorModuleFactory.h"
 #include "../../../modules/DummyBoundingBoxes/src/DummyBoundingBoxesModuleFactory.h"
-// TODO #include "../../../modules/FileExport/src/FileExportModuleFactory.h"
+#include "../../../modules/FileExport/src/FileExportModuleFactory.h"
 #include "../../../modules/FileImporter/src/FileImporterModuleFactory.h"
 #include "../../../modules/SyntheticVideo/src/SyntheticVideoModuleFactory.h"
 #include "../../../modules/RTPImporter/src/RTPImporterModuleFactory.h"
@@ -69,10 +69,9 @@ int main(int argc, char **argv)
 		auto dummyBoundingBoxes = DummyBoundingBoxes::DummyBoundingBoxesModuleFactory::createModule();
 		server.registerModule(dummyBoundingBoxes);
 
-/* TODO
 		auto fileExport = FileExport::FileExportModuleFactory::createModule();
 		server.registerModule(fileExport);
-*/
+
 		auto fileImporter = FileImporter::FileImporterModuleFactory::createModule();
 		server.registerModule(fileImporter);
 

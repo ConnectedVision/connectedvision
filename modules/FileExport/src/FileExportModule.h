@@ -23,26 +23,44 @@ public:
 	class InputPin_ArbitraryData;
 
 public:
-	// worker
+	/**
+	 * module constructor
+	 */
+	FileExportModule();
+
 	virtual std::unique_ptr<IWorker> createWorker(
 		IWorkerControllerCallbacks &controller,									///< reference to worker controller
 		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
 	);
 
-	// data handling
+	/**
+	 * delete results of a config chain
+	 *
+	 * @param config	config chain
+	 */
 	virtual void deleteAllData(
 		const id_t configID		///< [in] config ID of data to be deleted
 	);
+
+	virtual int control(const id_t configID, const std::string& command, const id_t senderID, ConnectedVisionResponse &response);
 
 protected:
 	// data access
 	virtual void prepareStores() {}
 
-	// input / output pins
+	/**
+	 * generate input pin
+	 *
+	 * @return input pin
+	 */
 	virtual boost::shared_ptr<IConnectedVisionOutputPin> generateOutputPin(const pinID_t& pinID);
-	virtual boost::shared_ptr<IConnectedVisionInputPin> generateInputPin(const pinID_t& pinID);
 
-	boost::shared_ptr<IWorker> getWorkerByConfigID(const id_t configID);
+	/**
+	 *  generate output pin
+	 *
+	 * @return output pin
+	 */
+	virtual boost::shared_ptr<IConnectedVisionInputPin> generateInputPin(const pinID_t& pinID);
 };
 
 } // namespace FileExport

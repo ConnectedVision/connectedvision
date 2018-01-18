@@ -47,7 +47,8 @@ public:
 	) : Worker_BaseClass(module, controller, config), module(module), exportElementRunningUniqueID(0) {}
 
 	virtual void run();
-	virtual void stop(); // overwrite stop function to notify condExportJoblist
+
+	virtual void wakeUpWorker(); // notify condExportJoblist
 
 	
 protected:

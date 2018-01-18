@@ -30,11 +30,11 @@ namespace FileExport {
 using namespace std;
 
 
-/**
- * generate input pin
- *
- * @return input pin
- */
+FileExportModule::FileExportModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
+{
+
+}
+
 boost::shared_ptr<IConnectedVisionInputPin> FileExportModule::generateInputPin(const pinID_t& pinID)
 {
 	LOG_SCOPE;
@@ -47,11 +47,6 @@ boost::shared_ptr<IConnectedVisionInputPin> FileExportModule::generateInputPin(c
 	throw ConnectedVision::runtime_error("invalid pinID: " + pinID);
 }
 
-/**
- *  generate output pin
- *
- * @return output pin
- */
 boost::shared_ptr<IConnectedVisionOutputPin > FileExportModule::generateOutputPin(const pinID_t& pinID)
 {
 	LOG_SCOPE;
@@ -77,30 +72,26 @@ std::unique_ptr<IWorker> FileExportModule::createWorker(IWorkerControllerCallbac
 	return ptr;
 }
 
-/**
- * delete results of a config chain
- *
- * @param config	config chain
- */
+
+int FileExportModule::control(const id_t configID, const std::string& command, const id_t senderID, ConnectedVisionResponse &response)
+{
+	int ret = Module_BaseClass::control(configID, command, senderID, response);
+
+	try
+	{
+		auto ptr = boost::dynamic_pointer_cast<FileExportWorker>(this->getWorker(configID));
+		ptr->wakeUpWorker();
+	}
+	catch (std::out_of_range)
+	{
+	}
+
+	return(ret);
+}
+
 void FileExportModule::deleteAllData(const id_t configID)
 {
 	// nothing to do
-}
-
-boost::shared_ptr<IWorker> FileExportModule::getWorkerByConfigID(const id_t configID)
-{
-	std::vector< boost::shared_ptr<IWorker> > workers = this->getRunningWorkers();
-	if (workers.size() > 0)
-	{
-		for (std::vector< boost::shared_ptr<IWorker> >::iterator it = workers.begin(); it != workers.end(); ++it) 
-		{
-			if ((*it)->getID() == configID)
-			{
-				return(*it);
-			}
-		}
-	}
-	throw ConnectedVision::runtime_error("did not find running IConnectedVisionAlgorithmWorker with config id" + boost::lexical_cast<std::string>(configID));
 }
 
 } // namespace FileExport
