@@ -1054,17 +1054,7 @@ std::string Module_BaseClass::getConfigHTMLsummary(Module_BaseClass &module, con
 	string configUri = "/" + moduleID + "/" + configID + "/";
 	result += "<p><li><a href='" + configUri + "config'>" + configID + "</a>";
 				
-	auto storeStatus = module.getStatusStore();
-	if (!storeStatus)
-	{
-		throw ConnectedVision::runtime_error("error: could not retrieve status store! ");
-	}
-	auto status = storeStatus->getByID(configID);
-	if (!status)
-	{
-		throw ConnectedVision::runtime_error("error: could not retrieve status! ");
-	}
-	storeStatus.reset();
+	ConnectedVision::shared_ptr<const Class_generic_status> status = module.getStatus(configID);
 
 	result += " - belonging to module ";
 
@@ -1259,11 +1249,33 @@ std::string Module_BaseClass::getConfigHTMLsummary(Module_BaseClass &module, con
  */
 int Module_BaseClass::getStatus(const id_t configID, ConnectedVisionResponse& response)
 {
+	try
+	{
+		auto status = this->getStatus(configID);
+			
+		// return JSON string
+		response.setContentType("application/json");
+		response.setContent( status->toJsonStr() );
+	}
+	catch (std::out_of_range e)
+	{
+		return writeErrorLog(response, HTTP_Status_NOT_FOUND, e.what() );
+	}
+	catch (std::exception e)
+	{
+		return writeErrorLog(response, HTTP_Status_ERROR, e.what() );
+	}
+
+	return HTTP_Status_OK;
+}
+
+ConnectedVision::shared_ptr<const Class_generic_status> Module_BaseClass::getStatus(const id_t configID)
+{
 	LOG_SCOPE_CONFIG( configID );
 
 	// is module initialized?
 	if ( !this->ready )
-		return writeErrorLog(response, HTTP_Status_ERROR, "module not ready" );
+		throw std::runtime_error("module not ready");
 
 	id_t resolvedConfigID;
 	try 
@@ -1272,68 +1284,56 @@ int Module_BaseClass::getStatus(const id_t configID, ConnectedVisionResponse& re
 	}
 	catch (std::runtime_error& e)
 	{
-		return writeErrorLog(response, HTTP_Status_ERROR, std::string("error in resolvePotentialAliasID() function: (") + e.what() + ")" );
+		throw std::runtime_error(std::string("error in resolvePotentialAliasID() function: (") + e.what() + ")" );
 	}
 
-	try 
+	auto workerController = this->getWorkerController(resolvedConfigID);
+	// get object from Store
+	auto statusConst = workerController->getStatus();
+	auto configConst = this->configStore->getByID(resolvedConfigID);
+
+	if ( statusConst && configConst )
 	{
-		// get object from Store
-		auto statusConst = this->statusStore->getByID(resolvedConfigID);
-		auto configConst = this->configStore->getByID(resolvedConfigID);
-
-		if ( statusConst && configConst )
-		{
-			auto status = statusConst->copy();
+		auto status = statusConst->copy();
 	
-			// prepare own status
-			status->set_moduleID( getModuleID() );
+		// prepare own status
+		status->set_moduleID( getModuleID() );
 
-			// request status chain
-			vector<boost::shared_ptr<string>> statusChain;
+		// request status chain
+		vector<boost::shared_ptr<string>> statusChain;
 			
-			for(std::vector<std::string>::const_iterator it = this->inputPinIDs.begin(); it != this->inputPinIDs.end(); ++it)
-			{
-				pinID_t pinID = *it;
-				int inputPinCount = this->getInputPinCount(configConst, pinID);
+		for(std::vector<std::string>::const_iterator it = this->inputPinIDs.begin(); it != this->inputPinIDs.end(); ++it)
+		{
+			pinID_t pinID = *it;
+			int inputPinCount = this->getInputPinCount(configConst, pinID);
 
-				for(int iPin = 0; iPin < inputPinCount; iPin++)
-				{
-					boost::shared_ptr<IConnectedVisionInputPin> inPin = this->getInputPin(*configConst, pinID, iPin);
+			for(int iPin = 0; iPin < inputPinCount; iPin++)
+			{
+				boost::shared_ptr<IConnectedVisionInputPin> inPin = this->getInputPin(*configConst, pinID, iPin);
 					
-					///@TODO handle optional input pins
-					try
-					{
-						if ( !inPin )
-							throw ConnectedVision::runtime_error("pin pool is full");
-						Class_generic_status s = inPin->getStatus();
-						boost::shared_ptr< string > str( new string(s.toJsonStr()) );
-						statusChain.push_back( str );
-					}
-					catch (std::runtime_error& e)
-					{
-						return writeErrorLog(response, HTTP_Status_ERROR, "cannot get status chain for pin: " + pinID + " (" + e.what() + ")" );
-					}
+				///@TODO handle optional input pins
+				try
+				{
+					if ( !inPin )
+						throw ConnectedVision::runtime_error("pin pool is full");
+					Class_generic_status s = inPin->getStatus();
+					boost::shared_ptr< string > str( new string(s.toJsonStr()) );
+					statusChain.push_back( str );
+				}
+				catch (std::runtime_error& e)
+				{
+					throw std::runtime_error("cannot get status chain for pin: " + pinID + " (" + e.what() + ")" );
 				}
 			}
-			status->set_chain( statusChain );
-
-
-			// return JSON string
-			response.setContentType("application/json");
-			response.setContent( status->toJsonStr() );
-
-			return HTTP_Status_OK;
 		}
-		else
-		{
-				// not found
-			return writeErrorLog(response, HTTP_Status_NOT_FOUND, "getStatus: config not found");
-		}
+		status->set_chain( statusChain );
+
+		return(statusConst);
 	}
-	catch (std::exception& e)
+	else
 	{
-		// internal server error
-		return writeErrorLog(response, HTTP_Status_ERROR, string(e.what()) );
+		// not found
+		throw std::out_of_range("getStatus: config not found");
 	}
 }
 
@@ -2472,28 +2472,7 @@ int Module_BaseClass::control(const id_t configID, const std::string& command, c
 			return writeErrorLog(response, HTTP_Status_NOT_FOUND, "control: config not found");
 		}
 
-		// config has been loaded -> get worker controller for config, or init new controller
-		ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> workerController;
-		try
-		{
-			workerController = mapWorkerControllers.at(resolvedConfigID);
-		}
-		catch (...)
-		{
-			// create new worker instance that is automatically registered via registerWorkerInstance()
-			// multiple calls to this control() function and thus potential race conditions will be handled
-			// because constructor of WorkerController will fail due to out_of_range exception (duplicate configID for map)
-			// and the new operation will not be completed (roll-back)
-			new ConnectedVision::Module::WorkerController(resolvedConfigID, *this, *this, this->workerTimeout);
-
-			// re-fetch worker controller from mat to avoid racing conditions
-			 workerController = mapWorkerControllers.at(resolvedConfigID);
-
-			 if ( !workerController )
-			 {
-				 throw std::runtime_error("CORE PANIC: cannot create worker controller");
-			 }
-		}
+		auto workerController = this->getWorkerController(resolvedConfigID);
 		
 		// handle command
 		if ( command == "start" )
@@ -3736,4 +3715,32 @@ boost::shared_ptr<Logging::ILogWriter> Module_BaseClass::log() const
 		boost::shared_ptr<Logging::ILogWriter> log = boost::make_shared<Logging::LogWriterNULL>();
 		return log;
 	}
+}
+
+ConnectedVision::shared_ptr<WorkerController> Module_BaseClass::getWorkerController(const id_t configID)
+{
+	// config has been loaded -> get worker controller for config, or init new controller
+	ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> workerController;
+	try
+	{
+		workerController = mapWorkerControllers.at(configID);
+	}
+	catch (...)
+	{
+		// create new worker instance that is automatically registered via registerWorkerInstance()
+		// multiple calls to this control() function and thus potential race conditions will be handled
+		// because constructor of WorkerController will fail due to out_of_range exception (duplicate configID for map)
+		// and the new operation will not be completed (roll-back)
+		new ConnectedVision::Module::WorkerController(configID, *this, *this, this->workerTimeout);
+
+		// re-fetch worker controller from mat to avoid racing conditions
+			workerController = mapWorkerControllers.at(configID);
+
+			if ( !workerController )
+			{
+				throw std::runtime_error("CORE PANIC: cannot create worker controller");
+			}
+	}
+
+	return(workerController);
 }

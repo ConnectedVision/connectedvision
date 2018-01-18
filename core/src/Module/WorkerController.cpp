@@ -268,7 +268,8 @@ void WorkerController::workerThreadFunction()
 			{
 				case WorkerThreadProgress::Undefined:
 				case WorkerThreadProgress::Init:
-				case WorkerThreadProgress::Stopped:
+				case WorkerThreadProgress::Stopping:
+				case WorkerThreadProgress::Stopped:				
 				case WorkerThreadProgress::Finished:
 				case WorkerThreadProgress::Error:
 					// ignore and wait for next progress
@@ -350,6 +351,14 @@ void WorkerController::workerThreadFunction()
 						boost::this_thread::disable_interruption interrupt_disabler;
 
 						module.deleteAllData( this->configID );	// one thread (workerThread) is writing / deleting data
+						
+						// reset status message and progress
+						auto status = this->getStatus()->copy();
+						status->set_message("");
+						status->set_progress(0.0);
+						auto statusConst = this->statusStore->make_const( status );
+						this->statusStore->save_const( statusConst );
+
 						progress = WorkerThreadProgress::Init; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
 					}
 					break;

@@ -86,7 +86,8 @@ public:
 	virtual int getConfigHTMLsummary(const id_t configID, ConnectedVisionResponse &response);
 	virtual std::string getConfigHTMLsummary(Module_BaseClass &module, const Class_generic_config &config);
 
-	virtual int getStatus(const id_t configID, ConnectedVisionResponse &response);
+	virtual ConnectedVision::shared_ptr<const Class_generic_status> getStatus(const id_t configID);
+	virtual int getStatus(const id_t configID, ConnectedVisionResponse &response);	
 
 	virtual int control(const id_t configID, const std::string& command, const id_t senderID, ConnectedVisionResponse &response);
 
@@ -401,6 +402,7 @@ protected:
 	virtual void reset(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController);
 	virtual void recover(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController);
 
+	ConnectedVision::shared_ptr<WorkerController> getWorkerController(const id_t configID);
 
 protected:
 	IModuleEnvironment *env;
