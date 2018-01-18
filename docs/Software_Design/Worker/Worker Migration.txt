@@ -115,8 +115,7 @@ xxxWorker(
 	
 protected:
 	xxxModule &module;
-	IWorkerControllerCallbacks &controller;
-	ConnectedVision::shared_ptr<const Class_generic_config> config;	
+
 
 
 xxxWorker.cpp

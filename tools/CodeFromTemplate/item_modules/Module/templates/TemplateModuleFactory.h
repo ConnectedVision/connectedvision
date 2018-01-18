@@ -16,7 +16,7 @@ public:
 	/**
 	* factory for {{Module.name}}
 	*/
-	static ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> createModule();
+	static ConnectedVision::shared_ptr<ConnectedVision::Module::IModule> createModule();
 };
 
 {{ closeNamespace(global.namespace) }}

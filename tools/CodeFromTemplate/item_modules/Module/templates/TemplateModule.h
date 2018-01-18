@@ -5,8 +5,7 @@
 #include <IConnectedVisionModule.h>
 #include <IStore.h>
 
-#include <ConnectedVisionModule.h>
-#include <ConnectedVisionAlgorithmDispatcher.h>
+#include <Module/Module_BaseClass.h>
 
 {% for d in Module.outputPins %}
 #include "{{d.DataClass.classHeaderPath}}"
@@ -18,7 +17,7 @@
 *	module class: {{Module.name}}
 *	{{Module.description}}
 */
-class {{Module.moduleID}}Module: public ConnectedVisionModule
+class {{Module.moduleID}}Module: public Module_BaseClass
 {
 friend class {{Module.moduleID}}Worker;
 public:
@@ -27,39 +26,26 @@ public:
 	*/
 	{{Module.moduleID}}Module();
 
+	
+	
 	/**
-	* module init
-	*  - allocate resources
-	*  - prepare module / worker
-	*/
-	virtual void initModule(
-		IModuleEnvironment *env	///< [in] general environment
-	);
-
-	/**
-	* module release
-	*  - free resources
-	*  - tear-down module / worker
-	*/
-	virtual void releaseModule();
-
-	/**
-	* worker factory
+	* worker factory (implement IWorkerFactory interface)
 	*
 	* @return {{Module.name}} worker
 	*/
-	virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(
-		IModuleEnvironment *env,								///< [in] general environment
-		boost::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	virtual std::unique_ptr<IWorker> createWorker(
+		IWorkerControllerCallbacks &controller,									///< reference to worker controller
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
 	);
 
 	/**
 	* delete data / results of a given config
 	*/
-	virtual void deleteResults(
-		const boost::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	virtual void deleteAllData(
+		const id_t configID		///< [in] config ID of data to be deleted
 	);
 
+	
 protected:
 	/**
 	* connect to stores
