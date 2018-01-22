@@ -75,7 +75,8 @@ function renderTemplateToFile(templateFile, targetFile, context) {
 	{
 		// negative look behinds are not supported in JavaScript
 		// result = result.replace('(?<!\r)\n', '\r\n');
-		result = result.replace(/([^\r]?)\n/g, '$1\r\n');
+		result = result.replace(/\r\n/g, '\n');
+		result = result.replace(/\n/g, '\r\n');
 	}
 	
 	log.debug('[RenderTemplate] write file: ' + targetFile);
