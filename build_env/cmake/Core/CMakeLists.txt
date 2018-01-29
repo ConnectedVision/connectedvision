@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(ConnectedVisionCore)
 
+option(USE_INSTALL_SUBDIRECTORY_STRUCTURE "create a subdirectory structure for the install directory which consists of architecture and configuration type" OFF)
+
 set(ConnectedVisionCppRoot ../../..)
 
 include(${ConnectedVisionCppRoot}/build_env/cmake/common.cmake)
