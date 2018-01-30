@@ -139,8 +139,10 @@ class FFmpeg(ConanFile):
 			params += " --disable-libopenjpeg"
 			params += " --enable-asm"
 			params += " --enable-yasm"
-			
-		params += " --prefix=\"" + tools.unix_path(ffmpegInstallDir) + "\""
+			params += " --prefix=\"" + tools.unix_path(ffmpegInstallDir) + "\""
+		else:
+			params += " --prefix=\"" + ffmpegInstallDir + "\""
+
 		
 		if self.settings.build_type == "Debug":
 			params += " --enable-debug"
