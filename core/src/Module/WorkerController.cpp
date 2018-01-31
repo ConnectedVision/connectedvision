@@ -272,6 +272,9 @@ void WorkerController::workerThreadFunction()
 				case WorkerThreadProgress::Stopped:				
 				case WorkerThreadProgress::Finished:
 				case WorkerThreadProgress::Error:
+					// update status (saves status to store if changed, updates cache (if used))
+					this->getStatus();
+
 					// ignore and wait for next progress
 					break;
 
@@ -279,6 +282,10 @@ void WorkerController::workerThreadFunction()
 				case WorkerThreadProgress::Terminated:
 					// exit if terminate flag is set
 					progress = WorkerThreadProgress::Terminated; this->workerThreadProgress = progress; // update internal progress and set workerThreadProgress
+
+					// update status (saves status to store if changed, updates cache (if used))
+					this->getStatus();
+
 					return;
 
 				case WorkerThreadProgress::Starting:
@@ -295,8 +302,15 @@ void WorkerController::workerThreadFunction()
 							{
 								// start worker
 								this->workerThreadProgress = WorkerThreadProgress::Running;
+
+								// update status (saves status to store if changed, updates cache (if used))
+								// note: important to be done before worker->run() is invoked
+								this->getStatus();
+
 								boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
+								std::cout << "worker->run() started [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
 								worker->run();
+								std::cout << "worker->run() finished [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
 							}
 							catch (boost::thread_interrupted e)
 							{
@@ -315,6 +329,8 @@ void WorkerController::workerThreadFunction()
 							this->workerThreadProgress = WorkerThreadProgress::Cleanup;
 							worker.reset();
 
+							std::cout << "worker destroyed [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
+
 							// set status
 							if ( error )
 								progress = WorkerThreadProgress::Error;
@@ -325,6 +341,7 @@ void WorkerController::workerThreadFunction()
 						} 
 						else 
 						{
+							std::cout << "creating worker failed [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
 							// module has no worker -> skip running
 							progress = WorkerThreadProgress::Finished;
 						}
@@ -374,6 +391,9 @@ void WorkerController::workerThreadFunction()
 						else
 							progress = WorkerThreadProgress::Error;
 						this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
+
+						// update status (saves status to store if changed, updates cache (if used))
+						this->getStatus();
 					}
 					break;
 
