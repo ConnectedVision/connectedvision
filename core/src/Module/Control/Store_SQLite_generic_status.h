@@ -46,7 +46,7 @@ public:
 	virtual bool write_through(	const shared_ptr<const Class_generic_status>& statusConst )
 	{
 		// status is not running -> alwasy write to base store
-		if ( !statusConst->is_status_running() )
+		if ( (!statusConst->is_status_running()) && (!statusConst->is_status_starting()) && (!statusConst->is_status_stopping()))
 			return true;
 
 		Store_SQLite_generic_status::CacheLock lock(this->cacheMutex);
