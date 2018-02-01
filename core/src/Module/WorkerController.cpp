@@ -331,8 +331,10 @@ void WorkerController::workerThreadFunction()
 
 							std::cout << "worker destroyed [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
 
+							// get status from store (not this->getStatus()!!! since it would overwrite db status with getStatusFromProgress())
+							auto statusConst = this->statusStore->getByID(this->configID);
 							// set status
-							if ( error )
+							if ( error || statusConst->is_status_error() ) // check for both internal error (e.g. worker threw exception) and error from status stored in db (error manually set by worker)
 								progress = WorkerThreadProgress::Error;
 							else if ( stopped )
 								progress = WorkerThreadProgress::Stopped;
