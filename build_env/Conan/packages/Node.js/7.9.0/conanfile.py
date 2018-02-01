@@ -129,10 +129,17 @@ class NodeJs(ConanFile):
 		self.output.info("---------- package ----------")
 		self.output.info("")
 		
-		# self.copy and the automatic build directory removal strategy from Conan upon rebuild lead to an error on Windows for paths longer than 255 characters
-		# moving the data from the build directory to the package directory solves the problem
-		# though when the move operation is done within the package step, then this leads to different errors also related to paths longer than 255 characters
 		# self.copy("*", src=self.name, dst="bin")
+
+		# self.copy and the automatic build directory removal strategy from Conan upon rebuild lead to an error on Windows for paths longer than 255 characters
+		# moving the data from the build directory to the package directory helps to avoid this problem
+		# when the move operation is done within the package step, then this leads to a different error on Windows ("The file is a broken symlink") during the package step for file paths longer than 255 characters
+		# the value of the self.build_folder variable is provided in the package_info step using a text file because the self.build_folder variable is not available in the package_info step (self.package_folder is available though)
+		if self.settings.os == "Windows":
+			with open(os.path.join(self.package_folder, "temp.txt"), "w") as f:
+				f.write(self.build_folder)
+		else:
+			os.rename(os.path.join(self.build_folder, self.name), self.package_folder)
 
 
 
@@ -141,24 +148,26 @@ class NodeJs(ConanFile):
 		self.output.info("---------- package_info ----------")
 		self.output.info("")
 		
-		binDir = os.path.join(self.package_folder, "bin")
-		buildDir = os.path.join(os.getcwd(), self.name)
-		
-		if os.path.exists(buildDir):
-			if self.settings.os == "Windows":
-				# move the build directory content to the package directory in the package info step due to two reasons:
-				# 1. in case of a rebuild of the package, Conan runs into an error when dealing with paths longer than 255 characters on Windows e.g. when trying to delete the build directory
-				# 2. during the package step a function which is automatically executed by Conan leads to an error on Windows for paths longer than 255 characters (mistakenly interpreted as a broken symbolic link)
-				os.rename(buildDir, binDir)
-			else:
-				for element in os.listdir(buildDir):
-					shutil.move(os.path.join(self.name, element), self.package_folder)
-		
 		# create an empty include directory in order to avoid CMake errors when this package recipe is included in a CMakeLists.txt
 		includeDir = os.path.join(self.package_folder, "include")
 		
 		if not os.path.exists(includeDir):
 			os.makedirs(includeDir)
+		
+		binDir = os.path.join(self.package_folder, "bin")
+		
+		# workaround for behavior described in package step
+		if self.settings.os == "Windows" and not os.path.exists(binDir):
+			tempFile = os.path.join(self.package_folder, "temp.txt")
+			
+			with open(tempFile, "r") as f:
+				buildDir = f.read()
+				
+			if len(buildDir) < 1 or not os.path.exists(buildDir):
+				raise Exception("failed to obtain build_dir variable within package_info step")
+			
+			os.rename(os.path.join(buildDir, self.name), os.path.join(self.package_folder, "bin"))
+			os.remove(tempFile)
 		
 		self.env_info.path.append(binDir)
 		
