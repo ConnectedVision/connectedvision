@@ -15,8 +15,6 @@
 #include "FileExportWorker.h"
 #include "FileExportTriggerOutputPin.h"
 
-#define LOG_SCOPE_CONFIG( configID )		Logging::LoggingScope _log_scope( this->log(), Logging::Debug, this->logName, std::string(__FUNCTION__) + std::string("()@") + ConnectedVision::intToStr(__LINE__), ( configID ) );
-
 namespace ConnectedVision {
 namespace Module {
 namespace FileExport {
@@ -26,7 +24,6 @@ using namespace std;
 
 FileExportTriggerOutputPin::FileExportTriggerOutputPin(IModuleEnvironment *env, FileExportModule *pModule) : env(env)
 {
-	this->logName = "FileExportTriggerOutputPin";
 	this->pModule = pModule;
 }
 
@@ -38,8 +35,6 @@ FileExportTriggerOutputPin::~FileExportTriggerOutputPin(void)
 
 void FileExportTriggerOutputPin::init(const std::string& configStr)
 {
-	LOG_SCOPE;
-
 	this->config.parseJson( configStr.c_str() );
 	this->params.parseJson( this->config.get_params() );
 }
@@ -55,9 +50,8 @@ void FileExportTriggerOutputPin::init(const std::string& configStr)
 int FileExportTriggerOutputPin::getByID(const id_t id, ConnectedVisionResponse &response)
 {
 	id_t configID = this->config.get_id();
-	LOG_SCOPE_CONFIG( configID );
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -112,9 +106,8 @@ int FileExportTriggerOutputPin::getByID(const id_t id, ConnectedVisionResponse &
 int FileExportTriggerOutputPin::getByIndex(const int64_t index, ConnectedVisionResponse &response)
 {
 	id_t configID = this->config.get_id();
-	LOG_SCOPE_CONFIG( configID );
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -160,9 +153,8 @@ int FileExportTriggerOutputPin::getByIndexRange(const int64_t start, const int64
 int FileExportTriggerOutputPin::getByTimestamp(const timestamp_t timestamp, ConnectedVisionResponse &response)
 {
 	id_t configID = this->config.get_id();
-	LOG_SCOPE_CONFIG( configID );
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -194,9 +186,8 @@ int FileExportTriggerOutputPin::getByTimestamp(const timestamp_t timestamp, Conn
 int FileExportTriggerOutputPin::getBeforeTimestamp(const timestamp_t timestamp, ConnectedVisionResponse &response)
 {
 	id_t configID = this->config.get_id();
-	LOG_SCOPE_CONFIG( configID );
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -228,9 +219,8 @@ int FileExportTriggerOutputPin::getBeforeTimestamp(const timestamp_t timestamp, 
 int FileExportTriggerOutputPin::getAfterTimestamp(const timestamp_t timestamp, ConnectedVisionResponse &response)
 {
 	id_t configID = this->config.get_id();
-	LOG_SCOPE_CONFIG( configID );
 	
-	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorkerByConfigID(configID));
+	boost::shared_ptr<FileExportWorker> pWorker = boost::dynamic_pointer_cast<FileExportWorker>(pModule->getWorker(configID));
 	if (pWorker)
 	{
 		{ // scoped lock context
@@ -265,23 +255,6 @@ int FileExportTriggerOutputPin::getAllInTimespan(const timestamp_t start, const 
 	throw ConnectedVision::runtime_error("function getAllInTimespan() not implemented for FileExportTriggerOutputPin");
 }
 
-/**
- * get log writer
- *
- * @return log writer
- */
-boost::shared_ptr<Logging::ILogWriter> FileExportTriggerOutputPin::log() const
-{
-	if ( this->env ) 
-	{
-		return this->env->log(); 
-	}
-	else 
-	{
-		boost::shared_ptr<Logging::ILogWriter> log( new Logging::LogWriterNULL() );
-		return log;
-	}
-}
 
 } // namespace FileExport
 } // namespace Module

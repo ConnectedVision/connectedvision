@@ -10,9 +10,9 @@ namespace ConnectedVision {
 namespace Module {
 namespace DummyBoundingBoxes {
 
-ConnectedVision::shared_ptr<IConnectedVisionModule> DummyBoundingBoxesModuleFactory::createModule()
+ConnectedVision::shared_ptr<IModule> DummyBoundingBoxesModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> moduleInstance( new DummyBoundingBoxesModule() );
+	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<DummyBoundingBoxesModule>();
 	if ( !moduleInstance ) 
 		throw std::runtime_error("DummyBoundingBoxesModuleFactory: error creating instance for module: DummyBoundingBoxes");
 

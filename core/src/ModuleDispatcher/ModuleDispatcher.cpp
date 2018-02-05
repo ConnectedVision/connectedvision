@@ -13,14 +13,14 @@
 
 #include <helper.h>
 
-#include <VersionInfo/VersionInfo.h>
+#include "VersionInfo/VersionInfo.h"
 
 #include "ModuleDispatcher.h"
-#include <ConnectedVisionModule.h>
+#include "Module/Module_BaseClass.h"
 
-#include <IHTTPAbstraction.h>
-#include <HTTP/HTTPServerPoco.h>
-#include <HTTP/HTTPSServerPoco.h>
+#include "IHTTPAbstraction.h"
+#include "HTTP/HTTPServerPoco.h"
+#include "HTTP/HTTPSServerPoco.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -40,6 +40,7 @@ using namespace std;
 
 using namespace ConnectedVision;
 using namespace ConnectedVision::HTTP;
+using namespace ConnectedVision::Module;
 
 static bool matches(std::vector<std::string> &path, std::string match, unsigned int pos)
 {
@@ -137,7 +138,7 @@ ModuleDispatcher::~ModuleDispatcher()
 {
 	LOG_SCOPE;
 
-	for (vector<boost::shared_ptr<IConnectedVisionModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
+	for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
 	{
 		LOG_INFO("release module: " + (*it)->getModuleName());
 		(*it)->releaseModule();
@@ -161,7 +162,7 @@ void ModuleDispatcher::setLogoPNG(const BufferLogoPNG &logoPNG)
 	this->logo = boost::make_shared<cv::Mat>(cv::imdecode(input, cv::IMREAD_COLOR));
 }
 
-void ModuleDispatcher::registerModule(boost::shared_ptr<IConnectedVisionModule> module)
+void ModuleDispatcher::registerModule(boost::shared_ptr<ConnectedVision::Module::IModule> module)
 {
 	LOG_SCOPE;
 
@@ -177,18 +178,18 @@ void ModuleDispatcher::registerModule(boost::shared_ptr<IConnectedVisionModule> 
  *
  * @return module pointer (to NOT delete module)
  */
-boost::shared_ptr<IConnectedVisionModule> ModuleDispatcher::getModule(std::string moduleID) const
+boost::shared_ptr<ConnectedVision::Module::IModule> ModuleDispatcher::getModule(std::string moduleID) const
 {
 	LOG_SCOPE;
 
-	for (vector<boost::shared_ptr<IConnectedVisionModule>>::const_iterator it = modules.begin(); it != modules.end(); ++it) 
+	for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::const_iterator it = modules.begin(); it != modules.end(); ++it) 
 	{
-		boost::shared_ptr<IConnectedVisionModule> module = *it;
+		boost::shared_ptr<ConnectedVision::Module::IModule> module = *it;
 		if ( moduleID == module->getModuleID() )
 			return module;
 	}
 
-	boost::shared_ptr<IConnectedVisionModule> null_ptr;
+	boost::shared_ptr<ConnectedVision::Module::IModule> null_ptr;
 	return null_ptr;
 }
 
@@ -205,7 +206,7 @@ void ModuleDispatcher::start()
 
 	// init / start modules
 	LOG_INFO("init modules");
-	for (vector<boost::shared_ptr<IConnectedVisionModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
+	for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
 	{
 		(*it)->initModule( this );
 	}
@@ -213,7 +214,7 @@ void ModuleDispatcher::start()
 
 void ModuleDispatcher::stop()
 {
-	for (vector<boost::shared_ptr<IConnectedVisionModule>>::iterator it = modules.begin(); it != modules.end(); ++it)
+	for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::iterator it = modules.begin(); it != modules.end(); ++it)
 	{
 		(*it)->releaseModule();
 	}
@@ -244,7 +245,7 @@ bool ModuleDispatcher::handleRequest(const ConnectedVision::HTTP::HTTPServerRequ
 
 	int status = 0;
 
-	boost::shared_ptr<IConnectedVisionModule> module;
+	boost::shared_ptr<ConnectedVision::Module::IModule> module;
 
 	LOG_DEBUG("handle new request");
 
@@ -295,9 +296,9 @@ bool ModuleDispatcher::handleRequest(const ConnectedVision::HTTP::HTTPServerRequ
 
 	if ( uriPath.size() > 1 )
 	{
-		for (vector<boost::shared_ptr<IConnectedVisionModule>>::iterator it = modules.begin(); it != modules.end() && !module; ++it) 
+		for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::iterator it = modules.begin(); it != modules.end() && !module; ++it) 
 		{
-			boost::shared_ptr<IConnectedVisionModule>& m = *it;
+			boost::shared_ptr<ConnectedVision::Module::IModule>& m = *it;
 			if ( uriPath[1] == (*it)->getModuleID() )
 				module = *it;
 		}
@@ -400,7 +401,7 @@ bool ModuleDispatcher::handleRequest(const ConnectedVision::HTTP::HTTPServerRequ
 				}
 				else if ( matches(uriPath, "configSummary", 3) )
 				{
-					boost::shared_ptr<ConnectedVisionModule> pModule = boost::dynamic_pointer_cast<ConnectedVisionModule>(module);
+					boost::shared_ptr<Module_BaseClass> pModule = boost::dynamic_pointer_cast<Module_BaseClass>(module);
 					status = pModule->getConfigHTMLsummary( configID, responsePayload );
 					res = true;
 				}
@@ -676,9 +677,9 @@ void ModuleDispatcher::getHostInfo(const ConnectedVision::HTTP::HTTPServerReques
 
 	result += "<br/><hr/>";
 	result += "<h2>Modules</h2><ul>";
-	for (vector<boost::shared_ptr<IConnectedVisionModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
+	for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
 	{
-		boost::shared_ptr<IConnectedVisionModule> module = *it;
+		boost::shared_ptr<ConnectedVision::Module::IModule> module = *it;
 		string base = address + module->getModuleID();
 		
 		result += "<li><a href='#" + module->getModuleID() + "'>" + module->getModuleID() + "</a></li>";
@@ -686,9 +687,9 @@ void ModuleDispatcher::getHostInfo(const ConnectedVision::HTTP::HTTPServerReques
 	}
 	result += "</ul><br/>";
 
-	for (vector<boost::shared_ptr<IConnectedVisionModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
+	for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
 	{
-		boost::shared_ptr<IConnectedVisionModule> module = *it;
+		boost::shared_ptr<ConnectedVision::Module::IModule> module = *it;
 		
 		result += "<hr/>";
 		result += "<p><h2><a name='" + module->getModuleID() + "'>" + module->getModuleID() + "</a></h2><ul>";
@@ -777,9 +778,9 @@ void ModuleDispatcher::getModuleList(const ConnectedVision::HTTP::HTTPServerRequ
 	string result = "";
 
 	result += "[\n";
-	for (vector<boost::shared_ptr<IConnectedVisionModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
+	for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::iterator it = modules.begin(); it != modules.end(); ++it) 
 	{
-		boost::shared_ptr<IConnectedVisionModule> module = *it;
+		boost::shared_ptr<ConnectedVision::Module::IModule> module = *it;
 		if ( it != modules.begin() )
 			result += ",\n";
 		result += "{ \"name\": \"" + module->getModuleID() + "\", "
@@ -796,19 +797,19 @@ ConnectedVision::HTTP::EnumHTTPStatus ModuleDispatcher::getConfigListOverview(co
 {
 	LOG_SCOPE;
 
-	boost::shared_ptr<ConnectedVisionModule> module;
+	boost::shared_ptr<Module_BaseClass> module;
 
 	std::vector<std::string> uriPath;
 	boost::split(uriPath, request.getUri(), boost::is_any_of("/"));
 
 	if ( uriPath.size() > 1 )
 	{
-		for (vector<boost::shared_ptr<IConnectedVisionModule>>::iterator it = modules.begin(); it != modules.end() && !module; ++it) 
+		for (vector<boost::shared_ptr<ConnectedVision::Module::IModule>>::iterator it = modules.begin(); it != modules.end() && !module; ++it) 
 		{
-			boost::shared_ptr<IConnectedVisionModule>& m = *it;
+			boost::shared_ptr<ConnectedVision::Module::IModule>& m = *it;
 			if ( uriPath[1] == m->getModuleID() )
 			{
-				module = boost::dynamic_pointer_cast<ConnectedVisionModule>(m);
+				module = boost::dynamic_pointer_cast<Module_BaseClass>(m);
 			}
 		}
 	}

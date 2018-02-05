@@ -8,42 +8,59 @@
 #include <string>
 
 #include <IConnectedVisionModule.h>
-#include <ConnectedVisionModule.h>
+#include <Module/Module_BaseClass.h>
 
-#include <ConnectedVisionAlgorithmDispatcher.h>
+
 
 namespace ConnectedVision {
 namespace Module {
 namespace FileExport {
 
-class FileExportModule: public ConnectedVisionModule
+class FileExportModule: public Module_BaseClass
 {
 	friend class FileExportTriggerOutputPin;
 public:
 	class InputPin_ArbitraryData;
 
+public:
+	/**
+	 * module constructor
+	 */
 	FileExportModule();
 
-public:
-	// module init / release
-	virtual void initModule( IModuleEnvironment *env );
-	virtual void releaseModule();
+	virtual std::unique_ptr<IWorker> createWorker(
+		IWorkerControllerCallbacks &controller,									///< reference to worker controller
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
+	);
 
-	// worker
-	virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config);
+	/**
+	 * delete results of a config chain
+	 *
+	 * @param config	config chain
+	 */
+	virtual void deleteAllData(
+		const id_t configID		///< [in] config ID of data to be deleted
+	);
 
-	// data handling
-	virtual void deleteResults(const boost::shared_ptr<const Class_generic_config> config);
+	virtual int control(const id_t configID, const std::string& command, const id_t senderID, ConnectedVisionResponse &response);
 
 protected:
 	// data access
-	virtual void prepareStores();
+	virtual void prepareStores() {}
 
-	// input / output pins
+	/**
+	 * generate input pin
+	 *
+	 * @return input pin
+	 */
 	virtual boost::shared_ptr<IConnectedVisionOutputPin> generateOutputPin(const pinID_t& pinID);
-	virtual boost::shared_ptr<IConnectedVisionInputPin> generateInputPin(const pinID_t& pinID);
 
-	boost::shared_ptr<IConnectedVisionAlgorithmWorker> getWorkerByConfigID(const id_t configID);
+	/**
+	 *  generate output pin
+	 *
+	 * @return output pin
+	 */
+	virtual boost::shared_ptr<IConnectedVisionInputPin> generateInputPin(const pinID_t& pinID);
 };
 
 } // namespace FileExport

@@ -1,0 +1,149 @@
+title WorkerController recover
+
+participant ":WorkerController \n <<IWorkerController>> \n <<thread_safe>>" as WorkerController
+
+participant "commandQueue \n <<thread_safe>>" as commandQueue
+participant "controllerThread \n <<boost::thread>>" as controllerThread
+activate controllerThread #cyan
+
+participant "recoverCmd \n <<Command>>" as recoverCmd
+
+participant "workerThreadProgress \n <<thread_safe_progress>>" as workerThreadProgress
+
+participant "workerThread \n <<boost::thread>>" as workerThread
+activate workerThread #orange
+
+legend
+The color coding is used to indicate in which thread a function is executed.
+endlegend
+
+note over commandQueue: []
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+workerThread -> workerThreadProgress: wait_while(...)
+activate workerThreadProgress #orange
+activate workerThread #gray
+hnote over workerThreadProgress: wait for change of \n workerThreadProgress
+
+...
+
+== recover config ==
+
+
+ -> WorkerController : recover()
+activate WorkerController
+
+create recoverCmd
+WorkerController -> recoverCmd: <<create>>(\n   workerThreadProgress)
+activate recoverCmd
+activate WorkerController #gray
+WorkerController <<- recoverCmd: //recoverCmd//
+deactivate recoverCmd
+deactivate WorkerController #gray
+WorkerController -> commandQueue: enqueue(recoverCmd)
+activate commandQueue
+activate WorkerController #gray
+WorkerController <<- commandQueue
+deactivate commandQueue
+deactivate WorkerController #gray
+note over commandQueue: [recoverCmd]
+ <<- WorkerController
+deactivate WorkerController
+
+controllerThread <<- commandQueue: //recoverCmd//
+deactivate commandQueue
+deactivate controllerThread #gray
+controllerThread -> recoverCmd: execute()
+activate recoverCmd #cyan
+activate controllerThread #gray
+
+recoverCmd -> workerThreadProgress: get()
+activate workerThreadProgress #cyan
+activate recoverCmd #gray
+recoverCmd <<- workerThreadProgress: //Error//
+deactivate workerThreadProgress
+deactivate recoverCmd #gray
+
+alt workerThreadProgress == Error
+	recoverCmd -> workerThreadProgress: set(Recovering)
+	activate workerThreadProgress #cyan
+	activate recoverCmd #gray
+	recoverCmd <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate recoverCmd #gray
+	note over workerThreadProgress: Recovering
+
+	workerThread <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+
+	recoverCmd -> workerThreadProgress: wait_while(Recovering)
+	activate workerThreadProgress #cyan
+	activate recoverCmd #gray
+	hnote over recoverCmd: wait for worker to recover config
+
+	workerThread -> workerThreadProgress: get()
+	activate workerThreadProgress #orange
+	activate workerThread #gray
+	workerThread <<- workerThreadProgress: //Recovering//
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+
+	workerThread -> module: recover(configID)
+	activate module #orange
+	activate workerThread #gray
+	|||
+	ref over recoverCmd, module: try to recover from error\n
+	|||
+
+	workerThread <<- module
+	deactivate module
+	deactivate workerThread #gray
+
+	alt on success
+		workerThread -> workerThreadProgress: reset(Stopped)
+		activate workerThreadProgress #orange
+		activate workerThread #gray
+		workerThread <<- workerThreadProgress
+		deactivate workerThreadProgress
+		deactivate workerThread #gray
+		note over workerThreadProgress: Stopped
+	else
+		workerThread -> workerThreadProgress: set(Error)
+		activate workerThreadProgress #orange
+		activate workerThread #gray
+		workerThread <<- workerThreadProgress
+		deactivate workerThreadProgress
+		deactivate workerThread #gray
+		note over workerThreadProgress: Error
+	end
+		
+	recoverCmd <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate recoverCmd #gray
+end
+
+hnote over workerThread: thread loop
+workerThread -> workerThreadProgress: wait_while(...)
+activate workerThreadProgress #orange
+activate workerThread #gray
+hnote over workerThreadProgress: wait for change of \n workerThreadProgress
+
+controllerThread <<- recoverCmd
+deactivate recoverCmd
+deactivate controllerThread #gray
+destroy recoverCmd
+
+note over commandQueue: []
+hnote over controllerThread: thread loop
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+|||
+...
+

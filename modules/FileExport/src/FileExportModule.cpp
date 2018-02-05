@@ -30,56 +30,11 @@ namespace FileExport {
 using namespace std;
 
 
-/**
- * module constructor
- */
-FileExportModule::FileExportModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+FileExportModule::FileExportModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
 
 }
 
-/**
- * init module
- *
- * @param server  module server
- */
-void FileExportModule::initModule( IModuleEnvironment *env ) 
-{ 
-	LOG_SCOPE;
-
-	// clean up module before init
-	this->releaseModule();
-
-	// call parent init
-	ConnectedVisionModule::initModule(env);
-}
-
-/**
- * destroy module
- *
- * @param server  module server
- */
-void FileExportModule::releaseModule() 
-{
-	LOG_SCOPE;
-
-	// call parent init
-	ConnectedVisionModule::releaseModule();
-}
-
-/**
- * prepare module specific stores
- */
-void FileExportModule::prepareStores() 
-{
-	// module specific stores
-}
-
-/**
- * generate input pin
- *
- * @return input pin
- */
 boost::shared_ptr<IConnectedVisionInputPin> FileExportModule::generateInputPin(const pinID_t& pinID)
 {
 	LOG_SCOPE;
@@ -92,11 +47,6 @@ boost::shared_ptr<IConnectedVisionInputPin> FileExportModule::generateInputPin(c
 	throw ConnectedVision::runtime_error("invalid pinID: " + pinID);
 }
 
-/**
- *  generate output pin
- *
- * @return output pin
- */
 boost::shared_ptr<IConnectedVisionOutputPin > FileExportModule::generateOutputPin(const pinID_t& pinID)
 {
 	LOG_SCOPE;
@@ -114,48 +64,34 @@ boost::shared_ptr<IConnectedVisionOutputPin > FileExportModule::generateOutputPi
 	throw ConnectedVision::runtime_error("invalid pinID: " + pinID);
 }
 
-/**
- * create algorithm worker object
- *
- * @param env	ConnectedVision module environment
- * @param db	SQLite DB
- * @param config	job / config
- *
- * @return new algorithm worker object
- */
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> FileExportModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+std::unique_ptr<IWorker> FileExportModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config) 
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
+	// create worker instance
+	std::unique_ptr<IWorker> ptr( new FileExportWorker(*this, controller, config) );
 
-	return boost::shared_ptr<IConnectedVisionAlgorithmWorker>(new FileExportWorker(env, this, config));
+	return ptr;
 }
 
-/**
- * delete results of a config chain
- *
- * @param config	config chain
- */
-void FileExportModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
-{
-	LOG_SCOPE_CONFIG( config->get_id() );
 
-	// nothing to do
-}
-
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> FileExportModule::getWorkerByConfigID(const id_t configID)
+int FileExportModule::control(const id_t configID, const std::string& command, const id_t senderID, ConnectedVisionResponse &response)
 {
-	std::vector< boost::shared_ptr<IConnectedVisionAlgorithmWorker> > workers = algoDispatcher->getRunningWorkers();
-	if (workers.size() > 0)
+	int ret = Module_BaseClass::control(configID, command, senderID, response);
+
+	try
 	{
-		for (std::vector< boost::shared_ptr<IConnectedVisionAlgorithmWorker> >::iterator it = workers.begin(); it != workers.end(); ++it) 
-		{
-			if ((*it)->getID() == configID)
-			{
-				return(*it);
-			}
-		}
+		auto ptr = boost::dynamic_pointer_cast<FileExportWorker>(this->getWorker(configID));
+		ptr->wakeUpWorker();
 	}
-	throw ConnectedVision::runtime_error("did not find running IConnectedVisionAlgorithmWorker with config id" + boost::lexical_cast<std::string>(configID));
+	catch (std::out_of_range)
+	{
+	}
+
+	return(ret);
+}
+
+void FileExportModule::deleteAllData(const id_t configID)
+{
+	// nothing to do
 }
 
 } // namespace FileExport

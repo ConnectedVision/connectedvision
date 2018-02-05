@@ -22,7 +22,7 @@ public:
 	/**
 	* factory for Directory Iterator
 	*/
-	static ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> createModule();
+	static ConnectedVision::shared_ptr<ConnectedVision::Module::IModule> createModule();
 };
 
 } // namespace DirectoryIterator

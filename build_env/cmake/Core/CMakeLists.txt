@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(ConnectedVisionCore)
 
+option(USE_INSTALL_SUBDIRECTORY_STRUCTURE "create a subdirectory structure for the install directory which consists of architecture and configuration type" OFF)
+
 set(ConnectedVisionCppRoot ../../..)
 
 include(${ConnectedVisionCppRoot}/build_env/cmake/common.cmake)
@@ -18,7 +20,6 @@ create_version_info_file("${ConnectedVisionCppRootAbs}" "${ConnectedVisionCppRoo
 set(ConnectedVisionIncludeHeaders
 	${ConnectedVisionCppRoot}/core/include/general.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision.h
-	${ConnectedVisionCppRoot}/core/include/ConnectedVision_ConcurrentQueue.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_Exceptions.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_SmartPointer.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_Thread.h
@@ -32,7 +33,6 @@ set(ConnectedVisionIncludeHeaders
 	${ConnectedVisionCppRoot}/core/include/IStoreCV.h
 	${ConnectedVisionCppRoot}/core/include/ILogging.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision.h
-	${ConnectedVisionCppRoot}/core/include/ConnectedVision_ConcurrentQueue.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_Exceptions.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_SmartPointer.h
 	${ConnectedVisionCppRoot}/core/include/ConnectedVision_Thread.h
@@ -137,10 +137,7 @@ set(ConnectedVisionCoreHeaders
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_PinDescription_properties.h
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_RawData.h
 	${ConnectedVisionCppRoot}/core/src/CNamedResourcesPool.h
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmDispatcher.h
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmWorker.h
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPin.h
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionModule.h
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionOutputPin.h
 	${ConnectedVisionCppRoot}/core/src/DataSource_Memory_BaseClass.h
 	${ConnectedVisionCppRoot}/core/src/DataSource_REST_BaseClass.h
@@ -162,11 +159,8 @@ set(ConnectedVisionCoreSources
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_generic_status.cpp
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_RawData.cpp
 	${ConnectedVisionCppRoot}/core/src/CNamedResourcesPool.cpp
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmDispatcher.cpp
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionAlgorithmWorker.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPinControl.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionInputPinData.cpp
-	${ConnectedVisionCppRoot}/core/src/ConnectedVisionModule.cpp
 	${ConnectedVisionCppRoot}/core/src/ConnectedVisionOutputPin.cpp
 	${ConnectedVisionCppRoot}/core/src/DataSource_Memory_BaseClass.cpp
 	${ConnectedVisionCppRoot}/core/src/DataSource_Memory_BaseClass_specializations.cpp
@@ -216,16 +210,15 @@ set(ConnectedVisionCoreHTTPSources
 )
 
 set(ConnectedVisionCoreModuleHeaders
-	${ConnectedVisionCppRoot}/core/src/Module/WorkerThread.h
-	${ConnectedVisionCppRoot}/core/src/Module/WorkerDispatcher.h
-	${ConnectedVisionCppRoot}/core/src/Module/ConfigManager.h
-	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.h
+	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.h
+	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.h	
+	${ConnectedVisionCppRoot}/core/src/Module/Worker_BaseClass.h	
 )
 
 set(ConnectedVisionCoreModuleSources
-	${ConnectedVisionCppRoot}/core/src/Module/WorkerThread.cpp
-	${ConnectedVisionCppRoot}/core/src/Module/WorkerDispatcher.cpp
-	${ConnectedVisionCppRoot}/core/src/Module/ConfigManager.cpp
+	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.cpp
+	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.cpp	
+	${ConnectedVisionCppRoot}/core/src/Module/Worker_BaseClass.cpp
 )
 
 set(ConnectedVisionCoreModuleDispatcherHeaders

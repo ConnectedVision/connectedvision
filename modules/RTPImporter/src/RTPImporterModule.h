@@ -15,8 +15,8 @@
 #include <unordered_map>
 
 #include <IConnectedVisionModule.h>
-#include <ConnectedVisionModule.h>
-#include <ConnectedVisionAlgorithmDispatcher.h>
+#include <Module/Module_BaseClass.h>
+
 
 #include "Class_RTPImporter_output_FrameMetadata.h"
 
@@ -24,26 +24,27 @@ namespace ConnectedVision {
 namespace Module {
 namespace RTPImporter {
 
-class RTPImporterModule: public ConnectedVisionModule
+class RTPImporterModule: public Module_BaseClass
 {
 	friend class RTPImporterWorker;
 
 public:
 	RTPImporterModule();
 
-	// module init / release
-	virtual void initModule( IModuleEnvironment *env );
-	virtual void releaseModule();
-
 	// worker
-	virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config);
-	//for internal member access in the worker by a OutputPin
-	boost::shared_ptr<IConnectedVisionAlgorithmWorker> getWorkerByConfigID(const id_t configID);
+	virtual std::unique_ptr<IWorker> createWorker(
+		IWorkerControllerCallbacks &controller,									///< reference to worker controller
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
+	);
+
+
 	// data handling
-	virtual void deleteResults(const boost::shared_ptr<const Class_generic_config> config);
+	virtual void deleteAllData(
+		const id_t configID		///< [in] config ID of data to be deleted
+	);
 
 	//FIXME: Lookup workers by RTP-Handle
-	static std::unordered_map<HANDLE,boost::shared_ptr<IConnectedVisionAlgorithmWorker>> umHandleWorker;
+	static std::unordered_map<HANDLE,boost::shared_ptr<IWorker>> umHandleWorker;
 	static boost::shared_mutex umHandleWorker_access;
 
 protected:

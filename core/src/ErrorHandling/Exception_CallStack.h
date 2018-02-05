@@ -14,12 +14,17 @@
 */
 
 #include <stdexcept>
+#include <iostream>
 #include <string>
 #include <memory> // std::shared_ptr
 #include <ErrorHandling/CallStack.h>
 
 namespace ConnectedVision {
 namespace ErrorHandling {
+
+#ifdef _DEBUG
+	#define CALL_STACK_ENABLED
+#endif
 
 class Exception_BaseClass_CallStack
 {
@@ -62,7 +67,7 @@ public:
 		// print to console
 		if ( Exception_BaseClass_CallStack::printToStdOut )
 		{
-			printf( "\n%s", this->what(true) );
+			std::cout << this->what(true) << std::endl << std::flush;
 		}
 	}
 

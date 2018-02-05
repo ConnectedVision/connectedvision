@@ -59,9 +59,9 @@ public:
 	virtual void set_id(const std::string &value) { boost::shared_ptr<std::string> ptr = boost::make_shared<std::string>(value); set_id(ptr); };
 
 	/* timestamp - creation timestamp of aliasID for this config */
-	virtual ConnectedVision::timestamp_t get_timestamp() const;
-	virtual const ConnectedVision::timestamp_t getconst_timestamp() const;
-	virtual void set_timestamp(ConnectedVision::timestamp_t value);
+	virtual timestamp_t get_timestamp() const;
+	virtual const timestamp_t getconst_timestamp() const;
+	virtual void set_timestamp(timestamp_t value);
 
 
 protected:
@@ -74,7 +74,7 @@ protected:
 	boost::shared_ptr<std::string> id;
 	
 	/** creation timestamp of aliasID for this config */
-	ConnectedVision::timestamp_t timestamp;
+	timestamp_t timestamp;
 	
 };
 

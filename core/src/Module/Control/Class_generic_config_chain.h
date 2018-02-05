@@ -17,6 +17,10 @@
 namespace ConnectedVision
 {
 
+// if you want to extend the auto-generated class, enable the line below
+#define Class_generic_config_chain_extended
+
+#ifdef Class_generic_config_chain_extended
 /**
  * Class_generic_config_chain
  * 
@@ -27,7 +31,7 @@ class Class_generic_config_chain : public Stub_generic_config_chain {
 
 public:
 	Class_generic_config_chain() {};
-	Class_generic_config_chain(const rapidjson::Value& value) : Stub_generic_config_chain(value) {};
+	Class_generic_config_chain(const ::rapidjson::Value& value) : Stub_generic_config_chain(value) {};
 	Class_generic_config_chain(const std::string& str) : Stub_generic_config_chain(str) {};
 	virtual ~Class_generic_config_chain() {};
 
@@ -37,7 +41,10 @@ public:
 
 };
 typedef boost::shared_ptr<Class_generic_config_chain> Class_generic_config_chain_p;
+#endif // Class_generic_config_chain_extended
 
 } // namespace ConnectedVision
+
+#include "stubs/Class_generic_config_chain_Default.h"
 
 #endif // Class_generic_config_chain_def

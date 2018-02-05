@@ -1,0 +1,150 @@
+title WorkerController reset
+
+participant ":WorkerController \n <<IWorkerController>> \n <<thread_safe>>" as WorkerController
+
+participant "commandQueue \n <<thread_safe>>" as commandQueue
+participant "controllerThread \n <<boost::thread>>" as controllerThread
+activate controllerThread #cyan
+
+participant "resetCmd \n <<Command>>" as resetCmd
+participant "stopCmd \n <<Command>>" as stopCmd
+
+participant "workerThreadProgress \n <<thread_safe_progress>>" as workerThreadProgress
+
+participant "workerThread \n <<boost::thread>>" as workerThread
+activate workerThread #orange
+
+legend
+The color coding is used to indicate in which thread a function is executed.
+endlegend
+
+note over commandQueue: []
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+workerThread -> workerThreadProgress: wait_while(...)
+activate workerThreadProgress #orange
+activate workerThread #gray
+hnote over workerThreadProgress: wait for change of \n workerThreadProgress
+
+...
+
+== reset config ==
+
+
+ -> WorkerController : reset()
+activate WorkerController
+
+create stopCmd
+WorkerController -> stopCmd: <<create>>()
+activate stopCmd
+activate WorkerController #gray
+WorkerController <<- stopCmd: //stopCmd//
+deactivate stopCmd
+deactivate WorkerController #gray
+
+create resetCmd
+WorkerController -> resetCmd: <<create>>(\n   workerThreadProgress \n   stopCmd)
+activate resetCmd
+activate WorkerController #gray
+WorkerController <<- resetCmd: //resetCmd//
+deactivate resetCmd
+deactivate WorkerController #gray
+WorkerController -> commandQueue: enqueue(resetCmd)
+activate commandQueue
+activate WorkerController #gray
+WorkerController <<- commandQueue
+deactivate commandQueue
+deactivate WorkerController #gray
+note over commandQueue: [resetCmd]
+ <<- WorkerController
+deactivate WorkerController
+
+controllerThread <<- commandQueue: //resetCmd//
+deactivate commandQueue
+deactivate controllerThread #gray
+controllerThread -> resetCmd: execute()
+activate resetCmd #cyan
+activate controllerThread #gray
+
+resetCmd -> stopCmd: execute()
+activate stopCmd #cyan
+activate resetCmd #gray
+|||
+ref over stopCmd: stop worker if running \n
+|||
+resetCmd <<- stopCmd
+deactivate stopCmd
+deactivate resetCmd #gray
+destroy stopCmd
+
+resetCmd -> workerThreadProgress: set(Resetting)
+activate workerThreadProgress #cyan
+activate resetCmd #gray
+resetCmd <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate resetCmd #gray
+note over workerThreadProgress: Resetting
+
+workerThread <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate workerThread #gray
+
+resetCmd -> workerThreadProgress: wait_while(Resetting)
+activate workerThreadProgress #cyan
+activate resetCmd #gray
+hnote over resetCmd: wait for worker to reset config
+
+workerThread -> workerThreadProgress: get()
+activate workerThreadProgress #orange
+activate workerThread #gray
+workerThread <<- workerThreadProgress: //Resetting//
+deactivate workerThreadProgress
+deactivate workerThread #gray
+
+workerThread -> module: deleteAllData(configID)
+activate module #orange
+activate workerThread #gray
+|||
+ref over resetCmd, module: delete all results of config\n
+|||
+
+workerThread <<- module
+deactivate module
+deactivate workerThread #gray
+
+workerThread -> workerThreadProgress: reset(Init)
+activate workerThreadProgress #orange
+activate workerThread #gray
+workerThread <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate workerThread #gray
+note over workerThreadProgress: Init
+
+resetCmd <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate resetCmd #gray
+
+hnote over workerThread: thread loop
+workerThread -> workerThreadProgress: wait_while(...)
+activate workerThreadProgress #orange
+activate workerThread #gray
+hnote over workerThreadProgress: wait for change of \n workerThreadProgress
+
+controllerThread <<- resetCmd
+deactivate resetCmd
+deactivate controllerThread #gray
+destroy resetCmd
+
+note over commandQueue: []
+hnote over controllerThread: thread loop
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+|||
+...
+

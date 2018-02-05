@@ -41,24 +41,11 @@ using namespace std;
 
 #define DEFAULT_DESIGNATED_RINGBUFFER_MEMORY_IN_BYTES 250000000
 
-FileExportWorker::FileExportWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config) : 
-	ConnectedVisionAlgorithmWorker(env, module, config)
+void FileExportWorker::wakeUpWorker()
 {
-	exportElementRunningUniqueID = 0;
-}
-
-FileExportWorker::~FileExportWorker()
-{
-}
-
-void FileExportWorker::stop()
-{
-	this->go = false;
 	boost::mutex::scoped_lock scoped_lock(this->mutexExportJobList);
 	this->condExportJoblist.notify_one();
 	scoped_lock.unlock();
-
-	ConnectedVisionAlgorithmWorker::stop();
 }
 
 
@@ -276,14 +263,14 @@ void FileExportWorker::run()
 	LOG_INFO_CONFIG("worker start", configID);
 
 	// get status
-	auto statusStore = this->module->getStatusStore();
+	auto statusStore = this->module.getStatusStore();
 	ConnectedVision::shared_ptr<Class_generic_status> status = statusStore->getByID(configID)->copy();
 
 	// If your algorithm does NOT support RESUME, you must reset the config status and delete old results from the DB.
 	// reset status
 	status->resetStableResults();
 	// delete previous results
-	this->module->deleteResults( this->config );
+	this->module.deleteAllData(configID);
 
 	// update status timestamps
 	status->set_estimatedFinishTime( -1 ); // how long do we need?
@@ -299,7 +286,7 @@ void FileExportWorker::run()
 		std::string outputPathFormat;
 		std::string outputFilenameFormat;
 
-		int pathSeparatiorPos = filepathToParse.find_last_of("/\\"); // search for last backslash or slash (split filename from path)
+		size_t pathSeparatiorPos = filepathToParse.find_last_of("/\\"); // search for last backslash or slash (split filename from path)
 		if (pathSeparatiorPos != string::npos) // if found (directory of zip archive != working directory -> ) 
 		{						
 			outputPathFormat = filepathToParse.substr(0, pathSeparatiorPos+1);
@@ -346,7 +333,7 @@ void FileExportWorker::run()
 
 
 		// start inputpin for data
-		boost::shared_ptr<FileExportModule::InputPin_ArbitraryData> inputPin_data = boost::dynamic_pointer_cast<FileExportModule::InputPin_ArbitraryData>( this->module->getInputPin( this->config, FileExportModule::InputPin_ArbitraryData::PinID() ) );
+		boost::shared_ptr<FileExportModule::InputPin_ArbitraryData> inputPin_data = boost::dynamic_pointer_cast<FileExportModule::InputPin_ArbitraryData>( this->module.getInputPin( this->config, FileExportModule::InputPin_ArbitraryData::PinID() ) );
 		Class_generic_status dataStatus = inputPin_data->start();
 
 
@@ -365,7 +352,7 @@ void FileExportWorker::run()
 				if (this->exportJobList.size()==0)
 				{
 					condExportJoblist.wait(scoped_lock);
-					if (!go)
+					if ( !this->controller.intermediateContinueCheck() )
 					{
 						break;
 					}
@@ -450,7 +437,7 @@ void FileExportWorker::run()
 
 			statusStore->save_copy(status);
 			
-		} while (go);
+		} while ( this->controller.nextIterationStep() );
 
 		// update status
 		status->set_estimatedFinishTime( sysTime() );

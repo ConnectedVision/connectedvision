@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 2.8.12)
 project(ConnectedVisionUnitTest)
 
 option(USE_INSTALL_SUBDIRECTORY_STRUCTURE "create a subdirectory structure for the install directory which consists of architecture and configuration type" OFF)
-option(USE_CORE_AS_SUBPROJECT "embed and build dependent project (core) as subproject instead of only linking its prebuilt lib for easier debugging" OFF)
 
 set(ConnectedVisionCppRoot ../../..)
 
@@ -30,6 +29,7 @@ set(ConnectedVisionUnitTestHeaders
 
 set(ConnectedVisionUnitTestSources
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_ModuleBaseClass.cpp
+	${ConnectedVisionCppRoot}/test/UnitTest/Test_ModuleInputPins.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_Sample.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_SmartPointer.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_Store_Ringbuffer.cpp
@@ -53,12 +53,8 @@ set(ConnectedVisionUnitTestSources
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_HTTP_ServerPoco.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_Generic_status.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_OutputPin_JSON.cpp
-	${ConnectedVisionCppRoot}/test/UnitTest/Test_WorkerDispatcher.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_Thread.cpp
-	${ConnectedVisionCppRoot}/test/UnitTest/Test_WorkerThread.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_ConfigList.cpp
-	${ConnectedVisionCppRoot}/test/UnitTest/Test_ConcurrentQueue.cpp
-	${ConnectedVisionCppRoot}/test/UnitTest/Test_ConfigManager.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_ThreadSafe_Queue.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_CallStack.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_DynamicParameters.cpp
@@ -66,6 +62,8 @@ set(ConnectedVisionUnitTestSources
 	${ConnectedVisionCppRoot}/test/UnitTest/Test_GeneratedObject.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/MixIn_IDataAllocator.cpp
 	${ConnectedVisionCppRoot}/test/UnitTest/MixIn_IStore.cpp
+	${ConnectedVisionCppRoot}/test/UnitTest/Test_RapidJSON.cpp
+	${ConnectedVisionCppRoot}/test/UnitTest/Test_WorkerController.cpp	
 )
 
 set(ConnectedVisionUnitTestGeneratedHeaders

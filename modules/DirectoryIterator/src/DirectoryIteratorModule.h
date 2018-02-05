@@ -9,8 +9,7 @@
 #include <IConnectedVisionModule.h>
 #include <IStore.h>
 
-#include <ConnectedVisionModule.h>
-#include <ConnectedVisionAlgorithmDispatcher.h>
+#include <Module/Module_BaseClass.h>
 
 #include "Class_DirectoryIterator_output_FileMetadata.h"
 
@@ -22,7 +21,7 @@ namespace DirectoryIterator {
 *	module class: Directory Iterator
 *	Iterates a directory and returns the files with the extensions specified in the config.
 */
-class DirectoryIteratorModule: public ConnectedVisionModule
+class DirectoryIteratorModule: public Module_BaseClass
 {
 friend class DirectoryIteratorWorker;
 friend class OutputPin_DirectoryIterator_output_BinaryData;
@@ -32,15 +31,6 @@ public:
 	* module constructor
 	*/
 	DirectoryIteratorModule();
-
-	/**
-	* module init
-	*  - allocate resources
-	*  - prepare module / worker
-	*/
-	virtual void initModule(
-		IModuleEnvironment *env	///< [in] general environment
-	);
 
 	/**
 	* module release
@@ -54,17 +44,18 @@ public:
 	*
 	* @return Directory Iterator worker
 	*/
-	virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(
-		IModuleEnvironment *env,								///< [in] general environment
-		boost::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	virtual std::unique_ptr<IWorker> createWorker(
+		IWorkerControllerCallbacks &controller,									///< reference to worker controller
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
 	);
 
 	/**
 	* delete data / results of a given config
 	*/
-	virtual void deleteResults(
-		const boost::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	virtual void deleteAllData(
+		const id_t configID		///< [in] config ID of data to be deleted
 	);
+
 
 protected:
 	/**

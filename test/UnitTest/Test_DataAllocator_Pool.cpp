@@ -4,8 +4,6 @@
 */
 
 #include <DataHandling/DataAllocator_Pool.h>
-#include <ConnectedVision_Thread.h>
-
 #include <CppUTest/TestHarness.h>
 
 #include "MixIn_IDataAllocator.h"

@@ -1,4 +1,4 @@
-/* auto-generated header by CodeFromTemplate */
+/* auto-generated header by CodeFromTemplate - Connected Vision - https://github.com/ConnectedVision */
 /* CodeFromTemplate Version: 0.3 alpha */
 /* generic_status.sql */
 /* NEVER TOUCH this file! */
@@ -12,6 +12,8 @@ CREATE TABLE "generic_status"
 	'timestamp' BIGINT /* time of modification (integer) */,
 	'moduleID' VARCHAR(32) NOT NULL DEFAULT '' /* ID of module (string) */,
 	'moduleURI' TEXT NOT NULL DEFAULT '' /* URI of module instance (string) */,
+	'commandQueue._idx1' BIGINT /* array index dimension: 1 (array) */,
+	'commandQueue' TEXT /*  (string) */,
 	'status' TEXT NOT NULL DEFAULT 'n/a' /* current status of config / job (string) */,
 	'message' TEXT /* general message (e.g. description of last error) (string) */,
 	'progress' DOUBLE NOT NULL DEFAULT '0' /* processing progress (0.0 - 1.0) (number) */,

@@ -22,7 +22,7 @@ namespace FileExport {
 /**
  *
  */
-class FileExportTriggerOutputPin : public IConnectedVisionOutputPin, public Logging::ILogable
+class FileExportTriggerOutputPin : public IConnectedVisionOutputPin
 {
 public:
 	static const pinID_t PinID() { return "FileExportTrigger"; };
@@ -42,8 +42,6 @@ public:
 	virtual int getBeforeTimestamp(const timestamp_t timestamp, ConnectedVisionResponse &response);
 	virtual int getAfterTimestamp(const timestamp_t timestamp, ConnectedVisionResponse &response);
 	virtual int getAllInTimespan(const timestamp_t start, const timestamp_t end, ConnectedVisionResponse &response);
-
-	virtual boost::shared_ptr<Logging::ILogWriter> log() const;
 
 protected:
 	Class_generic_config config;

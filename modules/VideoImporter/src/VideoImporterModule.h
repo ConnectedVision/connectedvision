@@ -6,9 +6,9 @@
 #pragma once
 
 #include <IConnectedVisionModule.h>
-#include <ConnectedVisionModule.h>
+#include <Module/Module_BaseClass.h>
 
-#include <ConnectedVisionAlgorithmDispatcher.h>
+
 
 namespace ConnectedVision {
 namespace Module {
@@ -16,21 +16,22 @@ namespace VideoImporter {
 
 class VideoImporterModule_priv;
 
-class VideoImporterModule: public ConnectedVisionModule
+class VideoImporterModule: public Module_BaseClass
 {
 public:
 	VideoImporterModule();
 	virtual ~VideoImporterModule();
 
-	// module init / release
-	virtual void initModule( IModuleEnvironment *env );
-	virtual void releaseModule();
-
 	// worker
-	virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config);
+	virtual std::unique_ptr<IWorker> createWorker(
+		IWorkerControllerCallbacks &controller,									///< reference to worker controller
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
+	);
 
 	// data handling
-	virtual void deleteResults(const boost::shared_ptr<const Class_generic_config> config);
+	virtual void deleteAllData(
+		const id_t configID		///< [in] config ID of data to be deleted
+	);
 
 	ConnectedVision::shared_ptr<Class_generic_status> init(boost::shared_ptr<const Class_generic_config> constConfig);
 

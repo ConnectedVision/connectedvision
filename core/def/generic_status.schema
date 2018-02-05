@@ -1,85 +1,95 @@
 {
-    "description": "config status",
-    "required": true,
-    "type": "object",
-    "properties": {
-        "id": {
-            "description": "config id",
+	"description": "config status",
+	"required": true,
+	"type": "object",
+	"properties": {
+		"id": {
+			"description": "config id",
 			"type": "string",
 			"exttype":"id",
 			"required":true,
 			"unit": "md5"
 		},
-        "timestamp": {
-            "description": "time of modification",
-            "required": false,
-            "unit": "ms",
+		"timestamp": {
+			"description": "time of modification",
+			"required": false,
+			"unit": "ms",
 			"type":"integer",
 			"exttype":"timestamp",
 			"default": 0
-        },
-        "moduleID": {
-            "description": "ID of module",
+		},
+		"moduleID": {
+			"description": "ID of module",
 			"type": "string",
 			"exttype":"id",
 			"required":true,
 			"unit": ""
 		},
-        "moduleURI": {
-            "description": "URI of module instance",
-            "required": true,
+		"moduleURI": {
+			"description": "URI of module instance",
+			"required": true,
 			"type": "string",
 			"exttype":"url",
 			"unit": "URL"
 		},
-        "status": {
-            "description": "current status of config / job",
-            "required": true,
-			"enum": ["n/a", "init", "startup", "running", "stopping", "stopped", "finished", "error", "reset", "cleanup"],
-            "unit": "",
-            "type": "string",
+		"commandQueue": {
+			"description": "commands waiting to be executed",
+			"required": true,
+			"unit": "",
+			"type": "array",
+			"items": {
+				"enum": ["start", "stop", "reset", "recover"],
+				"type": "string"
+			}
+		},		
+		"status": {
+			"description": "current status of config / job",
+			"required": true,
+			"enum": ["n/a", "init", "starting", "running", "stopping", "stopped", "finished", "error", "recovering", "resetting"],
+			"unit": "",
+			"type": "string",
 			"default": "n/a"
-        },
-        "message": {
-            "description": "general message (e.g. description of last error)",
-            "required": false,
-            "unit": "",
-            "type": "string",
+		},
+		"message": {
+			"description": "general message (e.g. description of last error)",
+			"required": false,
+			"unit": "",
+			"type": "string",
 			"default": ""
-        },
-        "progress": {
-            "description": "processing progress (0.0 - 1.0)",
-            "required": true,
-            "unit": "",
-            "type": "number",
+		},
+		"progress": {
+			"description": "processing progress (0.0 - 1.0)",
+			"required": true,
+			"unit": "",
+			"type": "number",
 			"default": 0,
 			"minimum": 0,
 			"maximum": 1
-        },
-        "startTime": {
-            "description": "System time when the config was started.",
-            "required": true,
-            "unit": "ms",
+		},
+		"startTime": {
+			"description": "System time when the config was started.",
+			"required": true,
+			"unit": "ms",
 			"type":"integer",
 			"exttype":"timestamp",
 			"default": -1
-        },
-        "systemTimeProcessing": {
-            "description": "System time when the config was / is processed. This time is updated only during processing the config (i.e. status='running').",
-            "required": true,
-            "unit": "ms",
+		},
+		"systemTimeProcessing": {
+			"description": "System time when the config was / is processed. This time is updated only during processing the config (i.e. status='running').",
+			"required": true,
+			"unit": "ms",
 			"type":"integer",
 			"exttype":"timestamp",
 			"default": -1
-        },
-        "estimatedFinishTime": {
-            "description": "estimated time to finish processing of this configChain",
-            "required": false,
-            "unit": "ms",
+		},
+		"estimatedFinishTime": {
+			"description": "estimated time to finish processing of this configChain",
+			"required": false,
+			"unit": "ms",
 			"type":"integer",
 			"exttype":"timestamp",
 			"default": -1
-        },
+		},
 		"qualityOfService": {
 			"description": "quality of service (QoS) parameters",
 			"type": "object",
@@ -103,12 +113,12 @@
 				}
 			}
 		},
-        "stableResults": {
-            "description": "Index and timestamp range of available and stable (non-changing) results. One entry for each output pin.",
-            "required": true,
-            "unit": "",
-            "type": "array",
-            "items": {
+		"stableResults": {
+			"description": "Index and timestamp range of available and stable (non-changing) results. One entry for each output pin.",
+			"required": true,
+			"unit": "",
+			"type": "array",
+			"items": {
 				"type": "object",
 				"properties": {
 					"pinID": {
@@ -140,15 +150,15 @@
 					}
 				}
 			}
-        },
-        "chain": {
-            "description": "Status of previous modules.",
-            "required": true,
-            "unit": "",
-            "type": "array",
-            "items": {
-                 "type": "any"
-            }
-         }
-    }
+		},
+		"chain": {
+			"description": "Status of previous modules.",
+			"required": true,
+			"unit": "",
+			"type": "array",
+			"items": {
+				"type": "any"
+			}
+		}
+	}
 }

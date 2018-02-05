@@ -7,4 +7,8 @@
 
 // init global flag
 bool ConnectedVision::ErrorHandling::Exception_BaseClass_CallStack::printToStdOut = false;
-bool ConnectedVision::ErrorHandling::Exception_BaseClass_CallStack::callStackEnabled = true;
+#ifdef CALL_STACK_ENABLED
+	bool ConnectedVision::ErrorHandling::Exception_BaseClass_CallStack::callStackEnabled = true;
+#else
+	bool ConnectedVision::ErrorHandling::Exception_BaseClass_CallStack::callStackEnabled = false;
+#endif

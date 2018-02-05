@@ -17,7 +17,8 @@
 
 namespace ConnectedVision
 {
-
+#define Class_generic_config_extended
+#ifdef Class_generic_config_extended
 /**
  * Class_generic_config
  * 
@@ -56,9 +57,9 @@ public:
 	virtual boost::shared_ptr<Class_generic_config_chain> getSubConfigConnectionByInputPin( const pinID_t& pinID ) const;
 
 	// dummy configID getter / setter
-	virtual const id_t getconst_configID() const { return ID_NULL; } // the generic config class does not use the configID
-	virtual id_t get_configID() const { return ID_NULL; } // the generic config class does not use the configID
-	virtual void set_configID(id_t configID) { /* do nothing */ }
+	virtual const id_t getconst_configID() const { return getconst_id(); } // map id to configID
+	virtual id_t get_configID() const { return get_id(); } // map id to configID
+	virtual void set_configID(id_t configID) { set_id(configID); } // map id to configID
 
 
 	/**
@@ -81,7 +82,10 @@ public:
 
 };
 typedef boost::shared_ptr<Class_generic_config> Class_generic_config_p;
+#endif // Class_generic_config_extended
 
 } // namespace ConnectedVision
+
+#include "stubs/Class_generic_config_Default.h"
 
 #endif // Class_generic_config_def

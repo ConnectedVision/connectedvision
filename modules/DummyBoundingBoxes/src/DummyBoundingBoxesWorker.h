@@ -5,11 +5,9 @@
 
 #pragma once
 
-#include <IModuleEnvironment.h>
-#include <ConnectedVisionModule.h>
-#include <ConnectedVisionAlgorithmDispatcher.h>
-#include <ConnectedVisionAlgorithmWorker.h>
+#include <Module/Worker_BaseClass.h>
 
+#include "DummyBoundingBoxesModule.h"
 #include "Class_DummyBoundingBoxes_output_Detections.h"
 #include "Class_DummyBoundingBoxes_output_ObjectData.h"
 
@@ -17,14 +15,20 @@ namespace ConnectedVision {
 namespace Module {
 namespace DummyBoundingBoxes {
 
-class DummyBoundingBoxesWorker : public ConnectedVisionAlgorithmWorker
+class DummyBoundingBoxesWorker : public Worker_BaseClass
 {
 public:
-	DummyBoundingBoxesWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config) :
-		ConnectedVisionAlgorithmWorker(env, module, config) {};
+	DummyBoundingBoxesWorker(
+		DummyBoundingBoxesModule &module,		///< [in] reference to "parent" module; This is the explicit DummyBoundingBoxesWorker (no interface) so it is ok to use the explicit DummyBoundingBoxesModule class.
+		IWorkerControllerCallbacks &controller,					///< [in] worker controller (for callbacks)
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	) : Worker_BaseClass(module, controller, config), module(module) {}
+
+	virtual void run();
 
 protected:
-	virtual void run();
+	DummyBoundingBoxesModule &module;
+
 };
 
 } // namespace DummyBoundingBoxes

@@ -23,7 +23,7 @@
 #include <IDataClassJSON.h>
 #include "ConnectedVisionInputPin.h"
 
-#include "ConnectedVisionModule.h"
+#include "Module_BaseClass.h"
 #include "Module/Control/Class_generic_config.h"
 #include "Module/Control/Class_generic_moduleStatus.h"
 
@@ -33,12 +33,13 @@
 using namespace std;
 using namespace ConnectedVision;
 using namespace ConnectedVision::HTTP;
+using namespace ConnectedVision::Module;
 
 /**
  * module constructor
  */
-ConnectedVisionModule::ConnectedVisionModule(const char moduleDescription[], const char inputPinDescription[], const char outputPinDescription[]) :
-	ready(false), env(NULL)
+Module_BaseClass::Module_BaseClass(const char moduleDescription[], const char inputPinDescription[], const char outputPinDescription[]) :
+	ready(false), env(NULL), workerTimeout(5000)
 {
 	initModuleDescription( moduleDescription, NULL, NULL, "" );
 	initInputPinDescription( inputPinDescription );
@@ -46,8 +47,6 @@ ConnectedVisionModule::ConnectedVisionModule(const char moduleDescription[], con
 
 	this->logName = this->moduleID;
 
-
-	this->algoDispatcher.reset();
 	this->statusStore.reset();
 	this->configStore.reset();
 
@@ -57,7 +56,7 @@ ConnectedVisionModule::ConnectedVisionModule(const char moduleDescription[], con
 /**
  * module constructor
  */
-ConnectedVisionModule::~ConnectedVisionModule()
+Module_BaseClass::~Module_BaseClass()
 {
 	// LOG is not valid in destructor
 
@@ -69,7 +68,7 @@ ConnectedVisionModule::~ConnectedVisionModule()
  *
  *	if the DB does not exits, it's created on-the-fly
  */
-void ConnectedVisionModule::connectDB() 
+void Module_BaseClass::connectDB() 
 {
 	LOG_SCOPE;
 
@@ -95,13 +94,13 @@ void ConnectedVisionModule::connectDB()
  *
  * @param server  module server
  */
-void ConnectedVisionModule::initModule( IModuleEnvironment *env ) 
+void Module_BaseClass::initModule( IModuleEnvironment *env ) 
 { 
 	LOG_SCOPE;
 	
 	try
 	{
-		ConnectedVisionModule::releaseModule();
+		Module_BaseClass::releaseModule();
 		this->env = env;
 
 		// update module URI
@@ -133,10 +132,6 @@ void ConnectedVisionModule::initModule( IModuleEnvironment *env )
 		{
 			this->outputPinsPool.insert( std::pair< pinID_t, boost::shared_ptr<OutputPinPool_t> >(*it, boost::shared_ptr<OutputPinPool_t>( new OutputPinPool_t() )) );
 		}
-
-
-		// create algorithm dispatcher
-		this->algoDispatcher = boost::shared_ptr<ConnectedVisionAlgorithmDispatcher>( new ConnectedVisionAlgorithmDispatcher(env, this, this ) );
 
 		// build rapidjson object with default parameters
 		if (defaultParameters.IsNull()) // lazy creation
@@ -209,7 +204,7 @@ void ConnectedVisionModule::initModule( IModuleEnvironment *env )
  *
  * @param server  module server
  */
-void ConnectedVisionModule::releaseModule() 
+void Module_BaseClass::releaseModule() 
 {
 	// stop module
 	if ( !this->ready )
@@ -219,7 +214,8 @@ void ConnectedVisionModule::releaseModule()
 	// make sure not to log if module has already been released
 	LOG_SCOPE;
 
-	this->algoDispatcher.reset();
+	// clear worker controller map
+	this->mapWorkerControllers.clear();
 
 	// destroy input pins
 	this->inputPinsPool.clear();
@@ -245,7 +241,7 @@ void ConnectedVisionModule::releaseModule()
  *
  * @return input pins
  */
-boost::shared_ptr< IConnectedVisionInputPin > ConnectedVisionModule::getInputPin(const id_t configID, const std::string pinID)
+boost::shared_ptr< IConnectedVisionInputPin > Module_BaseClass::getInputPin(const id_t configID, const std::string pinID)
 {
 	LOG_SCOPE_CONFIG( configID );
 
@@ -272,7 +268,7 @@ boost::shared_ptr< IConnectedVisionInputPin > ConnectedVisionModule::getInputPin
  *
  * @return input pins
  */
-boost::shared_ptr< IConnectedVisionInputPin > ConnectedVisionModule::getInputPin(const Class_generic_config &config, const pinID_t pinID, int index)
+boost::shared_ptr< IConnectedVisionInputPin > Module_BaseClass::getInputPin(const Class_generic_config &config, const pinID_t pinID, int index)
 {
 	id_t configID = config.get_id();
 	LOG_SCOPE_CONFIG( configID );
@@ -376,7 +372,7 @@ boost::shared_ptr< IConnectedVisionInputPin > ConnectedVisionModule::getInputPin
  *
  * @return output pins
  */
-boost::shared_ptr< IConnectedVisionOutputPin > ConnectedVisionModule::getOutputPin(const id_t configID, const pinID_t pinID)
+boost::shared_ptr< IConnectedVisionOutputPin > Module_BaseClass::getOutputPin(const id_t configID, const pinID_t pinID)
 {
 	LOG_SCOPE_CONFIG( configID );
 
@@ -407,7 +403,7 @@ boost::shared_ptr< IConnectedVisionOutputPin > ConnectedVisionModule::getOutputP
  *
  * @return output pins
  */
-boost::shared_ptr< IConnectedVisionOutputPin > ConnectedVisionModule::getOutputPin(const Class_generic_config &config, const std::string pinID)
+boost::shared_ptr< IConnectedVisionOutputPin > Module_BaseClass::getOutputPin(const Class_generic_config &config, const std::string pinID)
 {
 	id_t configID = config.get_id();
 	LOG_SCOPE_CONFIG( configID );
@@ -488,7 +484,7 @@ boost::shared_ptr< IConnectedVisionOutputPin > ConnectedVisionModule::getOutputP
  * @param[in]  moduleDescription			description
  *
  */
-void ConnectedVisionModule::initModuleDescription(const char moduleDescription[], const char moduleName[], const char moduleID[], const char moduleURI[])
+void Module_BaseClass::initModuleDescription(const char moduleDescription[], const char moduleName[], const char moduleID[], const char moduleURI[])
 {
 	if (this->moduleDescriptionJSON.Parse<0>( moduleDescription ).HasParseError())
 	{
@@ -583,7 +579,7 @@ void ConnectedVisionModule::initModuleDescription(const char moduleDescription[]
 *
 * @return number of instances of the specified pin for the specified config
 */
-int ConnectedVisionModule::getInputPinCount(const Class_generic_config& config, const pinID_t pinID)
+int Module_BaseClass::getInputPinCount(const Class_generic_config& config, const pinID_t pinID)
 {
 	const auto chain = config.getconst_chain();
 
@@ -619,7 +615,7 @@ int ConnectedVisionModule::getInputPinCount(const Class_generic_config& config, 
 
 
 
-int ConnectedVisionModule::getInputPinCount(const boost::shared_ptr<const Class_generic_config> config, const pinID_t pinID)
+int Module_BaseClass::getInputPinCount(const boost::shared_ptr<const Class_generic_config> config, const pinID_t pinID)
 {
 	if(!config)
 	{
@@ -637,7 +633,7 @@ int ConnectedVisionModule::getInputPinCount(const boost::shared_ptr<const Class_
  * @param[in]  moduleDescription			description
  *
  */
-void ConnectedVisionModule::initInputPinDescription(const char inputPinDescription[])
+void Module_BaseClass::initInputPinDescription(const char inputPinDescription[])
 {
 	rapidjson::Document inputPinDescriptionJSON;
 	if (inputPinDescriptionJSON.Parse<0>( inputPinDescription ).HasParseError())
@@ -670,7 +666,7 @@ void ConnectedVisionModule::initInputPinDescription(const char inputPinDescripti
  * @param[in]  moduleDescription			description
  *
  */
-void ConnectedVisionModule::initOutputPinDescription(const char outputPinDescription[])
+void Module_BaseClass::initOutputPinDescription(const char outputPinDescription[])
 {
 	rapidjson::Document outputPinDescriptionJSON;
 	if (outputPinDescriptionJSON.Parse<0>( outputPinDescription ).HasParseError())
@@ -704,7 +700,7 @@ void ConnectedVisionModule::initOutputPinDescription(const char outputPinDescrip
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getModuleDescription(ConnectedVisionResponse &response)
+int Module_BaseClass::getModuleDescription(ConnectedVisionResponse &response)
 {
 	LOG_SCOPE
 
@@ -721,7 +717,7 @@ int ConnectedVisionModule::getModuleDescription(ConnectedVisionResponse &respons
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getInputDescription(ConnectedVisionResponse &response)
+int Module_BaseClass::getInputDescription(ConnectedVisionResponse &response)
 {
 	LOG_SCOPE
 
@@ -738,7 +734,7 @@ int ConnectedVisionModule::getInputDescription(ConnectedVisionResponse &response
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getOutputDescription(ConnectedVisionResponse &response)
+int Module_BaseClass::getOutputDescription(ConnectedVisionResponse &response)
 {
 	LOG_SCOPE
 
@@ -755,7 +751,7 @@ int ConnectedVisionModule::getOutputDescription(ConnectedVisionResponse &respons
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getConfigList(ConnectedVisionResponse &response)
+int Module_BaseClass::getConfigList(ConnectedVisionResponse &response)
 {
 	LOG_SCOPE
 
@@ -793,7 +789,7 @@ int ConnectedVisionModule::getConfigList(ConnectedVisionResponse &response)
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getConfigListDetailed(ConnectedVisionResponse &response)
+int Module_BaseClass::getConfigListDetailed(ConnectedVisionResponse &response)
 {
 	LOG_SCOPE
 
@@ -860,7 +856,7 @@ int ConnectedVisionModule::getConfigListDetailed(ConnectedVisionResponse &respon
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getModuleStatus(ConnectedVisionResponse &response)
+int Module_BaseClass::getModuleStatus(ConnectedVisionResponse &response)
 {
 	LOG_SCOPE
 
@@ -878,18 +874,21 @@ int ConnectedVisionModule::getModuleStatus(ConnectedVisionResponse &response)
 			moduelStatus.set_moduleStatus_up();
 
 			// determine running configs / workers
-			std::vector< boost::shared_ptr<IConnectedVisionAlgorithmWorker> > workers = algoDispatcher->getRunningWorkers();
-			for (std::vector< boost::shared_ptr<IConnectedVisionAlgorithmWorker> >::iterator it = workers.begin(); it < workers.end(); ++it) 
-			{
-				moduelStatus.add_configsRunning( (*it)->getID() );
-			}
+			auto listRunningConfigs = this->mapWorkerControllers.filter( [](const ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &item) -> id_t
+				{
+					if ( item->activeWorker() )
+						return item->getConfigID();
+					else
+						return ID_NULL;
+				}, ID_NULL);
 
-			// determine running configs / workers
-			std::vector< boost::shared_ptr<IConnectedVisionAlgorithmWorker> > queue = algoDispatcher->getWaitingWorkers();
-			for (std::vector< boost::shared_ptr<IConnectedVisionAlgorithmWorker> >::iterator it = queue.begin(); it < queue.end(); ++it) 
-			{
-				moduelStatus.add_configsWaiting( (*it)->getID() );
-			}
+
+			// determine waiting configs / workers
+			// TODO remove waiting workers list from module status
+
+			// determine finished configs / workers
+			// TODO add finished workers list to module status
+
 		}
 		else
 		{
@@ -917,7 +916,7 @@ int ConnectedVisionModule::getModuleStatus(ConnectedVisionResponse &response)
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getConfig(const id_t configID, ConnectedVisionResponse &response)
+int Module_BaseClass::getConfig(const id_t configID, ConnectedVisionResponse &response)
 {
 	LOG_SCOPE_CONFIG( configID );
 
@@ -960,18 +959,18 @@ int ConnectedVisionModule::getConfig(const id_t configID, ConnectedVisionRespons
 	}
 }
 
-void ConnectedVisionModule::setLogoPNG(const BufferLogoPNG &logoPNG)
+void Module_BaseClass::setLogoPNG(const BufferLogoPNG &logoPNG)
 {
 	cv::_InputArray input(logoPNG.pBufferLogoAsPNG, logoPNG.sizeBufferLogoAsPNG);
 	this->logo = boost::make_shared<cv::Mat>(cv::imdecode(input, cv::IMREAD_COLOR));
 }
 
-bool ConnectedVisionModule::isSetLogo()
+bool Module_BaseClass::isSetLogo()
 {
 	return(this->logo != nullptr); // returns true if shared pointer is set, otherwise false
 }
 
-int ConnectedVisionModule::getModuleLogo(ConnectedVisionResponse &response)
+int Module_BaseClass::getModuleLogo(ConnectedVisionResponse &response)
 {
 	if (this->logo)
 	{
@@ -988,7 +987,7 @@ int ConnectedVisionModule::getModuleLogo(ConnectedVisionResponse &response)
 	else
 	{
 		ConnectedVision::HTTP::EnumHTTPStatus status = ConnectedVision::HTTP::HTTP_Status_NOT_FOUND;
-		writeError(response, status, id_t("ConnectedVisionModule::getModuleLogo"), string("module logo was not set"));		
+		writeError(response, status, id_t("Module_BaseClass::getModuleLogo"), string("module logo was not set"));		
 		return status;
 	}
 }
@@ -1001,7 +1000,7 @@ int ConnectedVisionModule::getModuleLogo(ConnectedVisionResponse &response)
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getConfigHTMLsummary(const id_t configID, ConnectedVisionResponse &response)
+int Module_BaseClass::getConfigHTMLsummary(const id_t configID, ConnectedVisionResponse &response)
 {
 	LOG_SCOPE_CONFIG( configID );
 
@@ -1025,11 +1024,9 @@ int ConnectedVisionModule::getConfigHTMLsummary(const id_t configID, ConnectedVi
 		boost::shared_ptr<const Class_generic_config> config = configStore->getByID(resolvedConfigID);
 		if ( config )
 		{
-			ConnectedVisionModule *module = this;
-
 			// return JSON string
 			response.setContentType("text/html");
-			response.setContent( this->getConfigHTMLsummary(*module, *config) );
+			response.setContent( this->getConfigHTMLsummary(*this, *config) );
 
 			return HTTP_Status_OK;
 		}
@@ -1046,7 +1043,7 @@ int ConnectedVisionModule::getConfigHTMLsummary(const id_t configID, ConnectedVi
 	}
 }
 
-std::string ConnectedVisionModule::getConfigHTMLsummary(ConnectedVisionModule &module, const Class_generic_config &config)
+std::string Module_BaseClass::getConfigHTMLsummary(Module_BaseClass &module, const Class_generic_config &config)
 {
 	string result;
 
@@ -1057,17 +1054,7 @@ std::string ConnectedVisionModule::getConfigHTMLsummary(ConnectedVisionModule &m
 	string configUri = "/" + moduleID + "/" + configID + "/";
 	result += "<p><li><a href='" + configUri + "config'>" + configID + "</a>";
 				
-	auto storeStatus = module.getStatusStore();
-	if (!storeStatus)
-	{
-		throw ConnectedVision::runtime_error("error: could not retrieve status store! ");
-	}
-	auto status = storeStatus->getByID(configID);
-	if (!status)
-	{
-		throw ConnectedVision::runtime_error("error: could not retrieve status! ");
-	}
-	storeStatus.reset();
+	ConnectedVision::shared_ptr<const Class_generic_status> status = module.getStatus(configID);
 
 	result += " - belonging to module ";
 
@@ -1076,19 +1063,23 @@ std::string ConnectedVisionModule::getConfigHTMLsummary(ConnectedVisionModule &m
 
 	string statusString = *status->getconst_status();
 	result += " - status:\t";
-	if (statusString.compare("running") == 0)
+	if (status->is_status_running())
 	{
 		result += "<span style='background-color:lawngreen;'>" + statusString + "</span>";
 	}
-	else if (statusString.compare("error") == 0)
+	else if (status->is_status_starting() || status->is_status_stopping() || status->is_status_resetting())
+	{
+		result += "<span style='background-color:cyan;'>" + statusString + "</span>";
+	}
+	else if (status->is_status_error())
 	{
 		result += "<span style='background-color:red;'>" + statusString + "</span>";
 	}
-	else if (statusString.compare("init") == 0)
+	else if (status->is_status_init())
 	{
 		result += "<span style='background-color:lightblue;'>" + statusString + "</span>";
 	}
-	else if (statusString.compare("stopped") == 0)
+	else if (status->is_status_stopped())
 	{
 		result += "<span style='background-color:silver;'>" + statusString + "</span>";
 	}
@@ -1260,13 +1251,35 @@ std::string ConnectedVisionModule::getConfigHTMLsummary(ConnectedVisionModule &m
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::getStatus(const id_t configID, ConnectedVisionResponse& response)
+int Module_BaseClass::getStatus(const id_t configID, ConnectedVisionResponse& response)
+{
+	try
+	{
+		auto status = this->getStatus(configID);
+			
+		// return JSON string
+		response.setContentType("application/json");
+		response.setContent( status->toJsonStr() );
+	}
+	catch (std::out_of_range e)
+	{
+		return writeErrorLog(response, HTTP_Status_NOT_FOUND, e.what() );
+	}
+	catch (std::exception e)
+	{
+		return writeErrorLog(response, HTTP_Status_ERROR, e.what() );
+	}
+
+	return HTTP_Status_OK;
+}
+
+ConnectedVision::shared_ptr<const Class_generic_status> Module_BaseClass::getStatus(const id_t configID)
 {
 	LOG_SCOPE_CONFIG( configID );
 
 	// is module initialized?
 	if ( !this->ready )
-		return writeErrorLog(response, HTTP_Status_ERROR, "module not ready" );
+		throw std::runtime_error("module not ready");
 
 	id_t resolvedConfigID;
 	try 
@@ -1275,68 +1288,56 @@ int ConnectedVisionModule::getStatus(const id_t configID, ConnectedVisionRespons
 	}
 	catch (std::runtime_error& e)
 	{
-		return writeErrorLog(response, HTTP_Status_ERROR, std::string("error in resolvePotentialAliasID() function: (") + e.what() + ")" );
+		throw std::runtime_error(std::string("error in resolvePotentialAliasID() function: (") + e.what() + ")" );
 	}
 
-	try 
+	auto workerController = this->getWorkerController(resolvedConfigID);
+	// get object from Store
+	auto statusConst = workerController->getStatus();
+	auto configConst = this->configStore->getByID(resolvedConfigID);
+
+	if ( statusConst && configConst )
 	{
-		// get object from Store
-		auto statusConst = this->statusStore->getByID(resolvedConfigID);
-		auto configConst = this->configStore->getByID(resolvedConfigID);
-
-		if ( statusConst && configConst )
-		{
-			auto status = statusConst->copy();
+		auto status = statusConst->copy();
 	
-			// prepare own status
-			status->set_moduleID( getModuleID() );
+		// prepare own status
+		status->set_moduleID( getModuleID() );
 
-			// request status chain
-			vector<boost::shared_ptr<string>> statusChain;
+		// request status chain
+		vector<boost::shared_ptr<string>> statusChain;
 			
-			for(std::vector<std::string>::const_iterator it = this->inputPinIDs.begin(); it != this->inputPinIDs.end(); ++it)
-			{
-				pinID_t pinID = *it;
-				int inputPinCount = this->getInputPinCount(configConst, pinID);
+		for(std::vector<std::string>::const_iterator it = this->inputPinIDs.begin(); it != this->inputPinIDs.end(); ++it)
+		{
+			pinID_t pinID = *it;
+			int inputPinCount = this->getInputPinCount(configConst, pinID);
 
-				for(int iPin = 0; iPin < inputPinCount; iPin++)
-				{
-					boost::shared_ptr<IConnectedVisionInputPin> inPin = this->getInputPin(*configConst, pinID, iPin);
+			for(int iPin = 0; iPin < inputPinCount; iPin++)
+			{
+				boost::shared_ptr<IConnectedVisionInputPin> inPin = this->getInputPin(*configConst, pinID, iPin);
 					
-					///@TODO handle optional input pins
-					try
-					{
-						if ( !inPin )
-							throw ConnectedVision::runtime_error("pin pool is full");
-						Class_generic_status s = inPin->getStatus();
-						boost::shared_ptr< string > str( new string(s.toJsonStr()) );
-						statusChain.push_back( str );
-					}
-					catch (std::runtime_error& e)
-					{
-						return writeErrorLog(response, HTTP_Status_ERROR, "cannot get status chain for pin: " + pinID + " (" + e.what() + ")" );
-					}
+				///@TODO handle optional input pins
+				try
+				{
+					if ( !inPin )
+						throw ConnectedVision::runtime_error("pin pool is full");
+					Class_generic_status s = inPin->getStatus();
+					boost::shared_ptr< string > str( new string(s.toJsonStr()) );
+					statusChain.push_back( str );
+				}
+				catch (std::runtime_error& e)
+				{
+					throw std::runtime_error("cannot get status chain for pin: " + pinID + " (" + e.what() + ")" );
 				}
 			}
-			status->set_chain( statusChain );
-
-
-			// return JSON string
-			response.setContentType("application/json");
-			response.setContent( status->toJsonStr() );
-
-			return HTTP_Status_OK;
 		}
-		else
-		{
-				// not found
-			return writeErrorLog(response, HTTP_Status_NOT_FOUND, "getStatus: config not found");
-		}
+		status->set_chain( statusChain );
+
+		return(statusConst);
 	}
-	catch (std::exception& e)
+	else
 	{
-		// internal server error
-		return writeErrorLog(response, HTTP_Status_ERROR, string(e.what()) );
+		// not found
+		throw std::out_of_range("getStatus: config not found");
 	}
 }
 
@@ -1348,7 +1349,7 @@ int ConnectedVisionModule::getStatus(const id_t configID, ConnectedVisionRespons
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::deleteConfig(const id_t configID, ConnectedVisionResponse &response)
+int Module_BaseClass::deleteConfig(const id_t configID, ConnectedVisionResponse &response)
 {
 	LOG_SCOPE_CONFIG( configID );
 	
@@ -1426,7 +1427,7 @@ int ConnectedVisionModule::deleteConfig(const id_t configID, ConnectedVisionResp
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::deleteConfigOnlyThis(const id_t configID, ConnectedVisionResponse &response)
+int Module_BaseClass::deleteConfigOnlyThis(const id_t configID, ConnectedVisionResponse &response)
 {
 	LOG_SCOPE_CONFIG( configID );
 	
@@ -1451,7 +1452,7 @@ int ConnectedVisionModule::deleteConfigOnlyThis(const id_t configID, ConnectedVi
 		if ( config )
 		{
 			// delete DB results
-			this->deleteResults( config );
+			this->deleteAllData( resolvedConfigID );
 
 			// delete status
 			this->statusStore->deleteByID( resolvedConfigID );
@@ -1484,7 +1485,7 @@ int ConnectedVisionModule::deleteConfigOnlyThis(const id_t configID, ConnectedVi
  * @param[in] config	configuration chain
  *
  */
-void ConnectedVisionModule::checkConfig(const Class_generic_config &config)
+void Module_BaseClass::checkConfig(const Class_generic_config &config)
 {
 	for(size_t i = 0; i < this->inputPinDescriptions.size(); i++)
 	{
@@ -1605,7 +1606,7 @@ void ConnectedVisionModule::checkConfig(const Class_generic_config &config)
 	}	
 }
 
-void ConnectedVisionModule::checkValueType(const rapidjson::Value &value, const ParameterValueType &type)
+void Module_BaseClass::checkValueType(const rapidjson::Value &value, const ParameterValueType &type)
 {
 	if ( (type == ParameterValueType::Integer64) && (!value.IsInt64()) )
 	{
@@ -1633,7 +1634,7 @@ void ConnectedVisionModule::checkValueType(const rapidjson::Value &value, const 
 	}
 }
 
-void ConnectedVisionModule::checkRecursivelyRequiredParametersAndType(const boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> &parameterDescTreeNode, const rapidjson::Value &currentParameterNode)
+void Module_BaseClass::checkRecursivelyRequiredParametersAndType(const boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> &parameterDescTreeNode, const rapidjson::Value &currentParameterNode)
 {
 	if (!currentParameterNode.IsObject())
 	{
@@ -1676,7 +1677,7 @@ void ConnectedVisionModule::checkRecursivelyRequiredParametersAndType(const boos
 	}
 }
 
-void ConnectedVisionModule::checkRecursivelyRequiredParametersAndType(const boost::shared_ptr<ParameterDescTreeNode> &parameterDescTreeNode, const rapidjson::Value &currentParameterNode)
+void Module_BaseClass::checkRecursivelyRequiredParametersAndType(const boost::shared_ptr<ParameterDescTreeNode> &parameterDescTreeNode, const rapidjson::Value &currentParameterNode)
 {
 	if (!currentParameterNode.IsArray())
 	{
@@ -1726,7 +1727,7 @@ void ConnectedVisionModule::checkRecursivelyRequiredParametersAndType(const boos
 	}
 }
 
-void ConnectedVisionModule::testDynamicParameterSanityAndUpdate(rapidjson::Value &node, bool expectDynamicValueToBeTrue, bool inSubArray)
+void Module_BaseClass::testDynamicParameterSanityAndUpdate(rapidjson::Value &node, bool expectDynamicValueToBeTrue, bool inSubArray)
 {
 	for (auto it = node.MemberBegin(); it != node.MemberEnd(); ++it)
 	{		
@@ -1862,7 +1863,7 @@ void ConnectedVisionModule::testDynamicParameterSanityAndUpdate(rapidjson::Value
 * recursively build the parameter description object
 * this function variant is used to process sub-objects
 */
-void ConnectedVisionModule::buildParameterDescriptionRecursive(const rapidjson::Value &node, boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> pTreeNode)
+void Module_BaseClass::buildParameterDescriptionRecursive(const rapidjson::Value &node, boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> pTreeNode)
 {	
 	for (auto it = node.MemberBegin(); it != node.MemberEnd(); ++it)
 	{
@@ -1930,7 +1931,7 @@ void ConnectedVisionModule::buildParameterDescriptionRecursive(const rapidjson::
 * recursively build the parameter description object
 * this function variant is used to process sub-arrays
 */
-void ConnectedVisionModule::buildParameterDescriptionRecursive(const rapidjson::Value &node, boost::shared_ptr<ParameterDescTreeNode> pTreeNode)
+void Module_BaseClass::buildParameterDescriptionRecursive(const rapidjson::Value &node, boost::shared_ptr<ParameterDescTreeNode> pTreeNode)
 {
 	if (node.HasMember("dynamic"))
 	{
@@ -1986,7 +1987,7 @@ void ConnectedVisionModule::buildParameterDescriptionRecursive(const rapidjson::
 	}
 }
 
-ConnectedVisionModule::ParameterDescriptionNodeInfo ConnectedVisionModule::queryParameterDescriptionInfo(const std::string parameterPath)
+Module_BaseClass::ParameterDescriptionNodeInfo Module_BaseClass::queryParameterDescriptionInfo(const std::string parameterPath)
 {
 	std::vector<std::string> parameterPathElements;
 	boost::split(parameterPathElements, parameterPath, boost::is_any_of("/"));
@@ -2015,7 +2016,7 @@ ConnectedVisionModule::ParameterDescriptionNodeInfo ConnectedVisionModule::query
 			}
 			else
 			{
-				ConnectedVisionModule::ParameterDescriptionNodeInfo nodeInfo;
+				Module_BaseClass::ParameterDescriptionNodeInfo nodeInfo;
 				if (found->second.pSubObject)
 				{
 					nodeInfo.type = found->second.type;
@@ -2054,7 +2055,7 @@ ConnectedVisionModule::ParameterDescriptionNodeInfo ConnectedVisionModule::query
  * @param[in] config	configuration chain
  *
  */
-void ConnectedVisionModule::checkInputPinID(const pinID_t pinID)
+void Module_BaseClass::checkInputPinID(const pinID_t pinID)
 {
 	/*
 	regex meaning (also see https://regex101.com/):
@@ -2078,7 +2079,7 @@ void ConnectedVisionModule::checkInputPinID(const pinID_t pinID)
 /**
  * Ensure that the pin description is valid. I.e. check if the min pin count is not smaller than 0.
  */
-void ConnectedVisionModule::checkInputPinDescription(const boost::shared_ptr<Class_PinDescription> description)
+void Module_BaseClass::checkInputPinDescription(const boost::shared_ptr<Class_PinDescription> description)
 {
 	if(description->get_minPinCount() < 0)
 	{
@@ -2093,7 +2094,7 @@ void ConnectedVisionModule::checkInputPinDescription(const boost::shared_ptr<Cla
  * @param[in] aliasID	the aliasID string used as search parameter
  * @return	list of configIDs (of this module) which have the specified aliasID assigned, ordered by aliasID creation timestamp in descending order
  */
-std::vector<ConnectedVision::id_t> ConnectedVisionModule::getConfigIDsByAliasID(std::string aliasID)
+std::vector<ConnectedVision::id_t> Module_BaseClass::getConfigIDsByAliasID(std::string aliasID)
 {
 	struct SortStructConfigID // custom structure used for sort mechanism: a configID with its corresponding aliasID creation timestamp
 	{
@@ -2149,7 +2150,7 @@ std::vector<ConnectedVision::id_t> ConnectedVisionModule::getConfigIDsByAliasID(
  * @param[in] inputID	the ID as string (either a configID or an aliasID) that needs to be resolved
  * @return	the resolved configID
  */
-ConnectedVision::id_t ConnectedVisionModule::resolvePotentialAliasID(const std::string &inputID)
+ConnectedVision::id_t Module_BaseClass::resolvePotentialAliasID(const std::string &inputID)
 {
 	bool isAliasID = false;
 
@@ -2266,7 +2267,7 @@ ConnectedVision::id_t ConnectedVisionModule::resolvePotentialAliasID(const std::
  *
  * @param[in] configID		ID of configuration / job
  */
-void ConnectedVisionModule::updateAliasIDs(boost::shared_ptr<Class_generic_config> config)
+void Module_BaseClass::updateAliasIDs(boost::shared_ptr<Class_generic_config> config)
 {
 	boost::shared_ptr<const Class_generic_config> oldConfig = configStore->getByID(config->getconst_id());
 	boost::shared_ptr< std::vector< boost::shared_ptr< Class_generic_config_aliasID > > > newAliasIDs = config->get_aliasID();
@@ -2336,7 +2337,7 @@ void ConnectedVisionModule::updateAliasIDs(boost::shared_ptr<Class_generic_confi
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::setConfig(const id_t configIDConst, const std::string& configStr, ConnectedVisionResponse &response)
+int Module_BaseClass::setConfig(const id_t configIDConst, const std::string& configStr, ConnectedVisionResponse &response)
 {
 	id_t configID = configIDConst;
 	LOG_SCOPE_CONFIG( configID );
@@ -2440,7 +2441,7 @@ int ConnectedVisionModule::setConfig(const id_t configIDConst, const std::string
  *
  * @return status code (analog to HTTP codes)
  */
-int ConnectedVisionModule::control(const id_t configID, const std::string& command, const id_t senderID, ConnectedVisionResponse &response)
+int Module_BaseClass::control(const id_t configID, const std::string& command, const id_t senderID, ConnectedVisionResponse &response)
 {
 	LOG_SCOPE_CONFIG( configID );
 
@@ -2469,18 +2470,16 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 	{
 		// read status and config
 		boost::shared_ptr< const Class_generic_config > config = configStore->getByID(resolvedConfigID);
-
 		if ( !config )
 		{
 			// not found
-			httpCode = writeErrorLog(response, HTTP_Status_NOT_FOUND, "control: config not found");
+			return writeErrorLog(response, HTTP_Status_NOT_FOUND, "control: config not found");
 		}
-		else if ( !algoDispatcher )
-		{
-			// server error
-			httpCode = writeErrorLog(response, HTTP_Status_ERROR, "algo dispatcher not initialized");
-		}
-		else if ( command == "start" )
+
+		auto workerController = this->getWorkerController(resolvedConfigID);
+		
+		// handle command
+		if ( command == "start" )
 		{
 			// make sure that config chain has been set
 			for (std::vector<std::string>::const_iterator it = this->inputPinIDs.begin(); it != this->inputPinIDs.end(); ++it)
@@ -2504,16 +2503,27 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 						// set config and retry
 						inPin->setConfig(resolvedConfigID, config->getSubConfigConnectionByInputPin(pinIDIndexed), pinIDIndexed);
 					}
+
+///////////////////////////////// MIGRATION FIX-ME  is sub-config started somewhere else ? ////////////////
+					// start previous config
+					inPin->start();
 				}
 			}
 
 			if (senderID!=ID_NULL) // additional info: the id can be ID_NULL if no senderID was specified in url (e.g. a gui will issue a stop command without a senderID)
 			{
-				runningSuccessorList.insert(make_pair(senderID, true)); // a successor module sent the start command, so add it in the running successor list
+				try
+				{
+					runningSuccessorList.insert(make_pair(senderID, true)); // a successor module sent the start command, so add it in the running successor list
+				}
+				catch (std::out_of_range)
+				{
+					// ignore already registered senderID
+				}
 			}
 
 			// start processing
-			this->start(config);
+			this->start(workerController);
 
 			httpCode = this->getStatus(resolvedConfigID, response);
 		}
@@ -2524,7 +2534,7 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 			if (runningSuccessorList.size() == 0) // if no more successor module depends on this module's output
 			{
 				// stop processing
-				this->stop(config);
+				this->stop(workerController);
 			}
 			boost::shared_ptr< const Class_generic_status > status = statusStore->getByID(resolvedConfigID);
 
@@ -2591,7 +2601,7 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 			}
 
 			// recover from error
-			this->recover(config);
+			this->recover(workerController);
 
 			httpCode = this->getStatus(resolvedConfigID, response);
 		}
@@ -2601,8 +2611,8 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 
 			if (runningSuccessorList.size() == 0) // if no more successor module depends on this module's output
 			{
-				// stop processing
-				this->reset(config);
+				// reset processing
+				this->reset(workerController);
 			}
 			boost::shared_ptr< const Class_generic_status > status = statusStore->getByID(resolvedConfigID);
 
@@ -2644,7 +2654,7 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 			runningSuccessorList.clear();
 
 			// stop config
-			this->stop(config);
+			this->stop(workerController);
 			boost::shared_ptr< const Class_generic_status > status = statusStore->getByID(resolvedConfigID);
 
 			// if this module is stopped (not running) notify to predecessors in chain, otherwise stop propagation
@@ -2685,7 +2695,7 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 			runningSuccessorList.clear();
 
 			// reset config
-			this->reset(config);
+			this->reset(workerController);
 			boost::shared_ptr< const Class_generic_status > status = statusStore->getByID(resolvedConfigID);
 
 			// if this module is reseted (not running) notify to predecessors in chain, otherwise stop propagation
@@ -2730,21 +2740,21 @@ int ConnectedVisionModule::control(const id_t configID, const std::string& comma
 		else
 		{
 			// not found
-			httpCode = writeErrorLog(response, HTTP_Status_NOT_FOUND, "unknown control command");
+			return writeErrorLog(response, HTTP_Status_NOT_FOUND, "unknown control command");
 		}
 		
 	}
-	catch (std::runtime_error& e)
+	catch (std::exception &e)
 	{
 		// internal server error
-		httpCode = writeErrorLog(response, HTTP_Status_ERROR, string(e.what()) );
+		return writeErrorLog(response, HTTP_Status_ERROR, string(e.what()) );
 	}
 
 
 	return httpCode;
 }
 
-int ConnectedVisionModule::processParameterCommand(const id_t configID, const std::string& command, ConnectedVisionResponse &response)
+int Module_BaseClass::processParameterCommand(const id_t configID, const std::string& command, ConnectedVisionResponse &response)
 {
 	LOG_SCOPE_CONFIG( configID );
 
@@ -2795,7 +2805,7 @@ int ConnectedVisionModule::processParameterCommand(const id_t configID, const st
 	return httpCode;
 }
 
-int ConnectedVisionModule::processParameterCommand(const id_t configID, const std::string& command, const std::string& payload, ConnectedVisionResponse &response)
+int Module_BaseClass::processParameterCommand(const id_t configID, const std::string& command, const std::string& payload, ConnectedVisionResponse &response)
 {
 	LOG_SCOPE_CONFIG( configID );
 
@@ -2838,7 +2848,7 @@ int ConnectedVisionModule::processParameterCommand(const id_t configID, const st
 }
 
 
-boost::shared_ptr<std::string> ConnectedVisionModule::getUpdatedParams(const id_t configID)
+boost::shared_ptr<std::string> Module_BaseClass::getUpdatedParams(const id_t configID)
 {
 	boost::shared_ptr<std::string> params;
 	try
@@ -2858,7 +2868,7 @@ boost::shared_ptr<std::string> ConnectedVisionModule::getUpdatedParams(const id_
 	return(params);
 }
 
-void ConnectedVisionModule::getDefaultParametersRecursiveAsRapidjson(const rapidjson::Value &currentNodeInModuleDescription, rapidjson::Value &defaultParameterNode, rapidjson::Value::AllocatorType &allocator)
+void Module_BaseClass::getDefaultParametersRecursiveAsRapidjson(const rapidjson::Value &currentNodeInModuleDescription, rapidjson::Value &defaultParameterNode, rapidjson::Value::AllocatorType &allocator)
 {
 	for (auto it = currentNodeInModuleDescription.MemberBegin(); it != currentNodeInModuleDescription.MemberEnd(); it++)
 	{
@@ -2919,7 +2929,7 @@ void ConnectedVisionModule::getDefaultParametersRecursiveAsRapidjson(const rapid
 	}
 }
 
-void ConnectedVisionModule::setDynamicParameter(const std::string& parameterPath, const rapidjson::Value &parameterValue, rapidjson::Document &documentParams)
+void Module_BaseClass::setDynamicParameter(const std::string& parameterPath, const rapidjson::Value &parameterValue, rapidjson::Document &documentParams)
 {
 	std::vector<std::string> parameterPathElements;
 	boost::split(parameterPathElements, parameterPath, boost::is_any_of("/"));
@@ -2943,7 +2953,7 @@ void ConnectedVisionModule::setDynamicParameter(const std::string& parameterPath
 		}
 	}
 
-	ConnectedVisionModule::ParameterDescriptionNodeInfo parameterDescInfo = queryParameterDescriptionInfo(parameterPath);
+	Module_BaseClass::ParameterDescriptionNodeInfo parameterDescInfo = queryParameterDescriptionInfo(parameterPath);
 
 	boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> pNodeCurrentInParameterDescTree = this->parameterDesc;
 	for (auto it = parameterPathElements.begin(); it != parameterPathElements.end(); ++it)
@@ -2963,7 +2973,7 @@ void ConnectedVisionModule::setDynamicParameter(const std::string& parameterPath
 		}
 	}
 
-	if (parameterDescInfo.type == ConnectedVisionModule::ParameterValueType::Object)
+	if (parameterDescInfo.type == Module_BaseClass::ParameterValueType::Object)
 	{
 		if (!value.IsObject())
 		{
@@ -2976,7 +2986,7 @@ void ConnectedVisionModule::setDynamicParameter(const std::string& parameterPath
 
 		checkRecursivelyRequiredParametersAndType(pNodeCurrentInParameterDescTree, parameterValue);
 	}
-	else if (parameterDescInfo.type == ConnectedVisionModule::ParameterValueType::Array)
+	else if (parameterDescInfo.type == Module_BaseClass::ParameterValueType::Array)
 	{
 		if (!value.IsArray())
 		{
@@ -3012,7 +3022,7 @@ void ConnectedVisionModule::setDynamicParameter(const std::string& parameterPath
 	*pCurrentParameterNode = value;
 }
 
-void ConnectedVisionModule::checkRecursivelyIfParameterValueExistsInModuleDescription(const boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> &parameterDescTreeNode, const rapidjson::Value &currentParameterNode)
+void Module_BaseClass::checkRecursivelyIfParameterValueExistsInModuleDescription(const boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> &parameterDescTreeNode, const rapidjson::Value &currentParameterNode)
 {
 	for (auto it = currentParameterNode.MemberBegin(); it != currentParameterNode.MemberEnd(); ++it)
 	{
@@ -3032,7 +3042,7 @@ void ConnectedVisionModule::checkRecursivelyIfParameterValueExistsInModuleDescri
 	}
 }
 
-void ConnectedVisionModule::checkRecursivelyIfNonDynamicInitialParamsAndParamsMatch(const boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> &parameterDescTreeNode, const rapidjson::Value &currentInitialParameterNode, const rapidjson::Value &currentParameterNode, bool moduleAndconfigSupportDynamicParameters)
+void Module_BaseClass::checkRecursivelyIfNonDynamicInitialParamsAndParamsMatch(const boost::shared_ptr<std::map<std::string, ParameterDescTreeNode>> &parameterDescTreeNode, const rapidjson::Value &currentInitialParameterNode, const rapidjson::Value &currentParameterNode, bool moduleAndconfigSupportDynamicParameters)
 {
 	for (auto it = parameterDescTreeNode->cbegin(); it != parameterDescTreeNode->cend(); ++it)
 	{
@@ -3177,7 +3187,7 @@ void ConnectedVisionModule::checkRecursivelyIfNonDynamicInitialParamsAndParamsMa
 	}
 }
 
-void ConnectedVisionModule::checkRecursivelyIfNonDynamicInitialParamsAndParamsMatch(const boost::shared_ptr<ParameterDescTreeNode> parameterDescTreeNode, const rapidjson::Value &currentInitialParameterNode, const rapidjson::Value &currentParameterNode, bool moduleAndconfigSupportDynamicParameters)
+void Module_BaseClass::checkRecursivelyIfNonDynamicInitialParamsAndParamsMatch(const boost::shared_ptr<ParameterDescTreeNode> parameterDescTreeNode, const rapidjson::Value &currentInitialParameterNode, const rapidjson::Value &currentParameterNode, bool moduleAndconfigSupportDynamicParameters)
 {
 	const rapidjson::Value &initialParameterValue = currentInitialParameterNode;
 	const rapidjson::Value &parameterValue = currentParameterNode;
@@ -3299,7 +3309,7 @@ void ConnectedVisionModule::checkRecursivelyIfNonDynamicInitialParamsAndParamsMa
 	}
 }
 
-void ConnectedVisionModule::setDynamicParameter(const id_t resolvedConfigID, const std::string& parameterPath, const std::string& parameterValue, ConnectedVisionResponse &response)
+void Module_BaseClass::setDynamicParameter(const id_t resolvedConfigID, const std::string& parameterPath, const std::string& parameterValue, ConnectedVisionResponse &response)
 {		
 	// get config
 	boost::shared_ptr< const Class_generic_config > config = configStore->getByID(resolvedConfigID);
@@ -3367,7 +3377,7 @@ void ConnectedVisionModule::setDynamicParameter(const id_t resolvedConfigID, con
 				// for every sub-parameter inside the module description
 				for (auto it = parameterDesc->cbegin(); it != parameterDesc->cend(); ++it)
 				{	
-					ConnectedVisionModule::ParameterDescriptionNodeInfo parameterDescInfo = queryParameterDescriptionInfo(it->first);
+					Module_BaseClass::ParameterDescriptionNodeInfo parameterDescInfo = queryParameterDescriptionInfo(it->first);
 					if (!valueDocument.HasMember(it->first.c_str()))
 					{						
 						if (parameterDescInfo.required)
@@ -3381,7 +3391,7 @@ void ConnectedVisionModule::setDynamicParameter(const id_t resolvedConfigID, con
 							throw ConnectedVision::runtime_error(std::string("parse error of JSON object params: parameter node with name " + it->first + " was expected to be dynamic but was not declared as such! "));
 						}
 
-						if ((parameterDescInfo.type == ConnectedVisionModule::ParameterValueType::Array) && (!parameterDescInfo.dynamicItems))
+						if ((parameterDescInfo.type == Module_BaseClass::ParameterValueType::Array) && (!parameterDescInfo.dynamicItems))
 						{
 							// in fact one should never get in here if dynamic parameter sanity of module description was checked correctly in function initModuleDescription
 							throw ConnectedVision::runtime_error(std::string("parse error of JSON object params: parameter node with name " + it->first + " is dynamic array container but has array items that were not declared as dynamic! "));
@@ -3425,7 +3435,7 @@ void ConnectedVisionModule::setDynamicParameter(const id_t resolvedConfigID, con
 	getDynamicParameter(resolvedConfigID, parameterPath, response);
 }
 
-void ConnectedVisionModule::getDynamicParameter(const id_t resolvedConfigID, const std::string& parameterPath, ConnectedVisionResponse &response)
+void Module_BaseClass::getDynamicParameter(const id_t resolvedConfigID, const std::string& parameterPath, ConnectedVisionResponse &response)
 {
 	std::string parameterAsString;
 
@@ -3485,7 +3495,7 @@ void ConnectedVisionModule::getDynamicParameter(const id_t resolvedConfigID, con
 	response.setContent(s.GetString());
 }
 
-void ConnectedVisionModule::resetParameterToInitialValue(const id_t resolvedConfigID, const std::string& parameterPath, ConnectedVisionResponse &response)
+void Module_BaseClass::resetParameterToInitialValue(const id_t resolvedConfigID, const std::string& parameterPath, ConnectedVisionResponse &response)
 {
 	std::vector<std::string> parameterPathElements;
 	boost::split(parameterPathElements, parameterPath, boost::is_any_of("/"));
@@ -3584,21 +3594,13 @@ void ConnectedVisionModule::resetParameterToInitialValue(const id_t resolvedConf
  *
  *  This function can be overwritten to execute a module specific procedure.
  *
- * @param[in] config	configChain
+ * @param[in] workerController	worker controller of the config to be started
  */
-void ConnectedVisionModule::start(boost::shared_ptr<const Class_generic_config> constConfig)
+void Module_BaseClass::start(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController)
 {
-	auto configID = constConfig->get_id();
-	LOG_SCOPE_CONFIG( configID );
-	boost::shared_ptr< const Class_generic_status > status = statusStore->getByID( configID );
-	if ( !status )
-		throw ConnectedVision::runtime_error("start: status not found (configID: " + IDToStr( configID ) + ")");
-
-	if ( status->is_status_init() || status->is_status_stopped() )
-	{
-		// start processing
-		this->algoDispatcher->start( constConfig );
-	}
+	LOG_SCOPE_CONFIG( workerController->getConfigID() );
+	
+	workerController->start();
 }
 
 /**
@@ -3609,22 +3611,14 @@ void ConnectedVisionModule::start(boost::shared_ptr<const Class_generic_config> 
  * @param[in] config	configChain
  * @param[in] status	config status
  */
-void ConnectedVisionModule::stop(boost::shared_ptr<const Class_generic_config> constConfig)
+void Module_BaseClass::stop(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController)
 {
-	auto configID = constConfig->get_id();
-	LOG_SCOPE_CONFIG( configID );
-	boost::shared_ptr< const Class_generic_status > status = statusStore->getByID( configID );
-	if ( !status )
-		throw ConnectedVision::runtime_error("start: status not found (configID: " + IDToStr( configID ) + ")");
-
-	if ( status->is_status_running() )
-	{
-		// stop processing
-		this->algoDispatcher->stop( constConfig );
-	}
+	LOG_SCOPE_CONFIG( workerController->getConfigID() );
+	
+	workerController->stop();
 
 	// delete the cached config parameters
-	this->mapCachedConfigParameters.erase(configID);
+	this->mapCachedConfigParameters.erase( workerController->getConfigID() );
 }
 
 /**
@@ -3635,19 +3629,11 @@ void ConnectedVisionModule::stop(boost::shared_ptr<const Class_generic_config> c
  * @param[in] config	configChain
  * @param[in] status	config status
  */
-void ConnectedVisionModule::recover(boost::shared_ptr<const Class_generic_config> constConfig)
+void Module_BaseClass::recover(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController)
 {
-	auto configID = constConfig->get_id();
-	LOG_SCOPE_CONFIG( configID );
-	boost::shared_ptr< const Class_generic_status > status = statusStore->getByID( configID );
-	if ( !status )
-		throw ConnectedVision::runtime_error("start: status not found (configID: " + IDToStr( configID ) + ")");
-
-	if ( status->is_status_error() )
-	{
-		// recover from error
-		this->algoDispatcher->recover( constConfig );
-	}
+	LOG_SCOPE_CONFIG( workerController->getConfigID() );
+	
+	workerController->recover();
 }
 
 /**
@@ -3658,31 +3644,46 @@ void ConnectedVisionModule::recover(boost::shared_ptr<const Class_generic_config
  * @param[in] config	configChain
  * @param[in] status	config status
  */
-void ConnectedVisionModule::reset(boost::shared_ptr<const Class_generic_config> constConfig)
+void Module_BaseClass::reset(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController)
 {
-	auto configID = constConfig->get_id();
-	LOG_SCOPE_CONFIG( configID );
-	boost::shared_ptr< const Class_generic_status > status = statusStore->getByID( configID );
-	if ( !status )
-		throw ConnectedVision::runtime_error("start: status not found (configID: " + IDToStr( configID ) + ")");
+	LOG_SCOPE_CONFIG( workerController->getConfigID() );
 
-	if ( status->is_status_running() )
+	workerController->reset();
+}
+
+
+void Module_BaseClass::registerWorkerInstance(const id_t configID, ConnectedVision::Module::IWorkerControllerCallbacks *workerController)
+{
+	ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> ptr;
+	ptr.reset(dynamic_cast<ConnectedVision::Module::WorkerController*>(workerController));
+	auto pair = std::pair<id_t, ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController>>(configID, ptr);
+	this->mapWorkerControllers.insert(pair);
+	// insert() may fail intentionally in case of a racing-condition and may throw out_of_range exception which is essential
+	// for the worker controller constructor.
+}
+void Module_BaseClass::unregisterWorkerInstance(const id_t configID, ConnectedVision::Module::IWorkerControllerCallbacks *workerController)
+{
+	try
 	{
-		// stop processing if running
-		this->algoDispatcher->stop( constConfig );
-
-		status = statusStore->getByID( configID ); // update status to check if module was really stopped
+		auto ptr = this->mapWorkerControllers.at(configID);
+		if ( ptr.get() == workerController )
+		{
+			this->mapWorkerControllers.erase(configID, ptr);
+		}
 	}
-
-	// make sure that worker has really stopped / not running, otherwise ignore reset (because a different module is still running and depends on this module's output
-	if ( !status->is_status_running() )
-	{	
-		// reset config
-		this->algoDispatcher->reset( constConfig );
-
-		// delete saved results
-		this->deleteResults( constConfig );
+	catch (...)
+	{
+		// ignore
 	}
+}
+
+ConnectedVision::shared_ptr<ConnectedVision::Module::IWorker> Module_BaseClass::getWorker(const id_t configID) const
+{
+	auto controller = this->mapWorkerControllers.at(configID);
+	auto ptr = controller->getWorker();
+	if ( !ptr )
+		throw std::out_of_range("cannot get worker for config ID: " + IDToStr(configID) + " (worker is not running)");
+	return ptr;
 }
 
 
@@ -3695,7 +3696,7 @@ void ConnectedVisionModule::reset(boost::shared_ptr<const Class_generic_config> 
  *
  * @return HTTP error code
  */
-int ConnectedVisionModule::writeErrorLog(ConnectedVisionResponse &response, int status, std::string error)
+int Module_BaseClass::writeErrorLog(ConnectedVisionResponse &response, int status, std::string error)
 {
 	LOG_ERROR( error );
 
@@ -3707,7 +3708,7 @@ int ConnectedVisionModule::writeErrorLog(ConnectedVisionResponse &response, int 
  *
  * @return log writer
  */
-boost::shared_ptr<Logging::ILogWriter> ConnectedVisionModule::log() const
+boost::shared_ptr<Logging::ILogWriter> Module_BaseClass::log() const
 {
 	if ( this->env ) 
 	{
@@ -3715,7 +3716,35 @@ boost::shared_ptr<Logging::ILogWriter> ConnectedVisionModule::log() const
 	}
 	else 
 	{
-		boost::shared_ptr<Logging::ILogWriter> log( new Logging::LogWriterNULL() );
+		boost::shared_ptr<Logging::ILogWriter> log = boost::make_shared<Logging::LogWriterNULL>();
 		return log;
 	}
+}
+
+ConnectedVision::shared_ptr<WorkerController> Module_BaseClass::getWorkerController(const id_t configID)
+{
+	// config has been loaded -> get worker controller for config, or init new controller
+	ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> workerController;
+	try
+	{
+		workerController = mapWorkerControllers.at(configID);
+	}
+	catch (...)
+	{
+		// create new worker instance that is automatically registered via registerWorkerInstance()
+		// multiple calls to this control() function and thus potential race conditions will be handled
+		// because constructor of WorkerController will fail due to out_of_range exception (duplicate configID for map)
+		// and the new operation will not be completed (roll-back)
+		new ConnectedVision::Module::WorkerController(configID, *this, *this, this->workerTimeout);
+
+		// re-fetch worker controller from mat to avoid racing conditions
+			workerController = mapWorkerControllers.at(configID);
+
+			if ( !workerController )
+			{
+				throw std::runtime_error("CORE PANIC: cannot create worker controller");
+			}
+	}
+
+	return(workerController);
 }

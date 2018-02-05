@@ -31,14 +31,14 @@ void {{Module.moduleID}}Worker::run()
 	LOG_INFO_CONFIG("worker start", configID);
 
 	// get status
-	auto statusStore = this->module->getStatusStore();
+	auto statusStore = this->module.getStatusStore();
 	auto status = statusStore->getByID(configID)->copy();
 
 	// if your algorithm does NOT support RESUME, you must reset the config status and delete old results from the store
 	// reset status
 	status->resetStableResults();
 	// delete previous results
-	this->module->deleteResults( this->config );
+	this->module.deleteAllData( configID );
 
 	// update status timestamps
 	status->set_estimatedFinishTime( sysTime() + 1000 ); // TODO: how long do we need?
@@ -57,7 +57,7 @@ void {{Module.moduleID}}Worker::run()
 {% set masterInputPin = Module.inputPins[0] %}
 {% for d in Module.inputPins %}
 		// {{d.name}} input
-		ConnectedVision::shared_ptr<{{d.className}}> input{{d.name}}Pin = boost::dynamic_pointer_cast<{{d.className}}>( this->module->getInputPin( this->config, {{d.className}}::PinID() ) ); // get input pin from pool and cast to {{d.name}} pin
+		ConnectedVision::shared_ptr<{{d.className}}> input{{d.name}}Pin = boost::dynamic_pointer_cast<{{d.className}}>( this->module.getInputPin( this->config, {{d.className}}::PinID() ) ); // get input pin from pool and cast to {{d.name}} pin
 		auto input{{d.name}}Status = input{{d.name}}Pin->start(); // start previous module and get current status
 		pinID_t input{{d.name}}OutputPinID = input{{d.name}}Pin->getOutputPinID(); // map input pin ID to output pin ID
 		auto input{{d.name}}StableResults = input{{d.name}}Status.find_stableResultsByPinID( input{{d.name}}OutputPinID );
@@ -69,7 +69,7 @@ void {{Module.moduleID}}Worker::run()
 {% set masterOutputStore = Module.outputPins[0] %}
 {% for d in Module.outputPins %}
 		// {{d.name}} store
-		auto output{{d.name}}Store = dynamic_cast<{{Module.moduleID}}Module *>(this->module)->storeManager{{d.name}}->getReadWriteStore(configID);
+		auto output{{d.name}}Store = this->module.storeManager{{d.name}}->getReadWriteStore(configID);
 {% endfor %}
 
 // TODO --> additional stores / output pins come HERE! <--
@@ -94,14 +94,14 @@ void {{Module.moduleID}}Worker::run()
 {% endfor %}
 {% if masterInputPin %}
 			// if there is no new input data, then wait for some time and try again
-			if ( input{{masterInputPin.name}}Status.is_status_running() && index > input{{masterInputPin.name}}StableResults->getconst_indexEnd() && this->go )
+			if ( input{{masterInputPin.name}}Status.is_status_running() && index > input{{masterInputPin.name}}StableResults->getconst_indexEnd() && this->controller.intermediateContinueCheck() )
 			{
-				this->sleep_ms( 1000 );
+				sleep_ms( 500 );
 				continue;
 			}
 
-			// process all data we got so far
-			for (; index <= input{{masterInputPin.name}}StableResults->getconst_indexEnd() && this->go; ++index)
+			// process all data we got so far and notify WorkerController that we process the next iteration
+			for (; index <= input{{masterInputPin.name}}StableResults->getconst_indexEnd() && this->controller.nextIterationStep(); ++index)
 			{
 				// get {{masterInputPin.name}} data
 				auto {{masterInputPin.name|lower}} = input{{masterInputPin.name}}Pin->getByIndex( index );
@@ -167,18 +167,18 @@ void {{Module.moduleID}}Worker::run()
 {% if masterInputPin %}
 			}
 
-		} while ( input{{masterInputPin.name}}Status.is_status_running() && this->go ); // do-while there is input data to process
+		} while ( input{{masterInputPin.name}}Status.is_status_running() && this->controller.intermediateContinueCheck() ); // do-while there is input data to process and check with WorkerController
 {% else %}
 
 
-		} while ( this->go ); // TODO: how many data do we generate???
+		} while ( this->controller.nextIterationStep() ); // TODO: how many data do we generate???
 {% endif %}
 
 		// update status
 		status->set_estimatedFinishTime( sysTime() );
 		status->set_systemTimeProcessing( sysTime() );
 
-		if ( this->go )
+		if ( this->controller.intermediateContinueCheck() )
 		{
 			// worker has finished
 			status->set_progress( 1.0 );

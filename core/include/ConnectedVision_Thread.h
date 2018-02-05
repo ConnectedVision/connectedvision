@@ -15,7 +15,9 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
+#include <ILogging.h>
 #include "ConnectedVision_Exceptions.h"
+
 
 namespace ConnectedVision {
 
@@ -49,7 +51,6 @@ namespace ConnectedVision {
 		) : ConnectedVision::logic_error (what_arg) {}
 	};
 
-
 	// TODO: when changing to C++11 switched to std::mutex
 	// for now, boost is used 
 	typedef boost::mutex std__mutex;
@@ -73,7 +74,6 @@ namespace ConnectedVision {
 	typedef unique_lock Lock;
 
 
-
 	/**
 	* thread-safe wrapper for a strictly increasing data element
 	* @thread-safe
@@ -93,27 +93,39 @@ namespace ConnectedVision {
 		*/
 		thread_safe_progress<T>(
 			const T& val	///< initial value
-		) : value(val) {}
+		) : value(val), reset_count(0) {
+		}
 
 		/**
 		* copy constructor
 		*/
-		thread_safe_progress<T>(const thread_safe_progress<T>& other) : value(other.get()) {}
+		thread_safe_progress<T>(const thread_safe_progress<T>& other) : value(other.get()), reset_count(0) {
+		}
 
 		/**
 		* assignment
 		*/
-		thread_safe_progress<T>& operator= (const thread_safe_progress<T>& other) { this->set( other.get() ); }
+		thread_safe_progress<T>& operator= (const thread_safe_progress<T>& other) throw(sequence_exception) { this->set( other.get() ); }
 
 		/**
 		* assignment is a setter shortcut
 		*/
-		thread_safe_progress<T>& operator= (const T& val) { this->set(val); return *this; }
+		thread_safe_progress<T>& operator= (const T& val) throw(sequence_exception) { this->set(val); return *this; }
 
 		/**
 		* typecast to raw data type is a getter shortcut
 		*/
 		operator T() const { return this->get(); }
+
+		/**
+		* compare value
+		*/
+		bool operator== (T const& val)
+		{
+			std__unique_lock lock(this->mutex);
+			bool b = (this->value == val);
+			return b;
+		}
 
 		/**
 		* get value (thread safe)
@@ -125,19 +137,40 @@ namespace ConnectedVision {
 			T value( this->value );
 			return value;
 		}
+	
+		/**
+		* reset value (thread safe)
+		* @thread-safe
+		*/
+		void reset(
+			const T& newVal	///< new value
+		) {
+			std__unique_lock lock(this->mutex);
+			if ( newVal < this->value )
+				this->reset_count++;
+			this->value = newVal;
+			this->cond.notify_all();
+		}
 
 		/**
 		* set value (thread safe)
 		* @thread-safe
 		*/
 		void set(
-			const T& val	///< new value
-		) {
+			const T& newVal	///< new value
+		) throw(sequence_exception)
+		{
 			std__unique_lock lock(this->mutex);
-			if ( val < this->value )
+			// test if new value is greater than old one
+			if ( newVal < this->value )
 				throw sequence_exception("thread_safe_progress::set() progress has to be strictly growing, given value was less than stored value");
-			this->value = val;
-			this->cond.notify_all();
+
+			if ( this->value < newVal )
+			{
+				// update value
+				this->value = newVal;
+				this->cond.notify_all();
+			}
 		}
 
 		/**
@@ -151,7 +184,7 @@ namespace ConnectedVision {
 		bool wait_until(
 			const T& target,			///< state to wait for
 			const int64_t timeout = 0	///< timeout in milliseconds (default: wait for ever)
-		) const
+		) const throw(sequence_exception)
 		{
 			// avoid pitfalls of condition variables
 			// see https://www.justsoftwaresolutions.co.uk/threading/condition-variable-spurious-wakes.html
@@ -159,16 +192,94 @@ namespace ConnectedVision {
 			// see http://blog.smartbear.com/c-plus-plus/c11-tutorial-lambda-expressions-the-nuts-and-bolts-of-functional-programming/
 
 			std__unique_lock lock(this->mutex);
-			if ( !(this->value < target) )
+			if ( this->value >= target )
+			{
 				return true;	// the state is reached already
+			}
+			auto _reset_count = this->reset_count;
 			if ( timeout )
 			{
-				return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [this, &target](){ return !(this->value < target); });
+				return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&]() throw(sequence_exception) -> bool
+				{ 
+					if ( this->reset_count != _reset_count )
+						throw sequence_exception("thread_safe_progress::wait_until() progress was reset while waiting for a given value to be reached");
+					
+					return (this->value >= target); 
+				});
 			}
 			else
 			{
-				this->cond.wait(lock, [this, &target](){ return !(this->value < target); });
+				this->cond.wait(lock, [&]() throw(sequence_exception) -> bool
+				{ 
+					if ( this->reset_count != _reset_count )
+						throw sequence_exception("thread_safe_progress::wait_until() progress was reset while waiting for a given value to be reached");
+					
+					return (this->value >= target); 
+				});
+				
 				return true;	// we have no timeout, so every return means that the state was reached
+			}
+		}
+
+		/**
+		* wait for state to change (thread safe)
+		* @thread-safe
+		*
+		* This function waits while the internal state is equal to the given state.
+		*
+		* @return true if state was changed / false on timeout
+		*/
+		bool wait_while(
+			const T& state,				///< state to be checked
+			const int64_t timeout = 0	///< timeout in milliseconds (default: wait for ever)
+		) const
+		{
+			boost::unique_lock<boost::mutex> lock(this->mutex);
+			if ( this->value != state )
+			{
+				return true;	// the state is changed already
+			}
+			if ( timeout )
+			{
+				return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&](){ return (this->value != state); });
+			}
+			else
+			{
+				this->cond.wait(lock, [&](){ return (this->value != state); });
+				
+				return true;	// we have no timeout, so every return means that the state was changed
+			}
+		}
+
+
+		/**
+		* wait for state to become a given value (thread safe)
+		* @thread-safe
+		*
+		* This function waits while the internal state is not equal to the given state.
+		*
+		* @return true if state was changed / false on timeout
+		*/
+		bool wait_equal(
+			const T& state,				///< state to be checked
+			const int64_t timeout = 0	///< timeout in milliseconds (default: wait for ever)
+		) const
+		{
+			boost::unique_lock<boost::mutex> lock(this->mutex);
+			if ( this->value == state )
+			{
+				
+				return true;	// the state is already reached
+			}
+			if ( timeout )
+			{
+				return this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [&](){ return (this->value == state); });
+			}
+			else
+			{
+				this->cond.wait(lock, [&](){ return (this->value == state); });
+				
+				return true;	// we have no timeout, so every return means that the state has been reached
 			}
 		}
 
@@ -176,6 +287,7 @@ namespace ConnectedVision {
 		mutable std__condition_variable cond;
 		mutable std__mutex mutex;
 		T value;
+		int reset_count;
 	};
 
 
@@ -190,6 +302,8 @@ namespace ConnectedVision {
 	class thread_safe_queue // : public ConnectedVision::thread_safe_progress<T>
 	{
 	public:
+		typedef boost::unique_lock<boost::mutex> Lock;
+
 		/**
 		* default constructor
 		*/
@@ -210,6 +324,31 @@ namespace ConnectedVision {
 			return this->q.size();
 		}
 
+		/**
+		* Test whether container is empty
+		*
+		* Returns whether the queue is empty: i.e. whether its size is zero.
+		*/
+		bool empty() const
+		{
+			std__unique_lock lock(this->mutex);
+			return this->q.empty();
+		}
+
+		/**
+		* Clear content (thread safe)
+		* @thread-safe
+		*
+		* Removes all elements from the queue (which are destroyed), and leaving the queue with a size of 0.
+		*/
+		void clear()
+		{
+			std__unique_lock lock(this->mutex);
+			while( !this->q.empty() )
+			{
+				this->q.pop();
+			}
+		}
 
 		/**
 		* Insert element (thread safe)
@@ -233,12 +372,12 @@ namespace ConnectedVision {
 		* fetch & pop element from queue (thread safe)
 		* @thread-safe
 		*
-		* Fetches and removes the oldest element from the queue
+		* Fetches and removes the oldest element from the queue.
+		* @throw exception on timeout
 		*
-		* @return true if element was retrieve from queue / false on timeout
+		* @return popped value
 		*/
-		bool try_pop(
-			T& val,						///< popped value
+		T pop_wait(
 			const int64_t timeout = 0	///< timeout in milliseconds (default: wait for ever)
 		)
 		{
@@ -248,7 +387,7 @@ namespace ConnectedVision {
 			{
 				bool filled = this->cond.wait_for(lock, boost::chrono::milliseconds(timeout), [this](){ return !this->q.empty(); });
 				if ( !filled )
-					return false;
+					throw timeout_error("pop_wait() timeout");
 			}
 			else
 			{
@@ -256,10 +395,10 @@ namespace ConnectedVision {
 			}
 
 			// fetch and remove element from queue
-			val = std::move(this->q.front());
+			T val = std::move(this->q.front());
 			this->q.pop();
 
-			return true;    
+			return val;    
 		}
 
 	protected:
@@ -306,12 +445,12 @@ namespace ConnectedVision {
 		*
 		* Returns the desired element in the map with key k
 		*
-		* @return a copy of the queried elements
+		* @return a reference of the queried elements
 		*/
-		T at (const Key& k)
+		T& at (const Key& k)
 		{
 			std__unique_lock lock(this->mutex);
-			return T(this->q.at(k));
+			return q.at(k);
 		}
 
 		/**
@@ -320,14 +459,35 @@ namespace ConnectedVision {
 		*
 		* Returns the desired element in the map with key k
 		*
-		* @return a copy of the queried elements
+		* @return a reference of the queried elements
 		*/
-		const T at (const Key& k) const
+		const T& at (const Key& k) const
 		{
 			std__unique_lock lock(this->mutex);
-			return T(this->q.at(k));
+			return this->q.at(k);
 		}
 		
+		/**
+		* get (and create) element in map with key k and returns a REFERENCE to the element USE THIS FUNCTION WITH CARE!
+		* @thread-safe
+		*
+		* If k matches the key of an element in the container, the function returns a reference to its mapped value.
+		*
+		* If k does not match the key of any element in the container, the function inserts a new element with that key
+		* and returns a reference to its mapped value. Notice that this always increases the container size by one, 
+		* even if no mapped value is assigned to the element (the element is constructed using its default constructor).
+		*
+		* A similar member function, map::at, has the same behavior when an element with the key exists, 
+		* but throws an exception when it does not.
+		*
+		* @return a reference of the queried elements
+		*/
+		T operator[] (const Key& k) const
+		{
+			std__unique_lock lock(this->mutex);
+			return this->q[k];
+		}
+
 		/**
 		* insert element into map (thread safe)
 		* @thread-safe
@@ -339,7 +499,11 @@ namespace ConnectedVision {
 		void insert (const std::pair<Key,T>& val)
 		{
 			std__unique_lock lock(this->mutex);
-			this->q.insert(val);
+			auto ret = this->q.insert(val);
+			if ( !ret.second )
+			{
+				throw std::out_of_range("key already in use");
+			}
 		}
 
 		/**
@@ -352,8 +516,65 @@ namespace ConnectedVision {
 		*/
 		void erase (const Key& k)
 		{
-			std__unique_lock lock(this->mutex);
-			this->q.erase(k);
+			T item;
+			{
+				std__unique_lock lock(this->mutex);
+				auto it = this->q.find(k);
+				if ( it != this->q.end() ) 
+				{
+					// move element to local copy
+					item = std::move(it->second);
+					// delete element from map
+					this->q.erase(it);
+				}
+				// exit scope -> unlock mutex
+			}
+			// clear local copy (item) when exiting scope
+		}
+
+		/**
+		* erases an element of map if it is identical to the given item (thread safe)
+		* @thread-safe
+		*
+		* erases an element of the map with key k
+		*
+		* @param k		Key of the element to be removed from the map. Member type Key is the type of the elements in the container, 
+		* defined in map as an alias of its first template parameter (the key).
+		* @param target	actual item for comparison
+		*/
+		void erase (const Key& k, const T& target)
+		{
+			T item;
+			{
+				std__unique_lock lock(this->mutex);
+				auto it = this->q.find(k);
+				if ( it != this->q.end() && it->second == target ) 
+				{
+					// move element to local copy
+					item = std::move(it->second);
+					// delete element from map
+					this->q.erase(it);
+				}
+				// exit scope -> unlock mutex
+			}
+			// clear local copy (item) when exiting scope
+		}
+
+		/**
+		* Removes all elements from the map container (which are destroyed), leaving the container with a size of 0.
+		* @thread-safe
+		*/
+		void clear ()
+		{
+			std::map<Key,T> localMap;
+			{
+				std__unique_lock lock(this->mutex);
+				// move elements to local map to avoid potential problems with <T> destructor (e.g. shared pointers -> dead lock due to recursive mutex locking)
+				localMap.swap( this->q );
+				// exit scope -> unlock mutex
+			}
+			// clear local map after unlocking mutex
+			localMap.clear();
 		}
 
 		/**
@@ -376,6 +597,31 @@ namespace ConnectedVision {
 			{
 				this->q.insert(val);
 			}
+		}
+
+		/**
+		* applies a filtering function to the whole map and returns a list of matched return values
+		* @thread-safe
+		*
+		* @param filterFunction	function that is applied to each item of the map
+		*							function signature: id_t filterFunction(T &item)
+		* @param nullValue		if the filterFunction returns the nullValue, it will not be added to the list
+		*
+		* @return vector of matched return values
+		*/
+		std::vector<id_t> filter(std::function<id_t (const T&)> filterFunction, id_t nullValue = NULL) // TODO replace id_t with template type
+		{
+			std::vector<id_t>	results;
+			std__unique_lock lock(this->mutex);
+			typedef typename std::map<Key,T>::iterator MapIterator;
+			for (MapIterator it = this->q.begin(); it != this->q.end(); ++it)
+			{
+				T& item = it->second;
+				id_t value = filterFunction(item);
+				if ( value != nullValue )
+					results.push_back(value);
+			}
+			return results;
 		}
 
 	protected:

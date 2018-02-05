@@ -4,60 +4,39 @@
 */
 
 #include <vector>
-#include <ConnectedVisionModule.h>
+#include <Module/Module_BaseClass.h>
+#include "TestHelper_Module.hpp"
 
 #include <CppUTest/TestHarness.h>
 
 namespace ConnectedVision {
 namespace Module {
 
-/*
-* helper funtcion to add a connection to a config
-*/
-static void addConnection(
-	boost::shared_ptr<Class_generic_config_chain>& chainItem,	///< [in/out] chainItem object
-	const std::string& inputPinID,	///< [in] ID of input pin for connection
-	const std::string& outputPinID	///< [in] ID of input pin for connection
-	)
-{
-	Class_generic_config_chain_connections connection;
-	connection.set_inputPinID(inputPinID);
-	connection.set_outputPinID(outputPinID);
-	chainItem->add_connections(connection);
-}
-
-static void addConnection(
-	Class_generic_config& config,	///< [in/out] config object
-	const std::string& inputPinID,	///< [in] ID of input pin for connection
-	const std::string& outputPinID	///< [in] ID of input pin for connection
-	)
-{
-	auto chain = config.get_chain();
-	boost::shared_ptr<Class_generic_config_chain> chainItem	= ConnectedVision::make_shared<Class_generic_config_chain>();
-	chain->push_back(chainItem);
-	addConnection(chainItem, inputPinID, outputPinID);
-	config.set_chain(chain);
-}
-
-
-
-class TestWrapper_ConnectedVisionModule : public ConnectedVisionModule
+class TestWrapper_ConnectedVisionModule : public Module_BaseClass
 {
 public:
 	TestWrapper_ConnectedVisionModule(const char moduleDescription[], const char inputPinDescription[], const char outputPinDescription[]) :
-		ConnectedVisionModule(moduleDescription, inputPinDescription, outputPinDescription) {}
+		Module_BaseClass(moduleDescription, inputPinDescription, outputPinDescription) {}
 
 	// make function public
 	void checkConfig(const Class_generic_config &config)
 	{
-		ConnectedVisionModule::checkConfig(config);
+		Module_BaseClass::checkConfig(config);
 	}
 
 	// dummy implementation of abstract functions
 
-	void deleteResults(const boost::shared_ptr<const Class_generic_config> config) {}
+	void deleteAllData(const id_t configID) {}
 	
 	void prepareStores() {}
+
+	void connectDB() 
+	{
+		LOG_SCOPE;
+
+		// open DB		
+		this->dbConn.init(":memory:", SQLITE_OPEN_CREATE);
+	}
 
 	boost::shared_ptr<IConnectedVisionInputPin> generateInputPin(const pinID_t& pinID) 
 	{
@@ -71,12 +50,34 @@ public:
 		return nullPtr;
 	}
 
-	boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+	std::unique_ptr<IWorker> createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config)
 	{
-		boost::shared_ptr<IConnectedVisionAlgorithmWorker> nullPtr;
-		return nullPtr;
+		std::unique_ptr<Worker_Mockup> worker( new Worker_Mockup( this, controller, 5000, true ) );
+		return std::move(worker);
 	}
 
+	// test helper
+public:
+	ConnectedVision::shared_ptr<Class_generic_config> SetupConfigForTest(std::string configStr)
+	{
+		Class_generic_config configToCreate(configStr); // create temporal config object
+		checkConfig(configToCreate);
+		id_t configID = configToCreate.compute_id(); // get configID hash
+
+		ConnectedVisionResponse response;
+		setConfig("0", configStr, response); // create config in temporary database (e.g. memory database)
+
+		// query temporary database for config (NOTE: this will be different from a config object created from the input configStr
+		// since the aliasID list from the config from the store will be a modified version of aliasID list from a config object
+		// created from the input configStr (e.g. additional timestamps, empty and invalid aliasIDs erased))
+		boost::shared_ptr<const Class_generic_config> constConfig = getConfigStore()->getByID(configID);
+		
+		// clone config to make it writeable
+		auto config = constConfig->copy();
+		checkConfig(*config);
+
+		return(config);
+	}
 };
 
 
@@ -88,33 +89,7 @@ static const char moduleDescription[] = "{ \"name\": \"TestWrapper_ConnectedVisi
 											"\"APIVersion\": 0.5,"
 											"\"author\": \"\","
 											"\"params\": {} }";
-static const char inputPinDescription[] = "["
-											"{ \"name\": \"NormalInput\", \"id\": \"NormalInput\", \"description\": \"\", "
-											"\"type\": \"application/json\","
-											"\"properties\": {"
-											"\"id\": { \"type\": \"string\", \"exttype\": \"id\", \"required\": true, \"unit\": \"md5\" },"
-											"\"configID\": { \"type\": \"string\", \"exttype\": \"id\", \"required\": true, \"unit\": \"md5\" },"
-											"\"timestamp\": { \"type\": \"integer\", \"exttype\": \"timestamp\", \"required\": true, \"unit\": \"ms\" }"
-											"} },"
-											"{ \"name\": \"OptionalInput\", \"id\": \"OptionalInput\", \"description\": \"\", "
-											"\"type\": \"application/json\","
-											"\"minPinCount\" : 0,"
-											"\"maxPinCount\" : 1,"
-											"\"properties\": {"
-											"\"id\": { \"type\": \"string\", \"exttype\": \"id\", \"required\": true, \"unit\": \"md5\" },"
-											"\"configID\": { \"type\": \"string\", \"exttype\": \"id\", \"required\": true, \"unit\": \"md5\" },"
-											"\"timestamp\": { \"type\": \"integer\", \"exttype\": \"timestamp\", \"required\": true, \"unit\": \"ms\" }"
-											"} },"
-											"{ \"name\": \"MultipleInput\", \"id\": \"MultipleInput\", \"description\": \"\", "
-											"\"type\": \"application/json\","
-											"\"minPinCount\" : 0,"
-											"\"maxPinCount\" : 3,"
-											"\"properties\": {"
-											"\"id\": { \"type\": \"string\", \"exttype\": \"id\", \"required\": true, \"unit\": \"md5\" },"
-											"\"configID\": { \"type\": \"string\", \"exttype\": \"id\", \"required\": true, \"unit\": \"md5\" },"
-											"\"timestamp\": { \"type\": \"integer\", \"exttype\": \"timestamp\", \"required\": true, \"unit\": \"ms\" }"
-											"} }"
-											"]";
+static const char inputPinDescription[] = "[]";
 static const char outputPinDescription[] = "[]";
 
 const std::string configStr = "{ \"id\": \"\", \"name\": \"\", \"description\": \"\", \"version\": 1, "
@@ -123,7 +98,9 @@ const std::string configStr = "{ \"id\": \"\", \"name\": \"\", \"description\": 
 											"\"chain\": []"
 											"}";
 
-TEST_GROUP(inputPin)
+
+
+TEST_GROUP(moduleControl)
 {
 	void setup()
 	{
@@ -136,221 +113,212 @@ TEST_GROUP(inputPin)
 		// Uninit stuff
 	}
 
+	ModuleEnvironment_Mockup env;
 	std::shared_ptr<TestWrapper_ConnectedVisionModule> module;
 };
 
-TEST(inputPin, checkConfig_normal_config)
+
+TEST(moduleControl, missing_status_store_returns_error)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "OptionalInput", "OutputID");
-	addConnection(config, "MultipleInput", "OutputID");
+	ConnectedVisionResponse response;
+	auto statusStore = module->getStatusStore();
 
 	//////////////////////////////////////
 	// actual test
-	module->checkConfig(config);
-	CHECK( true ); // there was no exception, so the test passed
+	CHECK_FALSE( statusStore );
+
+	auto http_code = module->control(ID_NULL, "", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_ERROR, http_code);
 }
 
-TEST(inputPin, checkConfig_indexed_inputPins_same_subChain)
+TEST(moduleControl, missing_config_store_returns_error)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput.0", "OutputID");
-	auto configChain0 = config.get_chain(0);
-	addConnection(configChain0, "OptionalInput.0", "OutputID");
-	addConnection(configChain0, "MultipleInput.0", "OutputID");
+	ConnectedVisionResponse response;
+	auto configStore = module->getConfigStore();
 
 	//////////////////////////////////////
 	// actual test
-	module->checkConfig(config);
-	CHECK( true ); // there was no exception, so the test passed
+	CHECK_FALSE( configStore );
+
+	auto http_code = module->control(ID_NULL, "", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_ERROR, http_code);
 }
 
-TEST(inputPin, checkConfig_indexed_inputPins_distributed_over_subChains)
+TEST(moduleControl, missing_config_returns_error)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput.0", "OutputID");
-	addConnection(config, "MultipleInput.0", "OutputID");
-	auto configChain0 = config.get_chain(0);
-	addConnection(configChain0, "OptionalInput.0", "OutputID");
-	addConnection(configChain0, "MultipleInput.1", "OutputID");
+	ConnectedVisionResponse response;
+	module->initModule(&env);
 
 	//////////////////////////////////////
 	// actual test
-	module->checkConfig(config);
-	CHECK( true ); // there was no exception, so the test passed
+	auto http_code = module->control(ID_NULL, "", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_NOT_FOUND, http_code);
 }
 
-TEST(inputPin, checkConfig_indexed_inputPins_spezial_syntax)
+TEST(moduleControl, reset_config)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput.000", "OutputID");
-	addConnection(config, "OptionalInput.0", "OutputID");
-	addConnection(config, "MultipleInput", "OutputID");
-	addConnection(config, "MultipleInput.01", "OutputID");
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
 
 	//////////////////////////////////////
 	// actual test
-	module->checkConfig(config);
-	CHECK( true ); // there was no exception, so the test passed
+	auto http_code = module->control(config->getconst_configID(), "reset", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
-TEST(inputPin, checkConfig_detects_missing_inputPin)
+TEST(moduleControl, start_config)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
 
 	//////////////////////////////////////
 	// actual test
-	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
+	auto http_code = module->control(config->getconst_configID(), "start", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
-TEST(inputPin, checkConfig_optional_inputPin)
+TEST(moduleControl, start_unknown_config_returns_error)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
 
 	//////////////////////////////////////
 	// actual test
-	module->checkConfig(config);
-	CHECK( true ); // there was no exception, so the test passed
+	auto http_code = module->control("123", "start", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_NOT_FOUND, http_code);
 }
 
-TEST(inputPin, checkConfig_optional_inputPin_indexed)
+TEST(moduleControl, stop_config)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput.0", "OutputID");
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
 
 	//////////////////////////////////////
 	// actual test
-	module->checkConfig(config);
-	CHECK( true ); // there was no exception, so the test passed
+	module->control(config->getconst_configID(), "start", ID_NULL, response);
+	auto http_code = module->control(config->getconst_configID(), "stop", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
-TEST(inputPin, checkConfig_inputPin_index_out_of_range)
+TEST(moduleControl, recover_config)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "OptionalInput.0", "OutputID");
-	addConnection(config, "OptionalInput.1", "OutputID");
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
 
 	//////////////////////////////////////
 	// actual test
-	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
+	auto http_code = module->control(config->getconst_configID(), "recover", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
-TEST(inputPin, checkConfig_inputPin_missing_index)
+TEST(moduleControl, resetThis_config)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "MultipleInput.", "OutputID");
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
 
 	//////////////////////////////////////
 	// actual test
-	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
+	auto http_code = module->control(config->getconst_configID(), "resetThis", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
-TEST(inputPin, checkConfig_inputPin_negative_index)
+TEST(moduleControl, stopThis_config)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "MultipleInput.-1", "OutputID");
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
 
 	//////////////////////////////////////
 	// actual test
-	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
+	module->control(config->getconst_configID(), "start", ID_NULL, response);
+	auto http_code = module->control(config->getconst_configID(), "stopThis", ID_NULL, response);
+
+	CHECK_EQUAL(ConnectedVision::HTTP::HTTP_Status_OK, http_code);
 }
 
-TEST(inputPin, checkConfig_inputPin_non_numerical_index)
+
+TEST_GROUP(workerAccess)
+{
+	void setup()
+	{
+		// Init stuff
+		this->module = std::make_shared<TestWrapper_ConnectedVisionModule>(moduleDescription, inputPinDescription, outputPinDescription);
+	}
+
+	void teardown()
+	{
+		// Uninit stuff
+	}
+
+	ModuleEnvironment_Mockup env;
+	std::shared_ptr<TestWrapper_ConnectedVisionModule> module;
+};
+
+
+TEST(workerAccess, getworker_returns_pointer_for_config)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "MultipleInput.xyz", "OutputID");
+	ConnectedVisionResponse response;
+	module->initModule(&env);
+	auto config = module->SetupConfigForTest(configStr);
 
 	//////////////////////////////////////
 	// actual test
-	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
+	auto http_code = module->control(config->getconst_configID(), "start", ID_NULL, response);
+	
+	auto worker = module->getWorker( config->getconst_id() );
 }
 
-TEST(inputPin, checkConfig_multiple_inputPins_with_same_ID)
+
+/* TODO
+
+TEST(moduleInternal, deleteAllData_clears_DB)
 {
 	//////////////////////////////////////
 	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "MultipleInput.0", "OutputID");
-	addConnection(config, "MultipleInput.1", "OutputID");
-	addConnection(config, "MultipleInput.2", "OutputID");
-
-	//////////////////////////////////////
-	// actual test
-	module->checkConfig(config);
-	CHECK( true ); // there was no exception, so the test passed
-}
-
-TEST(inputPin, checkConfig_inputPin_index_sequence_error)
-{
-	//////////////////////////////////////
-	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "MultipleInput.0", "OutputID");
-	addConnection(config, "MultipleInput.2", "OutputID");
-
-	//////////////////////////////////////
-	// actual test
-	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
-}
-
-TEST(inputPin, checkConfig_double_usage_of_same_inputPin)
-{
-	//////////////////////////////////////
-	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "NormalInput", "AnotherOutputID");
 
 
 	//////////////////////////////////////
 	// actual test
-	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
-}
 
-TEST(inputPin, checkConfig_double_usage_of_same_inputPin_indexed)
-{
-	//////////////////////////////////////
-	// test initialization
-	Class_generic_config config(configStr);
-	addConnection(config, "NormalInput", "OutputID");
-	addConnection(config, "MultipleInput.0", "OutputID");
-	addConnection(config, "MultipleInput.1", "OutputID");
-	addConnection(config, "MultipleInput.1", "AnotherOutputID");
-	addConnection(config, "MultipleInput.2", "OutputID");
-
-	//////////////////////////////////////
-	// actual test
-	CHECK_THROWS( ConnectedVision::runtime_error, module->checkConfig(config) );
+	TODO
 }
+*/
 
 }} // namespace scope

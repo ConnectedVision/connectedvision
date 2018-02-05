@@ -6,9 +6,7 @@
 #ifndef DirectoryIteratorWorker_def
 #define DirectoryIteratorWorker_def
 
-#include <IModuleEnvironment.h>
-#include <ConnectedVisionModule.h>
-#include <ConnectedVisionAlgorithmWorker.h>
+#include <IConnectedVisionModule.h>
 
 namespace ConnectedVision {
 namespace Module {
@@ -18,21 +16,28 @@ namespace DirectoryIterator {
 *	worker for Directory Iterator
 *	Iterates a directory and returns the files with the extensions specified in the config.
 */
-class DirectoryIteratorWorker : public ConnectedVisionAlgorithmWorker
+class DirectoryIteratorWorker : public IWorker
 {
 public:
 	/**
 	* worker constructor
 	*/
 	DirectoryIteratorWorker(
-		IModuleEnvironment *env,								///< [in] general environment
-		ConnectedVisionModule *module,							///< [in] corresponding module
-		boost::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
-	) :	ConnectedVisionAlgorithmWorker(env, module, config) {}
+		DirectoryIteratorModule &module,						///< [in] reference to "parent" module
+		IWorkerControllerCallbacks &controller,					///< [in] worker controller (for callbacks)
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+		) : module(module), controller(controller), config(config) {}
 	virtual ~DirectoryIteratorWorker() {}
 
-protected:
 	virtual void run();
+
+	virtual IModule* getModule() { return static_cast<IModule*>(&module); };
+
+protected:
+	DirectoryIteratorModule &module;
+	IWorkerControllerCallbacks &controller;
+	ConnectedVision::shared_ptr<const Class_generic_config> config;
+
 };
 
 } // namespace DirectoryIterator

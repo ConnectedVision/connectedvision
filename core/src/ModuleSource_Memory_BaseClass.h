@@ -51,7 +51,7 @@ protected:
 	template <class T>
 	boost::shared_ptr<T> responseToData(ConnectedVisionResponse &response);
 
-	boost::shared_ptr<IConnectedVisionModule> pModule;
+	boost::shared_ptr<ConnectedVision::Module::IModule> pModule;
 	id_t moduleID;
 	id_t configID;
 };

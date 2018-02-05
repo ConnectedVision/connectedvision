@@ -9,43 +9,32 @@
 #include <boost/thread/thread.hpp>  // used for boost::this_thread::sleep(boost::posix_time::milliseconds(msecs));
 
 #include <vector>
-#include <ConnectedVisionModule.h>
+#include <Module/Module_BaseClass.h>
 #include <IModuleEnvironment.h>
+#include "TestHelper_Module.hpp"
 
 #include <CppUTest/TestHarness.h>
 
 namespace ConnectedVision {
 
-class TestMockupModuleEnvironment : public IModuleEnvironment{
-public:
-
-	virtual void registerModule( boost::shared_ptr<IConnectedVisionModule> module ) {};
-	virtual boost::shared_ptr<IConnectedVisionModule> getModule( std::string moduleName ) const { return(NULL); };
-	virtual std::string getModuleURL(std::string serverAddress, std::string moduleName ) const { return(""); };
-	virtual std::string getDataPath() const { return(""); };
-
-	virtual Class_HostStatus getHostStatus() { Class_HostStatus status; return(status); };
-
-};
-
 namespace Module {
 
-class TestWrapper_DynamicParameters : public ConnectedVisionModule
+class TestWrapper_DynamicParameters : public Module_BaseClass // TODO use TestHelper Mockup ???
 {
 public:
 	TestWrapper_DynamicParameters(const std::string moduleDescription, const char inputPinDescription[], const char outputPinDescription[]) :
-		ConnectedVisionModule(moduleDescription.c_str(), inputPinDescription, outputPinDescription) {}
+		Module_BaseClass(moduleDescription.c_str(), inputPinDescription, outputPinDescription) {}
 
 	// make function public
 	void checkConfig(const Class_generic_config &config)
 	{
-		ConnectedVisionModule::checkConfig(config);
+		Module_BaseClass::checkConfig(config);
 	}
 
 	// dummy implementation of abstract functions
 
-	void deleteResults(const boost::shared_ptr<const Class_generic_config> config) {}
-	
+	void deleteAllData(const id_t configID) {}
+
 	void prepareStores() { }
 
 	void connectDB() 
@@ -68,9 +57,9 @@ public:
 		return nullPtr;
 	}
 
-	boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+	std::unique_ptr<IWorker> createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config)
 	{
-		boost::shared_ptr<IConnectedVisionAlgorithmWorker> nullPtr;
+		std::unique_ptr<IWorker> nullPtr;
 		return nullPtr;
 	}
 
@@ -101,17 +90,17 @@ public:
 
 	void getDynamicParameter(const id_t resolvedConfigID, const std::string& parameterPath, ConnectedVisionResponse &response)
 	{
-		ConnectedVisionModule::getDynamicParameter(resolvedConfigID, parameterPath, response);
+		Module_BaseClass::getDynamicParameter(resolvedConfigID, parameterPath, response);
 	}
 
 	void setDynamicParameter(const id_t resolvedConfigID, const std::string& parameterPath, const std::string& parameterValue, ConnectedVisionResponse &response)
 	{
-		ConnectedVisionModule::setDynamicParameter(resolvedConfigID, parameterPath, parameterValue, response);
+		Module_BaseClass::setDynamicParameter(resolvedConfigID, parameterPath, parameterValue, response);
 	}
 
 	void resetParameterToInitialValue(const id_t resolvedConfigID, const std::string& parameterPath, ConnectedVisionResponse &response)
 	{
-		ConnectedVisionModule::resetParameterToInitialValue(resolvedConfigID, parameterPath, response);
+		Module_BaseClass::resetParameterToInitialValue(resolvedConfigID, parameterPath, response);
 	}
 };
 
@@ -1103,7 +1092,7 @@ TEST_GROUP(DynamicParameters_moduleDescriptions)
 		this->module.reset();
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	boost::shared_ptr<TestWrapper_DynamicParameters> module;
 };
 
@@ -1121,7 +1110,7 @@ TEST_GROUP(DynamicParameters_moduleAndConfigFeaturesRelatedToDynamicParameters)
 		this->module.reset();
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	boost::shared_ptr<TestWrapper_DynamicParameters> module;
 };
 
@@ -1140,7 +1129,7 @@ TEST_GROUP(DynamicParameters_configs)
 		this->module.reset();
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	boost::shared_ptr<TestWrapper_DynamicParameters> module;
 };
 
@@ -2449,7 +2438,7 @@ TEST_GROUP(DynamicParameters_moduleWithNonRequiredDynamicParameters)
 		this->module.reset();
 	}
 
-	TestMockupModuleEnvironment env;
+	ModuleEnvironment_Mockup env;
 	boost::shared_ptr<TestWrapper_DynamicParameters> module;
 };
 

@@ -77,6 +77,17 @@ public:
 	virtual void set_moduleURI(boost::shared_ptr<std::string> value);
 	virtual void set_moduleURI(const std::string &value) { boost::shared_ptr<std::string> ptr = boost::make_shared<std::string>(value); set_moduleURI(ptr); };
 
+	/* commandQueue - commands waiting to be executed */
+	virtual boost::shared_ptr<std::vector<boost::shared_ptr<std::string>>> get_commandQueue() const;
+	virtual const boost::shared_ptr<const std::vector<boost::shared_ptr<std::string>>> getconst_commandQueue() const;
+	virtual void set_commandQueue(boost::shared_ptr<std::vector<boost::shared_ptr<std::string>>> value);
+	virtual void set_commandQueue(const std::vector<boost::shared_ptr<std::string>> &value) { boost::shared_ptr<std::vector<boost::shared_ptr<std::string>>> ptr = boost::make_shared<std::vector<boost::shared_ptr<std::string>>>(value); set_commandQueue(ptr); };
+	// array functions
+	virtual boost::shared_ptr<std::string> get_commandQueue(int index) const;
+	virtual const boost::shared_ptr<std::string>& getconst_commandQueue(int index) const;
+	virtual void add_commandQueue(boost::shared_ptr<std::string> value);
+	virtual void add_commandQueue(const std::string &value) { boost::shared_ptr<std::string> ptr = boost::make_shared<std::string>(value); add_commandQueue(ptr); };
+
 	/* status - current status of config / job */
 	virtual boost::shared_ptr<std::string> get_status() const;
 	virtual const boost::shared_ptr<const std::string> getconst_status() const;
@@ -90,9 +101,9 @@ public:
 	const static boost::shared_ptr<std::string> status_init;
 	virtual bool is_status_init() const { return is_status( Stub_generic_status::status_init ); }
 	virtual void set_status_init() { set_status ( Stub_generic_status::status_init ); }
-	const static boost::shared_ptr<std::string> status_startup;
-	virtual bool is_status_startup() const { return is_status( Stub_generic_status::status_startup ); }
-	virtual void set_status_startup() { set_status ( Stub_generic_status::status_startup ); }
+	const static boost::shared_ptr<std::string> status_starting;
+	virtual bool is_status_starting() const { return is_status( Stub_generic_status::status_starting ); }
+	virtual void set_status_starting() { set_status ( Stub_generic_status::status_starting ); }
 	const static boost::shared_ptr<std::string> status_running;
 	virtual bool is_status_running() const { return is_status( Stub_generic_status::status_running ); }
 	virtual void set_status_running() { set_status ( Stub_generic_status::status_running ); }
@@ -108,12 +119,12 @@ public:
 	const static boost::shared_ptr<std::string> status_error;
 	virtual bool is_status_error() const { return is_status( Stub_generic_status::status_error ); }
 	virtual void set_status_error() { set_status ( Stub_generic_status::status_error ); }
-	const static boost::shared_ptr<std::string> status_reset;
-	virtual bool is_status_reset() const { return is_status( Stub_generic_status::status_reset ); }
-	virtual void set_status_reset() { set_status ( Stub_generic_status::status_reset ); }
-	const static boost::shared_ptr<std::string> status_cleanup;
-	virtual bool is_status_cleanup() const { return is_status( Stub_generic_status::status_cleanup ); }
-	virtual void set_status_cleanup() { set_status ( Stub_generic_status::status_cleanup ); }
+	const static boost::shared_ptr<std::string> status_recovering;
+	virtual bool is_status_recovering() const { return is_status( Stub_generic_status::status_recovering ); }
+	virtual void set_status_recovering() { set_status ( Stub_generic_status::status_recovering ); }
+	const static boost::shared_ptr<std::string> status_resetting;
+	virtual bool is_status_resetting() const { return is_status( Stub_generic_status::status_resetting ); }
+	virtual void set_status_resetting() { set_status ( Stub_generic_status::status_resetting ); }
 
 	/* message - general message (e.g. description of last error) */
 	virtual boost::shared_ptr<std::string> get_message() const;
@@ -193,6 +204,9 @@ protected:
 	
 	/** URI of module instance */
 	boost::shared_ptr<std::string> moduleURI;
+	
+	/** commands waiting to be executed */
+	boost::shared_ptr<std::vector<boost::shared_ptr<std::string>>> commandQueue;
 	
 	/** current status of config / job */
 	boost::shared_ptr<std::string> status;

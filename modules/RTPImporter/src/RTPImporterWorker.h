@@ -5,11 +5,10 @@
 
 #pragma once
 
-#include <IModuleEnvironment.h>
-#include <ConnectedVisionModule.h>
-#include <ConnectedVisionAlgorithmDispatcher.h>
-#include <ConnectedVisionAlgorithmWorker.h>
+//TODO do we need env? #include <IModuleEnvironment.h>
+#include <Module/Worker_BaseClass.h>
 
+#include "RTPImporterModule.h"
 #include "Class_RTPImporter_params.h"
 
 extern "C"
@@ -25,18 +24,23 @@ namespace ConnectedVision {
 namespace Module {
 namespace RTPImporter {
 
-class RTPImporterWorker : public ConnectedVisionAlgorithmWorker
+class RTPImporterWorker : public Worker_BaseClass
 {
 public:
-	RTPImporterWorker(IModuleEnvironment *env, ConnectedVisionModule *module, boost::shared_ptr<const Class_generic_config> config);
+	RTPImporterWorker(
+		RTPImporterModule &module,		///< [in] reference to "parent" module; This is the explicit RTPImporterWorker (no interface) so it is ok to use the explicit RTPImporterModule class.
+		IWorkerControllerCallbacks &controller,					///< [in] worker controller (for callbacks)
+		ConnectedVision::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+	);
 
-	void start();
-	void stop();
+	virtual void run();
+	
 	
 protected:
+	RTPImporterModule &module;
+
 	void initResources(); ///< function used to initialize resources
 	void freeResources(); ///< function used to free up resources
-	virtual void run();
 
 	SwsContext *imgConvertCtx;
 	AVFormatContext* formatCtx;

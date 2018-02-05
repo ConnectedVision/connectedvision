@@ -17,6 +17,10 @@
 namespace ConnectedVision {
 namespace DataHandling {
 
+// if you want to extend the auto-generated class, enable the line below
+#define Store_SQLite_generic_status_extended
+
+#ifdef Store_SQLite_generic_status_extended
 /**
  * Store_SQLite_generic_status
  *
@@ -42,7 +46,7 @@ public:
 	virtual bool write_through(	const shared_ptr<const Class_generic_status>& statusConst )
 	{
 		// status is not running -> alwasy write to base store
-		if ( !statusConst->is_status_running() )
+		if ( (!statusConst->is_status_running()) && (!statusConst->is_status_starting()) && (!statusConst->is_status_stopping()))
 			return true;
 
 		Store_SQLite_generic_status::CacheLock lock(this->cacheMutex);
@@ -59,16 +63,42 @@ public:
 		return true;
 	}
 
- };
+};
+#endif // Store_SQLite_generic_status_extended
 
+
+// if you want to extend the auto-generated class, enable the line below
+//#define Store_SQLite_Factory_generic_status_extended
+
+#ifdef Store_SQLite_Factory_generic_status_extended
 /**
  * factory for Store_SQLite_generic_status
  */
-typedef Store_SQLite_Factory_Stub_generic_status Store_SQLite_Factory_generic_status;
+class Store_SQLite_Factory_generic_status : public Store_SQLite_Factory_Stub_generic_status {
+public:
+	/**
+	* constructor
+	*/
+	Store_SQLite_Factory_generic_status(
+		DBConnection& db				///< [in] DB connection object
+	) : Store_SQLite_Factory_Stub_generic_status ( db )
+	{}
+
+	/*
+	* virtual destructor
+	*/
+	virtual ~Store_SQLite_Factory_generic_status()
+	{}
+
+ // TODO --> Your declarations and code comes HERE! <--
+
+};
 #define Store_SQLite_Factory_generic_status_enabled
+#endif // Store_SQLite_Factory_generic_status_extended
 
-}} // namespace
+} // namespace DataHandling
+} // namespace ConnectedVision
 
+#include "stubs/Store_SQLite_generic_status_Default.h"
 
 #endif // Store_SQLite_generic_status_def
-

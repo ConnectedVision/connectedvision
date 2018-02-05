@@ -115,7 +115,7 @@ public:
 
 
 			//LOG_DEBUG("handle new request");
-			boost::shared_ptr<IConnectedVisionModule> module;
+			boost::shared_ptr<ConnectedVision::Module::IModule> module;
 			ConnectedVisionResponse responsePayload;
 
 			ConnectedVision::HTTP::EnumConnectedVisionCommandType cmd = CMD_NA;

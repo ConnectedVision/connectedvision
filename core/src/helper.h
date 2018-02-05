@@ -9,12 +9,22 @@
 #include <string>
 #include <math.h>
 
+#include <boost/thread/thread_time.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 #include <IConnectedVisionModule.h>
 
 namespace ConnectedVision
 {
+
+#define LOG_CONFIG( level, msg, configID )	{ this->log()->write( (level), this->logName, std::string(__FUNCTION__) + std::string("()@") + ConnectedVision::intToStr(__LINE__), (msg), (configID) ); }
+#define LOG_DEBUG_CONFIG( msg, configID )	LOG_CONFIG( Logging::Debug, msg, configID )
+#define LOG_INFO_CONFIG( msg, configID )	LOG_CONFIG( Logging::Info, msg, configID )
+#define LOG_WARN_CONFIG( msg, configID )	LOG_CONFIG( Logging::Warning, msg, configID )
+#define LOG_ERROR_CONFIG( msg, configID )	LOG_CONFIG( Logging::Error, msg, configID )
+#define LOG_FATAL_CONFIG( msg, configID )	LOG_CONFIG( Logging::Fatal, msg, configID )
+#define LOG_SCOPE_CONFIG( configID )		Logging::LoggingScope _log_scope( this->log(), Logging::Debug, this->logName, std::string(__FUNCTION__) + std::string("()@") + ConnectedVision::intToStr(__LINE__), ( configID ) );
+
 
 pinID_t getIndexedPinID(const pinID_t& pinID, int index = -1);
 
@@ -44,6 +54,16 @@ static inline int64_t round_int64(double number)
 {
     int64_t i = static_cast<int64_t>(number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5));
 	return i;
+}
+
+/**
+ * sleep for x milliseconds
+ *
+ * @param ms	(minimal) time in milliseconts to sleep
+ */
+static inline void sleep_ms(int ms)
+{
+	boost::this_thread::sleep( boost::posix_time::milliseconds( ms ) );
 }
 
 } // namespace ConnectedVision

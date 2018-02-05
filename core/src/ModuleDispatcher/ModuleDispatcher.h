@@ -57,8 +57,8 @@ public:
 
 	static inline std::string getModuleName() { return "ModuleDispatcher"; };
 
-	virtual void registerModule( boost::shared_ptr<IConnectedVisionModule> module );
-	virtual boost::shared_ptr<IConnectedVisionModule> getModule( std::string moduleName ) const;
+	virtual void registerModule( boost::shared_ptr<ConnectedVision::Module::IModule> module );
+	virtual boost::shared_ptr<ConnectedVision::Module::IModule> getModule( std::string moduleName ) const;
 	virtual std::string getModuleURL( std::string serverAddress, std::string moduleName ) const;
 	virtual std::string getDataPath() const;
 	virtual void setDataPath(std::string path);
@@ -91,7 +91,7 @@ protected:
 
 	//std::string baseURI;
 	std::string dataPath;
-	std::vector< boost::shared_ptr<IConnectedVisionModule> > modules;
+	std::vector< boost::shared_ptr<ConnectedVision::Module::IModule> > modules;
 
 	// host logo png image as cv::Mat image
 	boost::shared_ptr<cv::Mat> logo;

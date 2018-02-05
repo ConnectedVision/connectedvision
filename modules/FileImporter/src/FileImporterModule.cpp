@@ -28,38 +28,9 @@ using namespace std;
 /**
  * module constructor
  */
-FileImporterModule::FileImporterModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+FileImporterModule::FileImporterModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
 
-}
-
-/**
- * init module
- *
- * @param server  module server
- */
-void FileImporterModule::initModule( IModuleEnvironment *env ) 
-{ 
-	LOG_SCOPE;
-
-	// clean up module before init
-	this->releaseModule();
-
-	// call parent init
-	ConnectedVisionModule::initModule(env);
-}
-
-/**
- * destroy module
- *
- * @param server  module server
- */
-void FileImporterModule::releaseModule() 
-{
-	LOG_SCOPE;
-
-	// call parent init
-	ConnectedVisionModule::releaseModule();
 }
 
 /**
@@ -104,21 +75,12 @@ boost::shared_ptr<IConnectedVisionOutputPin > FileImporterModule::generateOutput
 	throw ConnectedVision::runtime_error("invalid pinID: " + pinID);
 }
 
-/**
- * create algorithm worker object
- *
- * @param env	ConnectedVision module environment
- * @param db	SQLite DB
- * @param config	job / config
- *
- * @return new algorithm worker object
- */
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> FileImporterModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+std::unique_ptr<IWorker> FileImporterModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config)
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
+	// create worker instance
+	std::unique_ptr<IWorker> ptr;
 
-	// this module does not use Workers
-	return boost::shared_ptr<IConnectedVisionAlgorithmWorker>();
+	return ptr;
 }
 
 /**
@@ -126,10 +88,8 @@ boost::shared_ptr<IConnectedVisionAlgorithmWorker> FileImporterModule::createWor
  *
  * @param config	config chain
  */
-void FileImporterModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
+void FileImporterModule::deleteAllData(const id_t configID)
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
-
 	// nothing to do
 }
 

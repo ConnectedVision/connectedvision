@@ -156,6 +156,15 @@ protected:
 	/**
 	* bind object values for writing
 	*/
+	virtual void bind_commandQueue(
+		sqlite3_stmt *stmt, 							///< [in/out] SQLite statement to bind with
+		const boost::shared_ptr<const std::string>& obj,					///< [in] data object read from DB
+		const int64_t sortID,	///< [in] unique index of object
+		const int64_t idx1	///< [in] sub array index to order sub items
+	) const;
+	/**
+	* bind object values for writing
+	*/
 	virtual void bind_qualityOfService(
 		sqlite3_stmt *stmt, 							///< [in/out] SQLite statement to bind with
 		const boost::shared_ptr<const Class_generic_status_qualityOfService>& obj,					///< [in] data object read from DB

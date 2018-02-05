@@ -22,42 +22,13 @@
 
 using namespace ConnectedVision;
 
-{{Module.moduleID}}Module::{{Module.moduleID}}Module() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+{{Module.moduleID}}Module::{{Module.moduleID}}Module() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
-
-}
-
-void {{Module.moduleID}}Module::initModule( IModuleEnvironment *env ) 
-{
-	LOG_SCOPE;
-
-	// clean up module before init
-	releaseModule();
-
-	// call parent init
-	ConnectedVisionModule::initModule(env);
-}
-
-void {{Module.moduleID}}Module::releaseModule() 
-{
-	LOG_SCOPE;
-
-	// call parent release
-	ConnectedVisionModule::releaseModule();
-
-	// reset store managers
-{% for d in Module.outputPins %}	
-	this->storeManager{{d.name}}.reset();	
-{% endfor %}
-
-// TODO --> do additional clean-up HERE! <--
 
 }
 
 void {{Module.moduleID}}Module::prepareStores() 
 {
-	LOG_SCOPE;
-
 	// module specific stores
 
 {% for d in Module.outputPins %}
@@ -77,8 +48,6 @@ void {{Module.moduleID}}Module::prepareStores()
 
 boost::shared_ptr<IConnectedVisionInputPin> {{Module.moduleID}}Module::generateInputPin(const pinID_t& pinID)
 {
-	LOG_SCOPE;
-
 	{% for d in Module.inputPins %}	{% if loop.first %}	if{% else %}	else if{% endif %} ( {{d.className}}::hasPinID(pinID) )
 	{
 		// {{d.name}} input pin
@@ -91,8 +60,6 @@ boost::shared_ptr<IConnectedVisionInputPin> {{Module.moduleID}}Module::generateI
 
 boost::shared_ptr<IConnectedVisionOutputPin > {{Module.moduleID}}Module::generateOutputPin(const pinID_t& pinID)
 {
-	LOG_SCOPE;
-
 	{% for d in Module.outputPins %}{% if loop.first %}	if{% else %}	else if{% endif %} ( {{d.className}}::hasPinID(pinID) )
 	{
 		// {{d.name}} output pin
@@ -103,21 +70,19 @@ boost::shared_ptr<IConnectedVisionOutputPin > {{Module.moduleID}}Module::generat
 	throw ConnectedVision::runtime_error("failed to generate output pin (invalid pin ID: " + pinID + ")");
 }
 
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> {{Module.moduleID}}Module::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+std::unique_ptr<IWorker> {{Module.moduleID}}Module::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config) 
 {
-	LOG_SCOPE;
-
 	// create worker instance
-	return boost::make_shared<{{Module.moduleID}}Worker>(env, this, config);
+	std::unique_ptr<IWorker> ptr( new {{Module.moduleID}}Worker(*this, controller, config) );
+
+	return ptr;
 }
 
-void {{Module.moduleID}}Module::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
+void {{Module.moduleID}}Module::deleteAllData(const id_t configID)
 {
-	LOG_SCOPE_CONFIG( config->getconst_id() );
-
 	// delete all results for configID
 {% for d in Module.outputPins %}	
-	this->storeManager{{d.name}}->getReadWriteStore( config->getconst_id() )->deleteAll();
+	this->storeManager{{d.name}}->getReadWriteStore( configID )->deleteAll();
 {% endfor %}
 }
 

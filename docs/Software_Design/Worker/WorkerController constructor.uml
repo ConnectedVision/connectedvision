@@ -1,0 +1,269 @@
+' https://www.planttext.com/
+
+title WorkerController constructor / desctuctor
+
+participant "module" as module
+
+participant ":WorkerController \n <<IWorkerController>>\n <<thread_safe>>" as WorkerController
+note right of WorkerController
+	The WorkerController manages and controls the worker of exactly one config. The config chain is not handled by the WorkerController.
+
+	**used patterns:**
+	- [Command Pattern, Command Queue] To queue invoked commands and execute them in the controller thread or delegate to worker thread.
+	- [Singleton] Allow only one instance per config.
+	- [Active Object] Run methods / commands in a separate thread (controllerThread).
+end note 
+
+participant "commandQueue \n <<thread_safe>>" as commandQueue
+participant "controllerThread \n <<boost::thread>>" as controllerThread
+
+participant "terminateCmd \n <<Command>>" as terminateCmd
+participant "stopCmd \n <<Command>>" as stopCmd
+
+participant "workerThreadProgress \n <<thread_safe_progress>>" as workerThreadProgress
+participant "workerThread \n <<boost::thread>>" as workerThread
+
+participant "worker \n <<IWorker>>" as worker
+
+legend
+The color coding is used to indicate in which thread a function is executed.
+endlegend
+
+
+== constructor ==
+
+ -> WorkerController : <<create>>(configID, module, workerFactory, workerTimeout)
+activate WorkerController
+WorkerController -> WorkerController : init(configID)
+activate WorkerController
+
+note over commandQueue: []
+
+WorkerController -> module: registerWorkerInstance(configID, this)
+activate module
+activate WorkerController #gray
+WorkerController <<- module
+deactivate module
+deactivate WorkerController #gray
+
+alt config.status == init
+	WorkerController ->> workerThreadProgress : set(Init)
+	activate workerThreadProgress
+	activate WorkerController #gray
+	WorkerController <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate WorkerController #gray
+else config.status == stopped
+	WorkerController ->> workerThreadProgress : set(Stopped)
+	activate workerThreadProgress
+	activate WorkerController #gray
+	WorkerController <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate WorkerController #gray
+else config.status == finished
+	WorkerController ->> workerThreadProgress : set(Finished)
+	activate workerThreadProgress
+	activate WorkerController #gray
+	WorkerController <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate WorkerController #gray
+else
+	WorkerController ->> workerThreadProgress : set(Error)
+	activate workerThreadProgress
+	activate WorkerController #gray
+	WorkerController <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate WorkerController #gray
+end
+note over workerThreadProgress: xxx
+
+create controllerThread
+WorkerController --> controllerThread : <<create>>
+activate controllerThread #cyan
+hnote over controllerThread: thread loop
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+create workerThread
+WorkerController --> workerThread : <<create>>
+activate workerThread #orange
+
+WorkerController <<- WorkerController
+deactivate WorkerController
+ <<- WorkerController
+deactivate WorkerController
+
+workerThread -> workerThreadProgress: get()
+activate workerThreadProgress #orange
+activate workerThread #gray
+workerThread <<- workerThreadProgress: //Init, Stopped, Finished or Error//
+deactivate workerThreadProgress
+deactivate workerThread #gray
+
+hnote over workerThread: ignore: Undefined, Init, Stopped, Finished, Error
+
+workerThread -> workerThreadProgress: wait_while(...)
+activate workerThreadProgress #orange
+activate workerThread #gray
+hnote over workerThread: thread loop
+
+== working ... ==
+
+group working ...
+	workerThread <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+
+	workerThread -> workerThreadProgress: get()
+	activate workerThreadProgress #orange
+	activate workerThread #gray
+	workerThread <<- workerThreadProgress: Starting
+	deactivate workerThreadProgress
+	deactivate workerThread #gray
+
+	workerThread --> worker: run ...
+	activate workerThread #gray
+	activate worker #orange
+	note over workerThreadProgress: Running
+	...
+end
+
+== destructor ==
+
+ -> WorkerController : <<destroy>>
+activate WorkerController
+note left of WorkerController #orangered: <&warning> **destroy can BLOCK**\n (implicite worker stop)
+
+create stopCmd
+WorkerController -> stopCmd: <<create>>()
+activate stopCmd
+activate WorkerController #gray
+WorkerController <<- stopCmd: stopCmd
+deactivate stopCmd
+deactivate WorkerController #gray
+
+create terminateCmd
+WorkerController -> terminateCmd: <<create>>(\n   workerThreadProgress \n   progressBeforeTermination \n   stopCmd)
+activate terminateCmd
+activate WorkerController #gray
+WorkerController <<- terminateCmd: terminateCmd
+deactivate terminateCmd
+deactivate WorkerController #gray
+WorkerController -> commandQueue: enqueue(terminateCmd)
+activate commandQueue
+activate WorkerController #gray
+WorkerController <<- commandQueue
+deactivate commandQueue
+deactivate WorkerController #gray
+
+note over commandQueue: [terminateCmd]
+controllerThread <<- commandQueue: terminateCmd
+deactivate commandQueue
+deactivate controllerThread #gray
+
+controllerThread -> terminateCmd: execute()
+activate terminateCmd #cyan
+activate controllerThread #gray
+
+terminateCmd -> stopCmd: execute()
+activate stopCmd #cyan
+activate terminateCmd #gray
+group ref: stop
+	|||
+	workerThread <<- worker
+	deactivate worker
+	deactivate workerThread #gray
+	destroy worker
+	workerThread -->> workerThreadProgress
+	note over workerThreadProgress: Stopped
+	workerThreadProgress -->> stopCmd
+	
+	workerThread -> workerThreadProgress: wait_while(Stopped)
+	activate workerThreadProgress #orange
+	activate workerThread #gray
+	|||	
+end group
+terminateCmd <<- stopCmd
+deactivate stopCmd
+deactivate terminateCmd #gray
+destroy stopCmd
+
+|||
+hnote over terminateCmd: save last workerThreadProgress \n in progressBeforeTermination
+
+terminateCmd -> workerThreadProgress: set(Terminating)
+activate workerThreadProgress #cyan
+activate terminateCmd #gray
+terminateCmd <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate terminateCmd #gray
+note over workerThreadProgress: Terminating
+
+workerThread <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate workerThread #gray
+
+terminateCmd -> workerThreadProgress: wait_until(Terminated)
+activate workerThreadProgress #cyan
+activate terminateCmd #gray
+
+workerThread -> workerThreadProgress: get()
+activate workerThreadProgress #orange
+activate workerThread #gray
+workerThread <<- workerThreadProgress: //Terminating//
+deactivate workerThreadProgress
+deactivate workerThread #gray
+	
+hnote over workerThread: exit thread loop and terminate \n if workerThreadProgress == Terminating || Terminated
+
+workerThread -> workerThreadProgress: set(Terminated)
+activate workerThreadProgress #orange
+activate workerThread #gray
+workerThread <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate workerThread #gray
+
+workerThread -->> workerThread: exit
+deactivate workerThread
+
+terminateCmd <<- workerThreadProgress
+deactivate workerThreadProgress
+deactivate terminateCmd #gray
+
+
+controllerThread <<- terminateCmd
+deactivate terminateCmd
+deactivate controllerThread #gray
+destroy terminateCmd
+
+controllerThread -> workerThreadProgress: get()
+activate workerThreadProgress #cyan
+activate controllerThread #gray
+controllerThread <<- workerThreadProgress: Terminated
+deactivate workerThreadProgress
+deactivate controllerThread #gray
+hnote over controllerThread: exit thread loop and terminate \n if workerThreadProgress >= Terminating
+controllerThread -->> controllerThread: exit
+deactivate controllerThread
+
+
+WorkerController --> controllerThread: <<join>>
+destroy controllerThread
+
+WorkerController --> workerThread: <<join>>
+destroy workerThread
+
+WorkerController -> module: unregisterWorkerInstance(configID, this)
+activate module
+activate WorkerController #gray
+WorkerController <<- module
+deactivate module
+deactivate WorkerController #gray
+ 
+ <<- WorkerController
+deactivate WorkerController
+destroy WorkerController
+
+ 

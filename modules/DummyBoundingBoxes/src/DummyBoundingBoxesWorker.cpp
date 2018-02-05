@@ -9,7 +9,6 @@
 #include <helper.h>
 
 #include "DummyBoundingBoxesWorker.h"
-#include "DummyBoundingBoxesModule.h"
 
 #include "Class_DummyBoundingBoxes_params.h"
 #include "InputPin_DummyBoundingBoxes_input_Trigger.h"
@@ -34,7 +33,7 @@ void DummyBoundingBoxesWorker::run()
 	LOG_INFO_CONFIG("worker start", configID);
 
 	// get status
-	auto statusStore = this->module->getStatusStore();
+	auto statusStore = this->module.getStatusStore();
 	ConnectedVision::shared_ptr<Class_generic_status> status = statusStore->getByID(configID)->copy();
 
 	// find last processed index
@@ -52,17 +51,17 @@ void DummyBoundingBoxesWorker::run()
 		// start the trigger input pin if it is connected
 		ConnectedVision::shared_ptr<InputPin_DummyBoundingBoxes_input_Trigger> triggerInputPin;
 		
-		if(this->module->getInputPinCount(this->config, InputPin_DummyBoundingBoxes_input_Trigger::PinID()) > 0)
+		if(this->module.getInputPinCount(this->config, InputPin_DummyBoundingBoxes_input_Trigger::PinID()) > 0)
 		{
-			triggerInputPin = boost::dynamic_pointer_cast<InputPin_DummyBoundingBoxes_input_Trigger>(this->module->getInputPin(this->config, InputPin_DummyBoundingBoxes_input_Trigger::PinID()));
+			triggerInputPin = boost::dynamic_pointer_cast<InputPin_DummyBoundingBoxes_input_Trigger>(this->module.getInputPin(this->config, InputPin_DummyBoundingBoxes_input_Trigger::PinID()));
 			triggerInputPin->start();
 		}
 
 		// get output stores
-		auto detectionsStore = dynamic_cast<DummyBoundingBoxesModule *>(this->module)->detectionsStoreManager->getReadWriteStore(configID);
+		auto detectionsStore = this->module.detectionsStoreManager->getReadWriteStore(configID);
 		detectionsStore->deleteAll();
 		detectionsStableResults->importFromStore( *detectionsStore );
-		auto objectsStore = dynamic_cast<DummyBoundingBoxesModule *>(this->module)->objectsStoreManager->getReadWriteStore(configID);
+		auto objectsStore = this->module.objectsStoreManager->getReadWriteStore(configID);
 		objectsStore->deleteAll();
 		objectsStableResults->importFromStore( *objectsStore );
 
@@ -89,7 +88,7 @@ void DummyBoundingBoxesWorker::run()
 
 		int indexEnd = -1;
 		
-		for (int64_t idx = 0; idx < params.get_count() && go; idx++)
+		for (int64_t idx = 0; idx < params.get_count() && this->controller.nextIterationStep(); idx++)
 		{
 			if(triggerInputPin)
 			{
@@ -107,7 +106,7 @@ void DummyBoundingBoxesWorker::run()
 
 					triggerInputPinStatus = triggerInputPin->getStatus();
 				}
-				while(triggerInputPinStatus.is_status_running() && !newResultsFlag && this->go);
+				while(triggerInputPinStatus.is_status_running() && !newResultsFlag && this->controller.nextIterationStep());
 
 				indexEnd = triggerInputPinStatus.get_stableResults()->back()->get_indexEnd();
 			}
@@ -178,7 +177,7 @@ void DummyBoundingBoxesWorker::run()
 		status->set_stableResultsByPinID( objectsStableResults, OutputPin_DummyBoundingBoxes_output_ObjectData::PinID() );
 		status->set_estimatedFinishTime( sysTime() );
 		status->set_systemTimeProcessing( sysTime() );
-		if ( go )
+		if ( this->controller.intermediateContinueCheck() )
 		{
 			// worker has finished
 			status->set_progress( 1.0 );

@@ -10,9 +10,10 @@ namespace ConnectedVision {
 namespace Module {
 namespace DirectoryIterator {
 
-ConnectedVision::shared_ptr<IConnectedVisionModule> DirectoryIteratorModuleFactory::createModule()
+ConnectedVision::shared_ptr<IModule> DirectoryIteratorModuleFactory::createModule()
+
 {
-	ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> moduleInstance( new DirectoryIteratorModule() );
+	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<DirectoryIteratorModule>();
 	if ( !moduleInstance ) 
 		throw std::runtime_error("DirectoryIteratorModuleFactory: error creating instance for module: Directory Iterator");
 

@@ -1,0 +1,191 @@
+title WorkerController stop
+
+participant ":WorkerController \n <<IWorkerController>>\n <<thread_safe>>" as WorkerController
+
+participant "commandQueue \n <<thread_safe>>" as commandQueue
+participant "controllerThread \n <<boost::thread>>" as controllerThread
+activate controllerThread #cyan
+
+participant "stopCmd \n <<Command>>" as stopCmd
+
+participant "workerThreadProgress \n <<thread_safe_progress>>" as workerThreadProgress
+
+participant "workerThread \n <<boost::thread>>" as workerThread
+activate workerThread #orange
+workerThread -->> worker
+activate workerThread #gray
+
+participant "worker \n <<IWorker>>" as worker
+activate worker #orange
+
+legend
+The color coding is used to indicate in which thread a function is executed.
+endlegend
+
+note over commandQueue: []
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+note over workerThreadProgress: Running
+
+
+== stop config ==
+
+
+ -> WorkerController : stop()
+activate WorkerController
+create stopCmd
+WorkerController -> stopCmd : <<create>>(\n   workerThreadProgress \n   workerThread \n   workerTimeout)
+activate stopCmd
+activate WorkerController #gray
+WorkerController <<- stopCmd : //stopCmd//
+deactivate stopCmd
+deactivate WorkerController #gray
+WorkerController -> commandQueue: enqueue(stopCmd)
+activate commandQueue
+activate WorkerController #gray
+WorkerController <<- commandQueue
+deactivate commandQueue
+deactivate WorkerController #gray
+
+note over commandQueue: [stopCmd]
+controllerThread <<- commandQueue: //stopCmd//
+deactivate commandQueue
+deactivate controllerThread #gray
+
+ <<- WorkerController
+deactivate WorkerController
+
+controllerThread -> stopCmd: execute()
+activate stopCmd #cyan
+activate controllerThread #gray
+
+stopCmd -> workerThreadProgress: get()
+activate workerThreadProgress #cyan
+activate stopCmd #gray
+stopCmd <<- workerThreadProgress : //Running//
+deactivate workerThreadProgress
+deactivate stopCmd #gray
+
+alt workerThreadProgress == Running
+	
+	stopCmd -> workerThreadProgress: set(Stopping)
+	activate workerThreadProgress #cyan
+	activate stopCmd #gray
+	stopCmd <<- workerThreadProgress
+	deactivate workerThreadProgress
+	deactivate stopCmd #gray
+	note over workerThreadProgress: Stopping
+
+	stopCmd -> workerThreadProgress: wait_until(Cleanup, workerTimeout)
+	activate workerThreadProgress #cyan
+	activate stopCmd #gray
+	hnote over stopCmd: wait for worker to stop
+
+	note right of stopCmd: **cooperative worker**
+	...
+
+	worker -> WorkerController: nextIterationStep()
+	activate WorkerController #orange
+	activate worker #gray
+	WorkerController -> workerThreadProgress: get()
+	activate workerThreadProgress #orange
+	activate WorkerController #gray
+	WorkerController <<- workerThreadProgress: //Stopping//
+	deactivate workerThreadProgress
+	deactivate WorkerController #gray
+	hnote over WorkerController: return (workerThreadProgress == RUNNING)
+	worker <<- WorkerController: //false//
+	deactivate WorkerController
+	deactivate worker #gray
+
+	group ref: finish worker
+		|||
+		workerThread <<- worker
+		deactivate workerThread #gray
+		deactivate worker
+		
+		workerThread -> WorkerController: stopped = !intermediateContinueCheck()
+		activate WorkerController #orange
+		activate workerThread #gray
+		workerThread <<- WorkerController: //true//
+		deactivate WorkerController
+		deactivate workerThread #gray
+	
+		workerThread -> workerThreadProgress: set(Cleanup)
+		activate workerThreadProgress #orange
+		activate workerThread #gray
+		workerThread <<- workerThreadProgress
+		deactivate workerThreadProgress
+		deactivate workerThread #gray
+		note over workerThreadProgress: Cleanup	
+
+		stopCmd <<- workerThreadProgress
+		deactivate workerThreadProgress
+		deactivate stopCmd #gray
+
+		stopCmd -> workerThreadProgress: wait_until(Stopped, workerTimeout)
+		activate workerThreadProgress #cyan
+		activate stopCmd #gray
+		hnote over stopCmd: wait for worker to be destructed
+
+		workerThread -> worker: <<destroy>>
+		activate worker #orange
+		activate workerThread #gray
+		|||
+		...
+		workerThread <<- worker
+		deactivate worker
+		deactivate workerThread #gray
+		destroy worker
+		
+	    alt on error
+			workerThread -> workerThreadProgress: set(Error)
+			activate workerThreadProgress #orange
+			activate workerThread #gray
+			workerThread <<- workerThreadProgress
+			deactivate workerThreadProgress
+			deactivate workerThread #gray
+			note over workerThreadProgress: Error	
+		else stopped == true
+			workerThread -> workerThreadProgress: set(Stopped)
+			activate workerThreadProgress #orange
+			activate workerThread #gray
+			workerThread <<- workerThreadProgress
+			deactivate workerThreadProgress
+			deactivate workerThread #gray
+			note over workerThreadProgress: Stopped	
+		else else
+			...	
+		end		
+		
+	end
+
+	stopCmd <<- workerThreadProgress: //Stopped or Error//
+	deactivate workerThreadProgress
+	deactivate stopCmd #gray
+
+end
+
+hnote over workerThread: thread loop
+workerThread -> workerThreadProgress: wait_while(...)
+activate workerThreadProgress #orange
+activate workerThread #gray
+hnote over workerThreadProgress: wait for change of \n workerThreadProgress
+
+controllerThread <<- stopCmd
+deactivate stopCmd
+deactivate controllerThread #gray
+destroy stopCmd
+
+note over commandQueue: []
+hnote over controllerThread: thread loop
+controllerThread -> commandQueue: pop()
+activate commandQueue #cyan
+activate controllerThread #gray
+hnote over commandQueue: wait for command
+
+|||
+...

@@ -36,41 +36,11 @@ using namespace std;
 /**
  * module constructor
  */
-ThumbnailGeneratorModule::ThumbnailGeneratorModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription)
+ThumbnailGeneratorModule::ThumbnailGeneratorModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
 {
 
 }
 
-/**
- * init module
- *
- * @param server  module server
- */
-void ThumbnailGeneratorModule::initModule( IModuleEnvironment *env )
-{
-	LOG_SCOPE;
-
-	// clean up module before init
-	this->releaseModule();
-
-	// call parent init
-	ConnectedVisionModule::initModule(env);
-}
-
-/**
- * destroy module
- *
- * @param server  module server
- */
-void ThumbnailGeneratorModule::releaseModule() 
-{
-	LOG_SCOPE;
-
-	// call parent init
-	ConnectedVisionModule::releaseModule();
-
-	// clean-up
-}
 
 /**
  * prepare module specific stores
@@ -146,19 +116,14 @@ boost::shared_ptr<IConnectedVisionOutputPin > ThumbnailGeneratorModule::generate
 }
 
 
-/**
- * create algorithm worker object
- *
- * @param env	ConnectedVision module environment
- * @param config	job / config
- *
- * @return new algorithm worker object
- */
-boost::shared_ptr<IConnectedVisionAlgorithmWorker> ThumbnailGeneratorModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+std::unique_ptr<IWorker> ThumbnailGeneratorModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config) 
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
+	// create worker instance
+	std::unique_ptr<IWorker> ptr( new ThumbnailGeneratorWorker(*this, controller, config) );
+	if ( !ptr )
+		throw std::runtime_error( "cannot create worker for " + this->moduleName + " / configID: " + config->getconst_configID() );
 
-	return boost::shared_ptr<IConnectedVisionAlgorithmWorker>( new ThumbnailGeneratorWorker(env, this, config) );
+	return ptr;
 }
 
 /**
@@ -166,10 +131,8 @@ boost::shared_ptr<IConnectedVisionAlgorithmWorker> ThumbnailGeneratorModule::cre
  *
  * @param config	config chain
  */
-void ThumbnailGeneratorModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
+void ThumbnailGeneratorModule::deleteAllData(const id_t configID)
 {
-	LOG_SCOPE_CONFIG( config->get_id() );
-
 	// nothing to do
 }
 

@@ -10,10 +10,12 @@
 #include <boost/atomic.hpp>
 #include "IModuleEnvironment.h"
 #include "IConnectedVisionModule.h"
+#include "ConnectedVision_Exceptions.h"
 #include "TestHelper_Threads.hpp"
 
 namespace ConnectedVision {
 namespace Module {
+
 
 /*
  * mock-up implementation of module environment
@@ -30,7 +32,7 @@ public:
 	* register module
 	*/
 	virtual void registerModule( 
-		boost::shared_ptr<IConnectedVisionModule> module ///< module instance
+		boost::shared_ptr<ConnectedVision::Module::IModule> module ///< module instance
 	) {}
 
 	/**
@@ -38,10 +40,10 @@ public:
 	*
 	* @return module instance
 	*/
-	virtual boost::shared_ptr<IConnectedVisionModule> getModule(
+	virtual boost::shared_ptr<ConnectedVision::Module::IModule> getModule(
 		std::string moduleID	///< module ID
 	) const
-	{ return boost::shared_ptr<IConnectedVisionModule>(); }
+	{ return boost::shared_ptr<ConnectedVision::Module::IModule>(); }
 
 
 	/**
@@ -74,6 +76,7 @@ public:
 	virtual Class_HostStatus getHostStatus()
 	{ return Class_HostStatus(); }
 
+
 };
 
 namespace Worker_Mockup_spy {
@@ -86,7 +89,7 @@ public:
 	/** constructor */
 	Worker_Mockup(
 		IModule* module,	///< [in] associated module
-		IWorkerController &workerThread,	///< [in] reference to controller
+		IWorkerControllerCallbacks &workerThread,	///< [in] reference to controller
 		uint64_t runtime,	///< [in] runtime of worker.run() in milliseconds
 		bool cooperative	///< [in] cooperative worker
 	) : pModule(module), runtime(runtime), workerThread(workerThread), cooperative(cooperative)
@@ -140,7 +143,7 @@ public:
 	{ return this->pModule; }
 
 protected:
-	IWorkerController &workerThread;
+	IWorkerControllerCallbacks &workerThread;
 	const bool cooperative;
 	uint64_t runtime;
 	IModule* pModule;
@@ -165,7 +168,7 @@ public:
 	*
 	* @return module 
 	*/
-	virtual IModule* getModule() const
+	virtual IModule* getModule()
 	{ return this->pModule; }
 
 	/**
@@ -174,7 +177,7 @@ public:
 	* @return worker instance
 	*/
 	virtual std::unique_ptr<IWorker> createWorker(
-		IWorkerController &controller,									///< reference to controller
+		IWorkerControllerCallbacks &controller,									///< reference to controller
 		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
 	)
 	{
@@ -193,7 +196,7 @@ public:
 class Module_Mockup : public IModule
 {
 public:
-	Module_Mockup() : ready(false)
+	Module_Mockup() : ready(false), deleteAllDataCallCount(0), processConfigRecoverCallCount(0)
 	{}
 	virtual ~Module_Mockup() {}
 
@@ -268,6 +271,14 @@ public:
 		ConnectedVisionResponse &response	///< [out] response containing module description
 	) { throw ConnectedVision::runtime_error("not implemented"); }
 
+	/** get moduleLogo as ConnectedVisionResponse
+	* @param[out] response the ConnectedVisionResponse result which will contain the module logo if successful
+	* @return status code (analog to HTTP codes)
+	*/
+	virtual int getModuleLogo(
+		ConnectedVisionResponse &response	///< [out] response containing module description
+	) { throw ConnectedVision::runtime_error("not implemented"); }
+			
 	/**
 	* get input pins description as JSON response
 	*
@@ -421,14 +432,99 @@ public:
 		ConnectedVisionResponse &response	///< [out] response containing status
 	) { throw ConnectedVision::runtime_error("not implemented"); }
 
-	virtual int processParameterCommand(const id_t configID, const std::string& command, ConnectedVisionResponse &response)
-	{ throw ConnectedVision::runtime_error("not implemented"); }
 
-	virtual int processParameterCommand(const id_t configID, const std::string& command, const std::string& payload, ConnectedVisionResponse &response)
-	{ throw ConnectedVision::runtime_error("not implemented"); }
+	/**
+	* process parameter command after HTTP-GET request and return status as JSON response
+	*
+	* @return status code (analog to HTTP codes)
+	*/
+	virtual int processParameterCommand(
+		const id_t configID, 				///< [in] ID of config
+		const std::string& command,			///< [in] command		command: "parameter/name=", "parameter/name", ...
+		ConnectedVisionResponse &response	///< [out] response		status of configuration / job
+	) { throw ConnectedVision::runtime_error("not implemented"); }
 
-	virtual int getModuleLogo(ConnectedVisionResponse &response)
-	{ throw ConnectedVision::runtime_error("not implemented"); }
+	/**
+	* process parameter command after HTTP-PUT/-POST request and return status as JSON response
+	*
+	* @return status code (analog to HTTP codes)
+	*/
+	virtual int processParameterCommand(
+		const id_t configID, 				///< [in] ID of config
+		const std::string& command,			///< [in] command		command: "parameter/name"
+		const std::string& payload,			///< [in] payload		the payload of the put/post request
+		ConnectedVisionResponse &response	///< [out] response		status of configuration / job
+	) { throw ConnectedVision::runtime_error("not implemented"); }
+
+			
+	//////////////////////////////////////////////////////////////////////////////////
+	// config / worker specific
+
+
+	/**
+		* register worker instance for specific config
+		*/
+	virtual void registerWorkerInstance(
+		const id_t configID,						///< [in] ID of config
+		IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
+	)  {
+		if ( !this->workerMap.insert ( std::pair<id_t, const IWorkerControllerCallbacks*>(configID, workerController)).second )
+		{
+			throw ConnectedVision::runtime_error("config: " + IDToStr(configID) + " already in worker list");
+		}
+	}
+
+	/**
+		* unregister worker instance for specific config
+		*/
+	virtual void unregisterWorkerInstance(
+		const id_t configID,						///< [in] ID of config
+		IWorkerControllerCallbacks *workerController	///< [in] worker controller instance
+	) {
+		try 
+		{
+			if ( this->workerMap.at(configID) == workerController )
+			{
+				// remove worker controller from map
+				this->workerMap.erase(configID);
+			}
+			else
+			{
+				// ignore
+			}
+		}
+		catch (std::out_of_range e)
+		{
+			// ignore
+		}
+	}
+
+	/**
+		* delete all results for a given configID
+		*/
+	virtual void deleteAllData(
+		const id_t configID				///< [in] ID of config
+	) {
+		this->deleteAllDataCallCount++;
+		this->resultData.clear();
+	}
+
+
+	/**
+	* try to recover a given config
+	*
+	* @return	- true: if recovering was sucessfully (status is stopped)
+	*			- false: if config could not be recovered or module does not support recovering
+	*/
+	virtual bool processConfigRecover(
+		const id_t configID				///< [in] ID of config
+	) { 
+		this->processConfigRecoverCallCount++;
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////
+	// store functions
 
 	/**
 	* get status store
@@ -450,9 +546,14 @@ public:
 public:
 	bool ready;
 	IModuleEnvironment *pEnv;
+	std::vector<int> resultData;
+	std::map<id_t, const IWorkerControllerCallbacks*> workerMap;
 
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_status> > statusStore;
 	ConnectedVision::shared_ptr< ConnectedVision::DataHandling::IStore_ReadWrite<Class_generic_config> > configStore;
+
+	int deleteAllDataCallCount;
+	int processConfigRecoverCallCount;
 };
 
 
