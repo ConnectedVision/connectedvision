@@ -1063,19 +1063,23 @@ std::string Module_BaseClass::getConfigHTMLsummary(Module_BaseClass &module, con
 
 	string statusString = *status->getconst_status();
 	result += " - status:\t";
-	if (statusString.compare("running") == 0)
+	if (status->is_status_running())
 	{
 		result += "<span style='background-color:lawngreen;'>" + statusString + "</span>";
 	}
-	else if (statusString.compare("error") == 0)
+	else if (status->is_status_starting() || status->is_status_stopping() || status->is_status_resetting())
+	{
+		result += "<span style='background-color:cyan;'>" + statusString + "</span>";
+	}
+	else if (status->is_status_error())
 	{
 		result += "<span style='background-color:red;'>" + statusString + "</span>";
 	}
-	else if (statusString.compare("init") == 0)
+	else if (status->is_status_init())
 	{
 		result += "<span style='background-color:lightblue;'>" + statusString + "</span>";
 	}
-	else if (statusString.compare("stopped") == 0)
+	else if (status->is_status_stopped())
 	{
 		result += "<span style='background-color:silver;'>" + statusString + "</span>";
 	}
