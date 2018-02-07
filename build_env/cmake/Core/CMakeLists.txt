@@ -113,7 +113,7 @@ set(ConnectedVisionStubSources
 	${ConnectedVisionCppRoot}/core/src/Module/Control/stubs/Store_SQLite_Stub_generic_status.cpp
 )
 
-set(ConnectedVisionCoreHeaders 
+set(ConnectedVisionCoreHeaders
 	${ConnectedVisionCppRoot}/core/src/DBConnection.h
 	${ConnectedVisionCppRoot}/core/src/helper.h
 	${ConnectedVisionCppRoot}/core/src/Module/Control/Class_generic_config.h
@@ -192,7 +192,7 @@ set(ConnectedVisionCoreDataHandlingSources
 	${ConnectedVisionCppRoot}/core/src/DataHandling/Store_SQLite_BaseClass.cpp
 )
 
-set(ConnectedVisionCoreHTTPHeaders 
+set(ConnectedVisionCoreHTTPHeaders
 	${ConnectedVisionCppRoot}/core/src/HTTP/HTTPServerPoco.h
 	${ConnectedVisionCppRoot}/core/src/HTTP/HTTPClientPoco.h
 	${ConnectedVisionCppRoot}/core/src/HTTP/HTTPTools.h
@@ -211,13 +211,13 @@ set(ConnectedVisionCoreHTTPSources
 
 set(ConnectedVisionCoreModuleHeaders
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.h
-	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.h	
-	${ConnectedVisionCppRoot}/core/src/Module/Worker_BaseClass.h	
+	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.h
+	${ConnectedVisionCppRoot}/core/src/Module/Worker_BaseClass.h
 )
 
 set(ConnectedVisionCoreModuleSources
 	${ConnectedVisionCppRoot}/core/src/Module/WorkerController.cpp
-	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.cpp	
+	${ConnectedVisionCppRoot}/core/src/Module/Module_BaseClass.cpp
 	${ConnectedVisionCppRoot}/core/src/Module/Worker_BaseClass.cpp
 )
 
@@ -234,10 +234,7 @@ set(ConnectedVisionCoreInputPinsHeaders
 	${ConnectedVisionCppRoot}/core/src/Module/InputPins/InputPin_RAWYUV420.h
 )
 
-set(ConnectedVisionCoreInputPinsSources
-	${ConnectedVisionCppRoot}/core/src/Module/InputPins/InputPin_PNG.cpp
-	${ConnectedVisionCppRoot}/core/src/Module/InputPins/InputPin_RAWYUV420.cpp
-)
+set(ConnectedVisionCoreInputPinsSources)
 
 set(ConnectedVisionCoreOutputPinsHeaders
 	${ConnectedVisionCppRoot}/core/src/Module/OutputPins/OutputPin_Generic.h
@@ -262,7 +259,7 @@ set(HEADERS
 	${ConnectedVisionCoreErrorHandlingHeaders}
 	${ConnectedVisionStubHeaders}
 	${ConnectedVisionCoreHeaders}
-	${ConnectedVisionCoreDataHandlingHeaders}	
+	${ConnectedVisionCoreDataHandlingHeaders}
 	${ConnectedVisionCoreHTTPHeaders}
 	${ConnectedVisionCoreModuleHeaders}
 	${ConnectedVisionCoreModuleDispatcherHeaders}
@@ -362,6 +359,9 @@ install(DIRECTORY
 
 file(GLOB files "${ConnectedVisionCppRoot}/core/src/HTTP/*.h")
 install(FILES ${files} DESTINATION "include/HTTP")
+
+file(GLOB files "${ConnectedVisionCppRoot}/core/src/Module/*.h")
+install(FILES ${files} DESTINATION "include/Module")
 
 file(GLOB files "${ConnectedVisionCppRoot}/core/src/Module/Control/*.h")
 install(FILES ${files} DESTINATION "include/Module/Control")

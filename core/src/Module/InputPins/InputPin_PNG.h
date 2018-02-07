@@ -26,8 +26,7 @@ public:
 	static const bool hasPinID( pinID_t id ) { return ( id == PinID() ); };
 
 public:
-	InputPin_PNG(IModuleEnvironment *env, const pinID_t inputPinID);
-	virtual ~InputPin_PNG();
+	InputPin_PNG(IModuleEnvironment *env, const pinID_t inputPinID) : ConnectedVisionInputPinData(env, inputPinID) {}
 };
 
 } // namespace ConnectedVision
