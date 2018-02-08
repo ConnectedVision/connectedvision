@@ -12,7 +12,7 @@ namespace DummyBoundingBoxes {
 
 ConnectedVision::shared_ptr<IModule> DummyBoundingBoxesModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<DummyBoundingBoxesModule>();
+	ConnectedVision::shared_ptr<IModule> moduleInstance = boost::dynamic_pointer_cast<IModule>(ConnectedVision::make_shared<DummyBoundingBoxesModule>());
 	if ( !moduleInstance ) 
 		throw std::runtime_error("DummyBoundingBoxesModuleFactory: error creating instance for module: DummyBoundingBoxes");
 

@@ -12,7 +12,7 @@ namespace FileImporter {
 
 ConnectedVision::shared_ptr<IModule> FileImporterModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<FileImporterModule>();
+	ConnectedVision::shared_ptr<IModule> moduleInstance = boost::dynamic_pointer_cast<IModule>(ConnectedVision::make_shared<FileImporterModule>());
 	if ( !moduleInstance ) 
 		throw std::runtime_error("FileImporterModuleFactory: error creating instance for module: FileImporter");
 

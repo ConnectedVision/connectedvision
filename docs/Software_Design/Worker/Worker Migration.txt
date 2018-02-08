@@ -111,7 +111,7 @@ ConnectedVision::shared_ptr<IConnectedVisionModule> xxxModuleFactory::createModu
 	->
 ConnectedVision::shared_ptr<IModule> xxxModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<xxxModule>();
+	ConnectedVision::shared_ptr<IModule> moduleInstance = boost::dynamic_pointer_cast<IModule>(ConnectedVision::make_shared<xxxModule>());
 	if ( !moduleInstance ) 
 		throw std::runtime_error("xxxModuleFactory: error creating instance for module");
 

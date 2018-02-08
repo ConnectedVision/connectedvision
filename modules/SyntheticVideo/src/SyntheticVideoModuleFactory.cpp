@@ -12,7 +12,7 @@ namespace SyntheticVideo {
 
 ConnectedVision::shared_ptr<IModule> SyntheticVideoModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<SyntheticVideoModule>();
+	ConnectedVision::shared_ptr<IModule> moduleInstance = boost::dynamic_pointer_cast<IModule>(ConnectedVision::make_shared<SyntheticVideoModule>());
 	if ( !moduleInstance ) 
 		throw std::runtime_error("SyntheticVideoModuleFactory: error creating instance for module: SyntheticVideo");
 

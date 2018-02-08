@@ -12,7 +12,7 @@ namespace VideoImporter {
 
 ConnectedVision::shared_ptr<IModule> VideoImporterModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<VideoImporterModule>();
+	ConnectedVision::shared_ptr<IModule> moduleInstance = boost::dynamic_pointer_cast<IModule>(ConnectedVision::make_shared<VideoImporterModule>());
 	if ( !moduleInstance ) 
 		throw std::runtime_error("VideoImporterModuleFactory: error creating instance for module: VideoImporter");
 
