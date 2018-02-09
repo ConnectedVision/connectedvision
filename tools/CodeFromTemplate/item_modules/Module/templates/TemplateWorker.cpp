@@ -116,7 +116,7 @@ void {{Module.moduleID}}Worker::run()
 {% for d in Module.inputPins %}{% if d.name != masterInputPin.name %}
 				// get {{d.name}} data
 				auto input{{d.name}} = input{{d.name}}Pin->getByTimestamp( time );
-				if ( !input{{d.name}} )
+				if (input{{d.name}}.empty() || !input{{d.name}}.front())
 				{
 					throw ConnectedVision::runtime_error("{{d.name}} not found for timestamp: " + intToStr(time) );
 				}
