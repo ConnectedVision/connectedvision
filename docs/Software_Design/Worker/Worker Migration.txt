@@ -14,8 +14,9 @@ class xxxModule: public Module_BaseClass	(make sure that ConnectedVision::Module
 
 
 virtual void initModule();	->	optional
-virtual void releaseModule();	->	optional
 
+
+virtual void releaseModule();	->	optional
 
 
 virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(
@@ -24,7 +25,7 @@ virtual boost::shared_ptr<IConnectedVisionAlgorithmWorker> createWorker(
 );
 	->
 virtual std::unique_ptr<IWorker> createWorker(
-	IWorkerControllerCallbacks &controller,									///< reference to worker controller
+	IWorkerControllerCallbacks &controller,							///< reference to worker controller
 	ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
 ) (see IWorkerFactory)
 
@@ -38,14 +39,24 @@ virtual void deleteAllData(
 );
 
 
+
 xxxModule.cpp
 ------------
 
-
 // _moduleDescription, _inputPinDescription, _outputPinDescription are static strings from "xxx_ModuleDescription.h" (auto generated header)
-xxxModule::xxxModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription)
+xxxModule::xxxModule() : ConnectedVisionModule(_moduleDescription, _inputPinDescription, _outputPinDescription) {}
+	->
+xxxModule::xxxModule() : Module_BaseClass(_moduleDescription, _inputPinDescription, _outputPinDescription) {}
 
 
+boost::shared_ptr<IConnectedVisionAlgorithmWorker> xxxModule::createWorker(IModuleEnvironment *env, boost::shared_ptr<const Class_generic_config> config)
+{
+	LOG_SCOPE;
+
+	// create worker instance
+	return boost::make_shared<xxxWorker>(env, this, config);
+}
+	->
 std::unique_ptr<IWorker> xxxModule::createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config) 
 {
 	// create worker instance
@@ -54,27 +65,53 @@ std::unique_ptr<IWorker> xxxModule::createWorker(IWorkerControllerCallbacks &con
 	return ptr;
 }
 
-void deleteAllData(const id_t configID)
+
+void xxxModule::deleteResults(const boost::shared_ptr<const Class_generic_config> config)
+{
+	LOG_SCOPE_CONFIG( config->getconst_id() );
+
+	// delete all results for configID
+	this->storeManagerX->getReadWriteStore( config->getconst_id() )->deleteAll();
+}
+	->
+void xxxModule::deleteAllData(const id_t configID)
 {
 	// delete all results for configID
-	xxx->getReadWriteStore(configID)->deleteAll();
+	this->storeManagerX->getReadWriteStore(configID)->deleteAll();
 }
+
+
+virtual void initModule() { ... }	->	optional
+
+
+virtual void releaseModule() { ... }	->	optional
 
 
 
 xxxModuleFactory.h
 ------------
+
 static ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> createModule();
 	->
 static ConnectedVision::shared_ptr<ConnectedVision::Module::IModule> createModule();
 
 
+
 xxxModuleFactory.cpp
 ------------
-ConnectedVision::shared_ptr<IModule> xxxModuleFactory::createModule()
 
+ConnectedVision::shared_ptr<IConnectedVisionModule> xxxModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<xxxModule>();
+	ConnectedVision::shared_ptr<ConnectedVision::IConnectedVisionModule> moduleInstance( new xxxModule() );
+	if ( !moduleInstance ) 
+		throw std::runtime_error("xxxModuleFactory: error creating instance for module: xxx Module");
+
+	return moduleInstance;
+}
+	->
+ConnectedVision::shared_ptr<IModule> xxxModuleFactory::createModule()
+{
+	ConnectedVision::shared_ptr<IModule> moduleInstance = boost::dynamic_pointer_cast<IModule>(ConnectedVision::make_shared<xxxModule>());
 	if ( !moduleInstance ) 
 		throw std::runtime_error("xxxModuleFactory: error creating instance for module");
 
@@ -86,34 +123,40 @@ ConnectedVision::shared_ptr<IModule> xxxModuleFactory::createModule()
 xxxWorker.h
 ------------------
 
-#include <IModuleEnvironment.h>	-> remove
-#include <ConnectedVisionModule.h>	->	remove
-#include <ConnectedVisionAlgorithmWorker.h>	-> remove
-add	-> #include "xxxModule.h"
-add	-> #include <Module/Worker_BaseClass.h>
+remove:
+#include <IModuleEnvironment.h>
+#include <ConnectedVisionModule.h>
+#include <ConnectedVisionAlgorithmWorker.h>
+
+add:
+#include "xxxModule.h"
+#include <Module/Worker_BaseClass.h>
 
 
-class DirectoryIteratorWorker : public ConnectedVisionAlgorithmWorker
+class xxxWorker : public ConnectedVisionAlgorithmWorker
 	->
-class DirectoryIteratorWorker : public Worker_BaseClass
+class xxxWorker : public Worker_BaseClass
 
 
-xxxWorker()
-	->
 xxxWorker(
-		xxxModule &module,		///< [in] reference to "parent" module; This is the explicit xxxWorker (no interface) so it is ok to use the explicit xxxModule class.
-		IWorkerControllerCallbacks &controller,					///< [in] worker controller (for callbacks)
-		ConnectedVision::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
-	) : Worker_BaseClass(module, controller, config), module(module) {}
+	IModuleEnvironment *env,								///< [in] general environment
+	ConnectedVisionModule *module,							///< [in] corresponding module
+	boost::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+) :	ConnectedVisionAlgorithmWorker(env, module, config) {}
+->
+xxxWorker(
+	xxxModule &module,	///< [in] reference to "parent" module; This is the explicit xxxWorker (no interface) so it is ok to use the explicit xxxModule class.
+	IWorkerControllerCallbacks &controller,	///< [in] worker controller (for callbacks)
+	ConnectedVision::shared_ptr<const Class_generic_config> config	///< [in] config for this worker instance
+) : Worker_BaseClass(module, controller, config), module(module) {}
 
 
 
--> change 	virtual void run();	from protected to public
-	
-	-> add:
-	virtual IModule* getModule() { return static_cast<IModule*>(&module); };
-	
-protected:
+change from protected to public:
+	virtual void run();
+
+
+add to protected
 	xxxModule &module;
 
 
@@ -121,12 +164,26 @@ protected:
 xxxWorker.cpp
 ------------------
 	
-this->module->deleteResults( this->config );	->		this->module.deleteAllData(configID);
-
-this->module->xxx()	->	this-Module.xxx()
-
-this->go	->		this->controller.nextIterationStep() / this->controller.intermediateContinueCheck()
+this->module->deleteResults( this->config );
+	->
+this->module.deleteAllData(configID);
 
 
+this->module->xxx()
+	->
+this-Module.xxx()
 
-	
+
+this->go
+	->
+this->controller.nextIterationStep() / this->controller.intermediateContinueCheck()
+
+
+dynamic_cast<xxxModule *>(this->module)->storeManagerX-->getReadWriteStore(configID);
+	->
+auto storeX = this->module.storeManagerX->getReadWriteStore(configID);	
+
+
+this->sleep_ms(x);
+	->
+sleep_ms(x);

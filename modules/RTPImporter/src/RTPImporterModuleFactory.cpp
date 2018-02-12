@@ -12,7 +12,7 @@ namespace RTPImporter {
 
 ConnectedVision::shared_ptr<IModule> RTPImporterModuleFactory::createModule()
 {
-	ConnectedVision::shared_ptr<IModule> moduleInstance = ConnectedVision::make_shared<RTPImporterModule>();
+	ConnectedVision::shared_ptr<IModule> moduleInstance = boost::dynamic_pointer_cast<IModule>(ConnectedVision::make_shared<RTPImporterModule>());
 	if ( !moduleInstance ) 
 		throw std::runtime_error("RTPImporterModuleFactory: error creating instance for module: RTP stream receiver module");
 

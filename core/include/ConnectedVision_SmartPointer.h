@@ -243,7 +243,7 @@ namespace ConnectedVision {
 	}
 
 	template<class T, typename A, typename A2, typename A3, typename A4>
-	typename shared_ptr<T> make_shared(const A &a1, A2 &&a2, A3 &&a3, A4 &&a4)
+	shared_ptr<T> make_shared(const A &a1, A2 &&a2, A3 &&a3, A4 &&a4)
 	{
 		T* obj = NULL;
 		try
@@ -261,7 +261,7 @@ namespace ConnectedVision {
 	}
 
 	template<class T, typename A1, typename A2, typename A3, typename A4>
-	typename shared_ptr<T> make_shared(A1 &&a1, A2 &&a2, A3 &&a3, A4 &&a4)
+	shared_ptr<T> make_shared(A1 &&a1, A2 &&a2, A3 &&a3, A4 &&a4)
 	{
 		T* obj = NULL;
 		try

@@ -126,7 +126,7 @@ WorkerController::~WorkerController()
 {
 	// terminate controller and worker thread
 	auto stopCmd = ConnectedVision::make_shared<WorkerCommand::CommandStop>( this->workerThreadProgress, this->workerThread, this->workerTimeout );
-	ConnectedVision::shared_ptr<WorkerCommand::ICommand> terminateCmd = ConnectedVision::make_shared<WorkerCommand::CommandTerminate>( this->workerThreadProgress, this->progressBeforeTermination, stopCmd );
+	ConnectedVision::shared_ptr<WorkerCommand::ICommand> terminateCmd = boost::dynamic_pointer_cast<WorkerCommand::ICommand>(ConnectedVision::make_shared<WorkerCommand::CommandTerminate>( this->workerThreadProgress, this->progressBeforeTermination, stopCmd ));
 	commandQueue.push( terminateCmd );
 
 	// wait for the threads to terminate before destroying the class
@@ -158,7 +158,7 @@ const boost::shared_ptr<std::string> WorkerController::getStatusFromProgress() c
 ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::start() 
 {
 	// enqueue start command
-	ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdStart = ConnectedVision::make_shared<WorkerCommand::CommandStart>(this->workerThreadProgress);
+	ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdStart = boost::dynamic_pointer_cast<WorkerCommand::ICommand>(ConnectedVision::make_shared<WorkerCommand::CommandStart>(this->workerThreadProgress));
 	commandQueue.push( cmdStart );
 
 	return this->getStatus();
@@ -167,7 +167,7 @@ ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::start(
 ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::stop()
 {
 	// enqueue stop command
-	ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdStop = ConnectedVision::make_shared<WorkerCommand::CommandStop>(this->workerThreadProgress, this->workerThread, this->workerTimeout);
+	ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdStop = boost::dynamic_pointer_cast<WorkerCommand::ICommand>(ConnectedVision::make_shared<WorkerCommand::CommandStop>(this->workerThreadProgress, this->workerThread, this->workerTimeout));
 	commandQueue.push( cmdStop );
 
 	return this->getStatus();
@@ -177,7 +177,7 @@ ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::reset(
 {
 	// enqueue reset command
 	auto cmdStop = ConnectedVision::make_shared<WorkerCommand::CommandStop>(this->workerThreadProgress, this->workerThread, this->workerTimeout);
-	ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdReset = ConnectedVision::make_shared<WorkerCommand::CommandReset>(this->workerThreadProgress, cmdStop);
+	ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdReset = boost::dynamic_pointer_cast<WorkerCommand::ICommand>(ConnectedVision::make_shared<WorkerCommand::CommandReset>(this->workerThreadProgress, cmdStop));
 	commandQueue.push( cmdReset );
 
 	return this->getStatus();
@@ -186,7 +186,7 @@ ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::reset(
 ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::recover()
 {
 	// enqueue recover command
-	ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdRecover = ConnectedVision::make_shared<WorkerCommand::CommandRecover>(this->workerThreadProgress);
+	ConnectedVision::shared_ptr<WorkerCommand::ICommand> cmdRecover = boost::dynamic_pointer_cast<WorkerCommand::ICommand>(ConnectedVision::make_shared<WorkerCommand::CommandRecover>(this->workerThreadProgress));
 	commandQueue.push( cmdRecover );
 
 	return this->getStatus();
