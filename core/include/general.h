@@ -17,8 +17,13 @@
 #include <rapidjson/writer.h>	// for stringify JSON
 #include <rapidjson/stringbuffer.h>
 
-#if (_MSC_VER == 1600) // check for Visual Studio 2010
+// define noexcept for Visual Studio 2010 only
+#if (_MSC_VER == 1600)
 #define noexcept
+#endif
+
+// disable warnings about ignored exception specification up to the latest tested Visual Studio version
+#if (_MSC_VER <= 1900)
 #pragma warning( disable : 4290 )
 #endif
 

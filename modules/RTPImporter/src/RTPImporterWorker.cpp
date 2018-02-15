@@ -82,8 +82,6 @@ RTPImporterWorker::RTPImporterWorker(RTPImporterModule &module,	IWorkerControlle
 
 void RTPImporterWorker::initResources()
 {
-	char *pParamRtpUrl;
-
 	this->freeResources();
 
 	this->formatCtx = avformat_alloc_context();
