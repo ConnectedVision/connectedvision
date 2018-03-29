@@ -312,7 +312,7 @@ void WorkerController::workerThreadFunction()
 								worker->run();
 								std::cout << "worker->run() finished [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
 							}
-							catch (boost::thread_interrupted e)
+							catch (boost::thread_interrupted)
 							{
 								error = true;
 								std::cout << "[Exception worker.run() did not return on stop request in time -> interrupted after timeout] ";
