@@ -17,7 +17,7 @@ defined behavior is:
 e.g. http://localhost:2020/moduleID/xyz/status[http://localhost:2020/moduleID/*xyz*/status]
 ** “aliasID=xyz”: there are two possibilities:
 *** if only one config with aliasID “xyz” exists for the specified module this config will be used
-*** if there is more than one config that claimed aliasID “xyz”: the request answer will be something like “error: requested aliasID is ambiguous, choose a specific aliasID by…” followed by a list of configIDs claiming this aliasID (+ts)
+*** if there is more than one config that claimed aliasID “xyz”: the request answer will be the "youngest"-claiming config 
 ** “aliasID=xyz.0”: the most recent config of the module will be used (the “.0” makes this explicit)
 ** “aliasID=xyz.1”: the 2^nd^ youngest config that claimed the aliasID will be used
 ** “aliasID=xyz.n”: the (n+1)-th youngest config that claimed the aliasID will be used
@@ -60,7 +60,7 @@ You get back the config with updated information like the configID (the created 
 
 * if the config already existed, it should return the combined entries of the old aliasID list and the new aliasID list (provided in the set-config request). +
 In this case creation timestamps will be different for aliasIDs previously created with older set-config requests. +
-AliasIDs from the new list, which are also in the existing list, will get a timestamp update!
+AliasIDs from the new list, which are also in the existing list, will get a timestamp update! (see _Module_BaseClass::updateAliasIDs()_)
 
 [source, JSON]
 [subs=+quotes]
@@ -79,16 +79,20 @@ AliasIDs from the new list, which are also in the existing list, will get a time
 When querying a config the ModuleDispatcher is responsible for parsing the URL. +
 AliasID handling will be done when parsing the request URL for ConfigIDs in module specific requests (the sub-part of the URL containing the configID will be called ID string here):
 
-configStore is extended by function vector<id_t> getConfigIDsByAliasID(string aliasID): +
+_Module_BaseClass_ is extended by function _vector<id_t> getConfigIDsByAliasID(string aliasID)_: +
 returns list of configIDs with matching aliasID sorted by creation timestamp (most recent) of aliasID +
 note: the returned configIDs belong to configs of the specific module
 
+To resolve a generic configID (either a native configID or an aliasID) use the _resolvePotentialAliasID()_ function from _Module_BaseClass_. 
+
+An aliasID should be converted to a native configID on use (as late as possible), and not in advance (e.g. aliasIDs in sub configs).
+
 The parsing will look like this:
 
-* If the ID string does not start with “aliasID=” or “AliasID=” and does not contain “.” configStore is queried for the specific configID
+1. If the ID string does not start with “aliasID=” or “AliasID=” and does not contain “.”
 ** If it is found, it is used
 ** If it is not found aliasID resolving is done (so “aliasID=” can be omitted)
-* aliasID resolving:
+2. aliasID resolving:
 ** if present the leading “aliasID=” will be cut away from string
 ** test for post fix “.n”. If present save n and cut away from string
 ** configStore function getConfigIDsWithAliasID is invoked with cropped aliasID string
