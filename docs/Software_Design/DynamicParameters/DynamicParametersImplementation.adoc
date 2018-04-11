@@ -167,11 +167,11 @@ with value being a well-formated json object/array/value.
 
 Getting the whole params object can be done with this REST-request:
 
-http://127.0.0.1:2020/ModulXYZ/configid/parameter
+http://127.0.0.1:2020/ModulXYZ/configid/params
 
 Setting the whole params object can be done with this REST-request:
 
-http://127.0.0.1:2020/ModulXYZ/configid/parameter/={…}
+http://127.0.0.1:2020/ModulXYZ/configid/params/={…}
 
 Note: the curly braces indicate that params is an object.
 
