@@ -434,6 +434,14 @@ protected:
 	rapidjson::Document moduleDescriptionJSON; ///< rapidjson document for module description (needed for allocator)
 	rapidjson::Value defaultParameters; ///< rapidjson object with default parameters of module
 
+	/*
+	* module specific control functions
+	*/
+	virtual void start(boost::shared_ptr<const Class_generic_config> constConfig) {}
+	virtual void stop(boost::shared_ptr<const Class_generic_config> constConfig) {}
+	virtual void reset(boost::shared_ptr<const Class_generic_config> constConfig) {}
+	virtual void recover(boost::shared_ptr<const Class_generic_config> constConfig) {}
+
 	/**
 	* holds the parameter description object which provides required info about the parameter description (part of the module description) as c++-object
 	* parameterDesc == NULL <-> params: {}

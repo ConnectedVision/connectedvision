@@ -3592,7 +3592,7 @@ void Module_BaseClass::resetParameterToInitialValue(const id_t resolvedConfigID,
 /**
  * start processing of a configChain
  *
- *  This function can be overwritten to execute a module specific procedure.
+ *  This function can be overwritten to execute a module-specific procedure.
  *
  * @param[in] workerController	worker controller of the config to be started
  */
@@ -3600,13 +3600,16 @@ void Module_BaseClass::start(ConnectedVision::shared_ptr<ConnectedVision::Module
 {
 	LOG_SCOPE_CONFIG( workerController->getConfigID() );
 	
+	// call module-specific implementation
+	this->start(workerController->getConfig());
+
 	workerController->start();
 }
 
 /**
  * stop processing of a configChain
  *
- *  This function can be overwritten to execute a module specific procedure.
+ *  This function can be overwritten to execute a module-specific procedure.
  *
  * @param[in] config	configChain
  * @param[in] status	config status
@@ -3614,7 +3617,10 @@ void Module_BaseClass::start(ConnectedVision::shared_ptr<ConnectedVision::Module
 void Module_BaseClass::stop(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController)
 {
 	LOG_SCOPE_CONFIG( workerController->getConfigID() );
-	
+
+	// call module-specific implementation
+	this->stop(workerController->getConfig());
+
 	workerController->stop();
 
 	// delete the cached config parameters
@@ -3624,7 +3630,7 @@ void Module_BaseClass::stop(ConnectedVision::shared_ptr<ConnectedVision::Module:
 /**
  * revocer of a configChain
  *
- *  This function can be overwritten to execute a module specific procedure.
+ *  This function can be overwritten to execute a module-specific procedure.
  *
  * @param[in] config	configChain
  * @param[in] status	config status
@@ -3632,14 +3638,17 @@ void Module_BaseClass::stop(ConnectedVision::shared_ptr<ConnectedVision::Module:
 void Module_BaseClass::recover(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController)
 {
 	LOG_SCOPE_CONFIG( workerController->getConfigID() );
-	
+
+	// call module-specific implementation
+	this->recover(workerController->getConfig());
+
 	workerController->recover();
 }
 
 /**
  * reset processing of a configChain
  *
- *  This function can be overwritten to execute a module specific procedure.
+ *  This function can be overwritten to execute a module-specific procedure.
  *
  * @param[in] config	configChain
  * @param[in] status	config status
@@ -3647,6 +3656,9 @@ void Module_BaseClass::recover(ConnectedVision::shared_ptr<ConnectedVision::Modu
 void Module_BaseClass::reset(ConnectedVision::shared_ptr<ConnectedVision::Module::WorkerController> &workerController)
 {
 	LOG_SCOPE_CONFIG( workerController->getConfigID() );
+
+	// call module-specific implementation
+	this->reset(workerController->getConfig());
 
 	workerController->reset();
 }
