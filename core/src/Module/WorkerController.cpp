@@ -196,6 +196,8 @@ ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::getSta
 {
 	// get status and current status according to worker progress
 	auto statusConst = this->statusStore->getByID(this->configID);
+	if ( !statusConst )
+		return statusConst;
 	auto status = statusConst->copy();
 	auto statusProgress = this->getStatusFromProgress();
 

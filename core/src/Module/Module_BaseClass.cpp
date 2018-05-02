@@ -1459,6 +1459,10 @@ int Module_BaseClass::deleteConfigOnlyThis(const id_t configID, ConnectedVisionR
 
 			// delete config
 			this->configStore->deleteByID( resolvedConfigID );
+			
+			// delete worker cache
+			this->mapWorkerControllers.erase(resolvedConfigID);
+
 
 			// return JSON string
 			response.setContentType("application/json");
