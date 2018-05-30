@@ -211,12 +211,18 @@ namespace DataHandling {
 	class DataRange
 	{
 	public:
+		/** index is not available / not valid */
+		static const int64_t INDEX_NA = -1;
+
 		/** start index of the data range */
 		int64_t indexStart;
 	
 		/** end index of the data range */
 		int64_t indexEnd;
 	
+		/** index is not available / not valid */
+		static const timestamp_t TIMESTAMP_NA = -1;
+
 		/** start timestamp of the data range */
 		timestamp_t timestampStart;
 	

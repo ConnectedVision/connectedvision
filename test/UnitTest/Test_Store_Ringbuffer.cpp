@@ -180,11 +180,16 @@ TEST(Store_Ringbuffer, resetIndex_sets_index_for_next_element)
 	// actual test
 	store.resetIndex(index);
 
+	// start index is set, but no data in ringbuffer
+	auto range = store.getDataRange();
+	LONGS_EQUAL( range.INDEX_NA, range.indexStart );
+	LONGS_EQUAL( range.INDEX_NA, range.indexEnd );
+
 	// add first element
 	store.save_copy(data);
 
 	// check index
-	auto range = store.getDataRange();
+	range = store.getDataRange();
 	LONGS_EQUAL( index, range.indexStart );
 	LONGS_EQUAL( index, range.indexEnd );
 }
