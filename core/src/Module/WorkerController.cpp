@@ -145,16 +145,6 @@ bool WorkerController::activeWorker() const
 	return ( active );
 }
 
-const boost::shared_ptr<std::string> WorkerController::getStatusFromProgress() const
-{
-	WorkerThreadProgress::WorkerThreadProgress progress = this->workerThreadProgress.get();
-		
-	if ( progress == WorkerThreadProgress::Terminating || progress == WorkerThreadProgress::Terminated )
-		return mapProgressToStatus(this->progressBeforeTermination);
-	else
-		return mapProgressToStatus(progress);
-}
-
 ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::start() 
 {
 	// enqueue start command
@@ -194,24 +184,44 @@ ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::recove
 
 ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::getStatus()
 {
-	// get status and current status according to worker progress
+	// get current status according to worker progress
 	auto statusConst = this->statusStore->getByID(this->configID);
 	if ( !statusConst )
 		return statusConst;
 	auto status = statusConst->copy();
-	auto statusProgress = this->getStatusFromProgress();
 
-	// return directly if status didn't change
-	if ( status->is_status( statusProgress ) )
-		return statusConst;
+	// get progress
+	WorkerThreadProgress::WorkerThreadProgress progress = this->workerThreadProgress.get();
+	if ( progress == WorkerThreadProgress::Terminating || progress == WorkerThreadProgress::Terminated )
+		progress = this->progressBeforeTermination;
+	// get status from progress
+	auto progressToStatus = mapProgressToStatus(progress);
 
-	// update according to worker progress
-	status->set_status( statusProgress );
+	// cache status, but do not write status while worker is running
+	if ( progress >= WorkerThreadProgress::Starting && progress < WorkerThreadProgress::Stopped )
+	{
+		// was status changed manually?
+		if ( status->is_status_na() )
+		{
+			// update according to worker progress
+			status->set_status( progressToStatus );
+		}
+		return status;
+	}
+	else
+	{
+		// return directly if status didn't change or worker is running
+		if ( status->is_status( progressToStatus ) )
+			return statusConst;
 		
-	// save status and return
-	statusConst = this->statusStore->make_const( status );
-	this->statusStore->save_const( statusConst );
-	return statusConst;
+		// update according to worker progress
+		status->set_status( progressToStatus );
+
+		// save status and return
+		statusConst = this->statusStore->make_const( status );
+		this->statusStore->save_const( statusConst );
+		return statusConst;
+	}
 }
 
 ConnectedVision::shared_ptr<const Class_generic_config> WorkerController::getConfig()
@@ -293,7 +303,13 @@ void WorkerController::workerThreadFunction()
 				case WorkerThreadProgress::Starting:
 					try
 					{
-						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
+						// invalid status in store
+						auto status = this->getStatus()->copy();
+						status->set_message("");
+						status->set_status_na();
+						this->statusStore->save_move( status );
+
+						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption)
 						boost::this_thread::disable_interruption interrupt_disabler;
 
 						// create worker
@@ -310,9 +326,7 @@ void WorkerController::workerThreadFunction()
 								this->getStatus();
 
 								boost::this_thread::restore_interruption interrupt_enabler(interrupt_disabler);
-								std::cout << "worker->run() started [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
 								worker->run();
-								std::cout << "worker->run() finished [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
 							}
 							catch (boost::thread_interrupted)
 							{
@@ -330,8 +344,6 @@ void WorkerController::workerThreadFunction()
 							// clean up worker -> destroy worker
 							this->workerThreadProgress = WorkerThreadProgress::Cleanup;
 							worker.reset();
-
-							std::cout << "worker destroyed [moduleID: "<< this->module.getModuleID() << "]" << std::endl;
 
 							// get status from store (not this->getStatus()!!! since it would overwrite db status with getStatusFromProgress())
 							auto statusConst = this->statusStore->getByID(this->configID);
@@ -504,7 +516,7 @@ void WorkerController::init(id_t configID)
 	this->module.registerWorkerInstance(this->configID, this);
 }
 
-const boost::shared_ptr<std::string> WorkerController::mapProgressToStatus(WorkerThreadProgress::WorkerThreadProgress progress) const
+const boost::shared_ptr<std::string> WorkerController::mapProgressToStatus(WorkerThreadProgress::WorkerThreadProgress progress)
 {
 	switch ( progress )
 	{
@@ -533,5 +545,31 @@ const boost::shared_ptr<std::string> WorkerController::mapProgressToStatus(Worke
 	}
 }
 
+const WorkerThreadProgress::WorkerThreadProgress WorkerController::mapStatusToProgress(ConnectedVision::shared_ptr<Class_generic_status> status)
+{
+	if ( !status )
+		return WorkerThreadProgress::Undefined;
+
+	if ( status->is_status( Class_generic_status::status_init ) )
+		return WorkerThreadProgress::Init;
+	if ( status->is_status( Class_generic_status::status_starting ) )
+		return WorkerThreadProgress::Starting;
+	if ( status->is_status( Class_generic_status::status_running ) )
+		return WorkerThreadProgress::Running;
+	if ( status->is_status( Class_generic_status::status_stopping ) )
+		return WorkerThreadProgress::Stopping;
+	if ( status->is_status( Class_generic_status::status_stopped ) )
+		return WorkerThreadProgress::Stopped;
+	if ( status->is_status( Class_generic_status::status_finished ) )
+		return WorkerThreadProgress::Finished;
+	if ( status->is_status( Class_generic_status::status_recovering ) )
+		return WorkerThreadProgress::Recovering;
+	if ( status->is_status( Class_generic_status::status_resetting ) )
+		return WorkerThreadProgress::Resetting;
+	if ( status->is_status( Class_generic_status::status_error ) )
+		return WorkerThreadProgress::Error;
+
+	return WorkerThreadProgress::Undefined;
+}
 
 }} // namespace

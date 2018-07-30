@@ -165,13 +165,6 @@ public:
 	bool activeWorker() const;
 
 	/**
-	* maps worker progress to config status
-	*
-	* @return config status string
-	*/
-	const boost::shared_ptr<std::string> getStatusFromProgress() const;
-
-	/**
 	* start the worker for a given config
 	*
 	* If there is already an existing worker, this function does nothing.
@@ -290,7 +283,14 @@ protected:
 	*
 	* @return config status string
 	*/
-	const boost::shared_ptr<std::string> mapProgressToStatus(WorkerThreadProgress::WorkerThreadProgress progress) const;
+	static const boost::shared_ptr<std::string> mapProgressToStatus(WorkerThreadProgress::WorkerThreadProgress progress);
+
+	/**
+	* maps config status to worker progress
+	*
+	* @return worker progress
+	*/
+	static const WorkerThreadProgress::WorkerThreadProgress mapStatusToProgress(ConnectedVision::shared_ptr<Class_generic_status> status);
 
 	// module
 	ConnectedVision::Module::IModule& module;

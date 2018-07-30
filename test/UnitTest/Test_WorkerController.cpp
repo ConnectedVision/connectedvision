@@ -475,7 +475,6 @@ TEST(WorkerController, reset_command_stops_worker_and_calls_deleteAllData)
 
 }
 
-
 TEST(WorkerController, getStatus_returns_thread_progress_mapped_to_status)
 {
 	//////////////////////////////////////
@@ -501,6 +500,38 @@ TEST(WorkerController, getStatus_returns_thread_progress_mapped_to_status)
 	CHECK( status->is_status_stopped() );
 }
 
+TEST(WorkerController, getStatus_returns_manual_set_status)
+{
+	//////////////////////////////////////
+	// test initialization
+	const int timeout = 1000;
+	TestWrapper_WorkerController workerCtrl(configID, module, workerFactory);
+
+	//////////////////////////////////////
+	// actual test
+	auto status = workerCtrl.getStatus();
+	CHECK( status->is_status_init() );
+
+	// start and wait
+	workerCtrl.start();
+	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Running, timeout);
+
+	// manually set status
+	auto statusStore = module.getStatusStore();
+	auto statusCopy = status->copy();
+	statusCopy->set_status_finished();
+	statusStore->save_move(statusCopy);
+
+	// check status
+	status = workerCtrl.getStatus();
+	CHECK( status->is_status_finished() );
+
+	// stop and wait
+	workerCtrl.stop();
+	workerCtrl.spy_workerThreadProgress().wait_until(WorkerThreadProgress::Stopped, timeout);
+	status = workerCtrl.getStatus();
+	CHECK( status->is_status_stopped() );
+}
 
 // status.equals is not implemented, so this test will always fail
 IGNORE_TEST(WorkerController, getStatus_returns_the_same_object_if_status_has_not_changed)
@@ -518,7 +549,6 @@ IGNORE_TEST(WorkerController, getStatus_returns_the_same_object_if_status_has_no
 	CHECK( status2 );
 	CHECK( status1.get() == status2.get() );
 }
-
 IGNORE_TEST(WorkerController, getStatus_returns_different_object_if_status_has_changed)
 {
 	//////////////////////////////////////
@@ -535,7 +565,6 @@ IGNORE_TEST(WorkerController, getStatus_returns_different_object_if_status_has_c
 	CHECK( status2 );
 	CHECK_FALSE( status1.get() == status2.get() );
 }
-
 IGNORE_TEST(WorkerController, getStatus_caches_status)
 {
 	//////////////////////////////////////
@@ -576,7 +605,6 @@ TEST(WorkerController, start_a_stopped_config_does_start_a_new_worker)
 	// stop worker
 	workerCtrl.stop();
 }
-
 
 TEST(WorkerController, getWorker_returns_running_worker)
 {

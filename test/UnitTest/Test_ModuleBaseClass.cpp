@@ -52,7 +52,7 @@ public:
 
 	std::unique_ptr<IWorker> createWorker(IWorkerControllerCallbacks &controller, ConnectedVision::shared_ptr<const Class_generic_config> config)
 	{
-		std::unique_ptr<Worker_Mockup> worker( new Worker_Mockup( this, controller, 5000, true ) );
+		std::unique_ptr<Worker_Mockup> worker( new Worker_Mockup( this, controller, config, 5000, true ) );
 		return std::move(worker);
 	}
 

@@ -90,9 +90,10 @@ public:
 	Worker_Mockup(
 		IModule* module,	///< [in] associated module
 		IWorkerControllerCallbacks &workerThread,	///< [in] reference to controller
+		ConnectedVision::shared_ptr<const Class_generic_config> config,	///< [in] config for this worker instance
 		uint64_t runtime,	///< [in] runtime of worker.run() in milliseconds
 		bool cooperative	///< [in] cooperative worker
-	) : pModule(module), runtime(runtime), workerThread(workerThread), cooperative(cooperative)
+	) : module(module), config(config), runtime(runtime), workerThread(workerThread), cooperative(cooperative)
 	{
 		Worker_Mockup_spy::constructorThreadID = getCurrentThread().id;
 		Worker_Mockup_spy::runThreadID = 0;
@@ -109,9 +110,16 @@ public:
 		const int64_t iterationTime = 10;
 		Worker_Mockup_spy::runThreadID = getCurrentThread().id;
 
+		// get status
+		auto statusStore = this->getModule()->getStatusStore();
+		auto status = statusStore->getByID(this->config->getconst_configID())->copy();
+
 		int64_t iterations = runtime;
 		for ( int64_t i = 0; i < iterations/iterationTime; i++ )
 		{
+			status->set_progress( 1.0 - (float)iterations/(float)i );
+			statusStore->save_copy(status);
+
 			// simulate some work
 			boost::this_thread::sleep_for(boost::chrono::milliseconds(iterationTime));
 
@@ -122,6 +130,9 @@ public:
 					return;
 			}
 		}
+
+		status->set_progress(1.0);
+		statusStore->save_copy(status);
 
 		//finished
 		return;
@@ -140,13 +151,14 @@ public:
 	* @return module 
 	*/
 	virtual IModule* getModule()
-	{ return this->pModule; }
+	{ return this->module; }
 
 protected:
 	IWorkerControllerCallbacks &workerThread;
 	const bool cooperative;
 	uint64_t runtime;
-	IModule* pModule;
+	IModule* module;
+	ConnectedVision::shared_ptr<const Class_generic_config> config;
 };
 
 class WorkerFactory_Mockup : public IWorkerFactory
@@ -157,7 +169,7 @@ public:
 		IModule* module,		///< [in] associated module
 		uint64_t runtime = 100,	///< [in] runtime of worker.run() in milliseconds
 		bool cooperative = true	///< [in] cooperative worker
-	) : pModule(module), runtime(runtime), cooperative(cooperative), numberOfCreatedWorkers(0)
+	) : module(module), runtime(runtime), cooperative(cooperative), numberOfCreatedWorkers(0)
 	{
 	}
 	/** destructor */
@@ -169,7 +181,7 @@ public:
 	* @return module 
 	*/
 	virtual IModule* getModule()
-	{ return this->pModule; }
+	{ return this->module; }
 
 	/**
 	* create a new worker instance for a given config
@@ -181,14 +193,14 @@ public:
 		ConnectedVision::shared_ptr<const Class_generic_config> config	///< config for the worker to be created
 	)
 	{
-		std::unique_ptr<Worker_Mockup> worker( new Worker_Mockup( this->pModule, controller, runtime, this->cooperative ) );
+		std::unique_ptr<Worker_Mockup> worker( new Worker_Mockup( this->module, controller, config, runtime, this->cooperative ) );
 		numberOfCreatedWorkers++;
 		return std::move(worker);
 	}
 
 public:
 	bool cooperative;
-	IModule* pModule;
+	IModule* module;
 	uint64_t runtime;
 	boost::atomic<uint64_t> numberOfCreatedWorkers;
 };
