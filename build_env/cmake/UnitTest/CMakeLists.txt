@@ -8,7 +8,10 @@ set(ConnectedVisionCppRoot ../../..)
 
 include(${ConnectedVisionCppRoot}/build_env/cmake/common.cmake)
 
-set(packages "CppUTest/3.8@covi/stable")	
+set(packages 
+	CppUTest/3.8@covi/stable
+	libcurl/7.47.1@covi/stable
+)
 
 execute_conan_cmake_run_without_targets(${packages})
 execute_conan_cmake_run_with_targets(${packages})

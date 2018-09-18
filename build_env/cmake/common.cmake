@@ -43,7 +43,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/conan.cmake)
 set(CONNECTED_VISION_CONAN_PACKAGES_DEFAULT
 	Boost/1.58.0@covi/stable
 	FFmpeg/3.2.4@covi/stable
-	libcurl/7.47.1@covi/stable
 	OpenCV/3.1.0@covi/stable
 	POCO/1.6.1@covi/stable
 	RapidJSON/1.0.2@covi/stable

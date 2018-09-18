@@ -16,7 +16,6 @@ class ConnectedVision(ConanFile):
 	default_options = "toolchain=None"
 	requires = (("Boost/1.58.0@covi/stable"),
 		("FFmpeg/3.2.4@covi/stable"),
-		("libcurl/7.47.1@covi/stable"),
 		("Node.js/7.9.0@covi/stable"),
 		("OpenCV/3.1.0@covi/stable"),
 		("POCO/1.6.1@covi/stable"),
