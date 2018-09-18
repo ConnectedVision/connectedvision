@@ -57,6 +57,149 @@ if sys.version_info > (3, 0, 0):
 
 
 
+def compareRecipesWithCache(diffTool=""):
+	"""
+	Compares the recipes from the current repository checkout with the exported recipes of the Conan cache.
+	
+	The result of the comparison is displayed on the console:
+	* cache != checkout: if the cell is marked with an x, then the recipe from the Conan cache and does not match the one from the Git checkout
+	* checkout != HEAD: if the cell is marked with an x, then the recipe of the Git checkout does not match the one from the Git HEAD revision
+	* package name
+	* package version
+	
+	Additionally to the console output, it is attempted to visualize the differences using a diff tool installed on the current OS.
+	
+	Args:
+		diffTool (str, optional): The path of the difftool to use. If omitted, then it is attempted to extract the diff tool from the Git configuration.
+	"""
+	
+	import tempfile
+	
+	if sys.version_info > (3, 3, 0):
+		from shutil import which
+	else:
+		from distutils.spawn import find_executable as which
+	
+	# if no valid diff tool was specified, then try to extract one from the Git configuration
+	if not diffTool or not (os.path.exists(diffTool) or which(diffTool)):
+		if diffTool:
+			print("the specified diff tool was not found: \"" + diffTool + "\"")
+		
+		print("trying to extract a diff tool from the Git configuration ...")
+		
+		try:
+			output = subprocess.check_output(["git", "config", "diff.tool"], universal_newlines=True)
+			diffToolName = output.rstrip()
+			output = subprocess.check_output(["git", "config", "difftool." + diffToolName + ".cmd"], universal_newlines=True)
+			
+			m = re.match(r"^[\"']?([^\"']+)[\"']?(?= [\"']?[\/\-\$](?:\w+)[\"']?[ $])", output)
+			
+			diffToolGit = m.group(1)
+			
+			if "\\\\" in diffToolGit:
+				diffToolGit = diffToolGit.replace("\\ ", " ")
+			
+			diffToolGit = diffToolGit.replace("\\\\", "\\")
+		except:
+			pass
+		
+		if diffToolGit and (os.path.exists(diffToolGit) or which(diffToolGit)):
+			print("located diff tool candidate: \"" + diffToolGit + "\"")
+			diffTool = diffToolGit
+		else:
+			print("failed to locate diff tool candidate: \"" + diffToolGit + "\"")
+			diffTool = ""
+		
+	if platform.system() == "Windows":
+		homeEnvVar = "USERPROFILE"
+	
+	else:
+		homeEnvVar = "HOME"
+	
+	if not homeEnvVar in os.environ:
+		raise Exception("failed to determine the user home directory using the " + homeEnvVar + " environment variable")
+	
+	conanDataDir = os.path.join(os.environ[homeEnvVar], ".conan", "data")
+	repoPackagesRoot = os.path.join(os.path.dirname(os.path.realpath(__file__)), "packages")
+	repoRoot = os.path.abspath(os.path.join(repoPackagesRoot, os.pardir, os.pardir, os.pardir))
+	
+	n1 = 10
+	f1 = "{:^" + str(n1) + "}"
+	n2 = n1
+	f2 = "{:^" + str(n2) + "}"
+	n3 = 20
+	f3 = "{:^" + str(n3) + "}"
+	f3d = "{:<" + str(n3) + "}"
+	n4 = 12
+	f4 = "{:^" + str(n4) + "}"
+	f4d = "{:<" + str(n4) + "}"
+	
+	print("")
+	print(f1.format("cache") + "|" + f2.format("checkout") + "|" + f3.format("") + "|" + f4.format(""))
+	print(f1.format("!=") + "|" + f2.format("!=") + "|" + f3.format("name") + "|" + f4.format("version"))
+	print(f1.format("checkout") + "|" + f2.format("HEAD") + "|" + f3.format("") + "|" + f4.format(""))
+	print(str("{:-^" + str(n1 + n2 + n3 + n4 + 3) + "}").format(""))
+	
+	for name in os.listdir(repoPackagesRoot):
+		nameDir = os.path.join(repoPackagesRoot, name)
+		
+		if not os.path.isdir(nameDir):
+			continue
+		
+		for version in os.listdir(nameDir):
+			repoFile = os.path.join(repoPackagesRoot, name, version, "conanfile.py")
+			cacheFile = os.path.join(conanDataDir, name, version, "covi", "stable", "export", "conanfile.py")
+		
+			if not os.path.exists(repoFile):
+				raise Exception("something is wrong with this comparison script")
+		
+			if not os.path.exists(cacheFile):
+				continue
+		
+			with open(repoFile, "r") as f:
+						repoFileContent = f.read()
+			
+			with open(cacheFile, "r") as f:
+						cacheFileContent = f.read()
+		
+			repoFileRelative = os.path.relpath(repoFile, repoRoot)
+			cmd = ["git", "diff", "--quiet", "--exit-code", "HEAD", repoFileRelative]
+			exitCode = subprocess.call(cmd, universal_newlines=True, cwd=repoRoot)
+			
+			if repoFileContent == cacheFileContent:
+				if exitCode == 0:
+					v1 = " "
+					v2 = " "
+				else:
+					v1 = " "
+					v2 = "x"
+					
+					if diffTool:
+						subprocess.call(["git", "difftool", repoFileRelative], universal_newlines=True, cwd=repoRoot)
+			else:
+				if exitCode == 0:
+					v1 = "x"
+					v2 = " "
+					
+					if diffTool:
+						os.system("\"" + diffTool + "\" " + cacheFile + " " + repoFile)
+				else:
+					v1 = "x"
+					v2 = "x"
+					
+					if diffTool:
+						with tempfile.NamedTemporaryFile(delete=True) as f:
+							tf = f.name + ".txt"
+							
+							# replace backslashes with forward slashes as the Git command below would not work otherwise (at least for Git 2.18.0 on Windows 10)
+							repoFileRelativeSlash = repoFileRelative.replace("\\", "/")
+							
+							os.system("git show HEAD:" + repoFileRelativeSlash + " > \"" + tf + "\" && \"" + diffTool + "\" \"" + tf + "\" " + cacheFile + " " + repoFile)
+			
+			print(f1.format(v1) + "|" + f2.format(v2) + "|" + f3d.format(" " + name) + "|" + f4d.format(" " + version))
+
+
+
 def deleteDirectory(dirPath, message):
 	# check if the package directory exists
 	if not os.path.isdir(dirPath) or not os.path.exists(dirPath):
