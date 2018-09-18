@@ -45,11 +45,9 @@ set(CONNECTED_VISION_CONAN_PACKAGES_DEFAULT
 	FFmpeg/3.2.4@covi/stable
 	libcurl/7.47.1@covi/stable
 	OpenCV/3.1.0@covi/stable
-	OpenSSL/1.0.2g@covi/stable
 	POCO/1.6.1@covi/stable
 	RapidJSON/1.0.2@covi/stable
 	SQLite/3.15.1@covi/stable
-	zlib/1.2.11@covi/stable
 )
 
 if(MSVC)

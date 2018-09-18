@@ -29,6 +29,7 @@ def installPackages():
 		])
 	
 	packages.extend([
+		"zlib/1.2.11",
 		"Boost/1.58.0",
 		"CppUTest/3.8",
 		"FFmpeg/3.2.4",
@@ -38,8 +39,7 @@ def installPackages():
 		"OpenSSL/1.0.2g",
 		"POCO/1.6.1",
 		"RapidJSON/1.0.2",
-		"SQLite/3.15.1",
-		"zlib/1.2.11"
+		"SQLite/3.15.1"
 	])
 	
 	for package in packages:

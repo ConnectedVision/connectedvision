@@ -78,10 +78,8 @@ target_link_libraries(${PROJECT_NAME}
 	CONAN_PKG::Boost
 	CONAN_PKG::FFmpeg
 	CONAN_PKG::OpenCV
-	CONAN_PKG::OpenSSL
 	CONAN_PKG::POCO
 	CONAN_PKG::SQLite
-	CONAN_PKG::zlib
 )
 
 

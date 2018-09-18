@@ -168,10 +168,8 @@ target_link_libraries(${PROJECT_NAME}
 	CONAN_PKG::CppUTest
 	CONAN_PKG::libcurl
 	CONAN_PKG::OpenCV
-	CONAN_PKG::OpenSSL
 	CONAN_PKG::POCO
 	CONAN_PKG::SQLite
-	CONAN_PKG::zlib
 )
 
 if(MSVC)

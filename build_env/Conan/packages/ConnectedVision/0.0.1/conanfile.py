@@ -19,11 +19,9 @@ class ConnectedVision(ConanFile):
 		("libcurl/7.47.1@covi/stable"),
 		("Node.js/7.9.0@covi/stable"),
 		("OpenCV/3.1.0@covi/stable"),
-		("OpenSSL/1.0.2g@covi/stable"),
 		("POCO/1.6.1@covi/stable"),
 		("RapidJSON/1.0.2@covi/stable"),
-		("SQLite/3.15.1@covi/stable"),
-		("zlib/1.2.11@covi/stable"))
+		("SQLite/3.15.1@covi/stable"))
 
 
 
