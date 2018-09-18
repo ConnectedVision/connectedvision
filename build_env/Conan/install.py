@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 import argparse
 import os
 import platform
@@ -5,16 +7,18 @@ import subprocess
 import sys
 import tools as customTools
 import traceback
-from conans import tools as conanTools
 
 
 
 def installPackages():
-	parser = argparse.ArgumentParser(description="Installer for for Conan packages. By default, i.e. if no command line arguments are specified, it only exports the Conan package recipes. If architectures and configs are specified, it also builds the packages for these settings.")
+	parser = argparse.ArgumentParser(description="Installer for for Conan packages. By default, i.e. if no command line arguments are specified, it only exports the local Conan package recipes to the Conan cache. If architectures and configs are specified, it also builds the packages for these settings.")
 	parser.add_argument("-a", "--arch", help="system architectures", nargs="+", type=str, required=False, default=[""], choices=["x86", "x86_64"])
 	parser.add_argument("-c", "--config", help="configurations", nargs="+", type=str, required=False, default=[""], choices=["Debug", "Release"])
 	parser.add_argument("-r", "--remote", help="use remote package recipe from Conan package repository instead of exporting the local recipe", required=False, action="store_true")
 	args = parser.parse_args()
+	
+	if args.remote and ((type(args.arch) is list and "" in args.arch) or (type(args.config) is list and "" in args.config)):
+		raise Exception("when using the -r/--remote parameter, the specification of the -a/--arch and -c/--config parameters is mandatory")
 	
 	user = "covi"
 	channel = "stable"
@@ -43,47 +47,44 @@ def installPackages():
 	])
 	
 	for package in packages:
-		dirPathList = [os.path.join(os.getcwd(), "packages")] + package.split("/")
-		dirPath = os.path.abspath(os.path.join(*dirPathList))
-		
-		with conanTools.chdir(dirPath):
-			for a in args.arch:
-				for c in args.config:
-					runtime = ""
-					
-					if c == "Debug":
-						runtime = "MDd"
-					elif c == "Release":
-						runtime = "MD"
-					elif c:
-						raise Exception("invalid configuration: " + c)
-					
-					name = package.split("/")[0]
-					version = package.split("/")[1]
-					installPackage(name, version, user, channel, a, c, runtime, args.remote)
+		for a in args.arch:
+			for c in args.config:
+				runtime = ""
+				
+				if c == "Debug":
+					runtime = "MDd"
+				elif c == "Release":
+					runtime = "MD"
+				elif c:
+					raise Exception("invalid configuration: " + c)
+				
+				name = package.split("/")[0]
+				version = package.split("/")[1]
+				installPackage(name, version, user, channel, a, c, runtime, args.remote)
 
 
 
 def installPackage(name, version, user, channel, arch="", config="", runtime="", remote=False):
+	# export recipe to the Conan cache using the local file instead of the file from the Connected Vision Conan repository on bintray.com
 	if not remote:
-		customTools.exportPackage(user, channel)
-	
-	# if no architecture or config were provided and the packe was exported (only possible for local package recipes) then return since the package recipe was exported to the Conan cache directory by the preceding command
-	if not arch or not config:
-		return
+		filePath = os.path.join(os.path.dirname(__file__), "packages", name, version, "conanfile.py")
+		customTools.exportPackage(filePath, user, channel)
+		
+		# if no architecture or config were specified, then skip the Conan install step
+		if not arch or not config:
+			return
 	
 	reference = name + "/" + version + "@" + user + "/" + channel
-	cmd = ["conan", "install", reference, "-b", "outdated", "-s", "arch=" + arch, "-s", "build_type=" + config, "-u"]
+	
+	cmd = ["conan", "install", reference, "-u", "-b", "outdated", "-s", "arch=" + arch, "-s", "build_type=" + config]
 	
 	if platform.system() == "Windows":
 		cmd.extend(["-s", "compiler=Visual Studio", "-s", "compiler.runtime=" + runtime, "-g", "visual_studio"])
 	else:
 		cmd.extend(["-s", "compiler=gcc"])
 	
-	returncode = subprocess.call(cmd)
-	
-	if returncode != 0:
-		raise Exception("conan install command failed:\n" + str(cmd))
+	# use check_call without try-except to raise an exception if the command fails and as a result terminate the execution of the parent installPackages() method
+	subprocess.check_call(cmd, universal_newlines=True)
 	
 	if platform.system() == "Windows":
 		try:
@@ -95,4 +96,5 @@ def installPackage(name, version, user, channel, arch="", config="", runtime="",
 
 
 
-installPackages()
+if __name__ == "__main__":
+	installPackages()
