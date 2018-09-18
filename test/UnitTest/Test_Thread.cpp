@@ -376,19 +376,19 @@ TEST(thread_safe_progress, wait_equal_should_timeout)
 template<typename T>
 static void thread_set_delayed(ConnectedVision::thread_safe_progress<T>* a, const T val, int64_t delay)
 {
-	sleep(delay);
+	sleep(static_cast<uint64_t>(delay));
 	a->set(val);
 }
 template<typename T>
 static void thread_get_delayed(ConnectedVision::thread_safe_progress<T>* a, int64_t delay)
 {
-	sleep(delay);
+	sleep(static_cast<uint64_t>(delay));
 	T val = a->get();
 }
 template<typename T>
 static void thread_reset_delayed(ConnectedVision::thread_safe_progress<T>* a, const T val, int64_t delay)
 {
-	sleep(delay);
+	sleep(static_cast<uint64_t>(delay));
 	a->reset(val);
 }
 template<typename T>
@@ -454,7 +454,7 @@ TEST(thread_safe_progress, set_notifies_all_waiting_threads)
 	a.set(10);
 
 	// force task switch and give threads a chance to terminate
-	sleep(1);
+	sleep(static_cast<uint64_t>(1));
 
 	// all threads should join immediately
 	CHECK( t1.try_join_for(boost::chrono::milliseconds(timeout)) );

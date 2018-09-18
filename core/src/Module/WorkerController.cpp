@@ -206,7 +206,7 @@ ConnectedVision::shared_ptr<const Class_generic_status> WorkerController::getSta
 			// update according to worker progress
 			status->set_status( progressToStatus );
 		}
-		return status;
+		return this->statusStore->make_const( status );
 	}
 	else
 	{
