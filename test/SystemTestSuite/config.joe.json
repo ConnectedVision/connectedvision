@@ -5,6 +5,17 @@
 	"serverExeFile": "<rootdir>/bin/VS2010/<architecture>/<buildconfig>/SystemTestServer.exe",
 	"serverOutputDisplayFlag": true,
 	"tests": [
+		{ "setup": {} },
+		{ "startConfig": { } },
+		{ "checkConfigExecution": { "criteria": { "status": "finished" } } },
+		{ "checkLastStableResults": {} },
+		{ "verifyOutputDataType": {} },
+		{ "processReferenceOutput": {} },
+		{ "outputPinBenchmark": { "requests": 10 } },
+		{ "stopConfig": {} },
+		{ "deleteConfig": {} }
+	],
+	"exampleTests": [
 		{ "load_config" : {} },
 		{ "send_config" : {} },
 		{ "check_config" : {} },
@@ -22,17 +33,6 @@
 		{ "check_configList" : {} },
 		{ "delete_config" : {} },
 		
-		{ "setup": {} },
-		{ "startConfig": { } },
-		{ "checkConfigExecution": { "criteria": { "status": "finished" } } },
-		{ "checkLastStableResults": {} },
-		{ "verifyOutputDataType": {} },
-		{ "processReferenceOutput": {} },
-		{ "outputPinBenchmark": { "requests": 10 } },
-		{ "stopConfig": {} },
-		{ "deleteConfig": {} }
-	],
-	"exampleTests": [
 		{ "load_config" : {} },
 		{ "send_config" : { "TODO": { "attemps": 10 }, "expectedResponse": { "statusCode": 500 } } },
 		{ "check_config" : {} },

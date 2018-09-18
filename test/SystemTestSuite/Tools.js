@@ -715,7 +715,7 @@ exports.deleteConfigs = function(modules, serverUrl, callback)
 			data[moduleId].configs.forEach(function(config, iConfig)
 			{
 				var message = "deliberate attempted access to a supposedly deleted config does not return the expected error";
-				expect(config.result, message).to.have.property("status", 404);
+				expect(config.result, message).to.have.property("status", 500);
 				expect(config.result, message).to.have.property("error");
 				expect(config.result.error, message).not.to.equal("");
 			});
