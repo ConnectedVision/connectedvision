@@ -13,7 +13,7 @@ class ConnectedVision(ConanFile):
 	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	generators = "cmake"
 	options = { "toolchain": "ANY" }
-	default_options = "toolchain="
+	default_options = "toolchain=None"
 	requires = (("Boost/1.58.0@covi/stable"),
 		("FFmpeg/3.2.4@covi/stable"),
 		("libcurl/7.47.1@covi/stable"),
