@@ -14,8 +14,6 @@
 
 namespace ConnectedVision
 {
-	class ::ConnectedVision::Module::IModule;
-
 class IModuleEnvironment : public Logging::ILogable {
 public:
 	IModuleEnvironment() : _log(new Logging::LogWriterNULL()) {}
