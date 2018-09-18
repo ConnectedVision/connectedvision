@@ -7,15 +7,33 @@ endif()
 add_definitions(-DUNICODE)
 add_definitions(-D_UNICODE)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 if(MSVC)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 elseif(CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pthread")
+	# set required C++11 standard for CMake >= 3.1
+	if(CMAKE_VERSION VERSION_EQUAL "3.1" OR CMAKE_VERSION VERSION_GREATER "3.1")
+		set(CMAKE_CXX_STANDARD 11)
+		set(CMAKE_CXX_STANDARD_REQUIRED ON)
+	# set required C++11 standard for CMake < 3.1
+	else()
+		include(CheckCXXCompilerFlag)
+
+		CHECK_CXX_COMPILER_FLAG("-std=c++11" compilerFlag)
+
+		if(compilerFlag)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+		else()
+			CHECK_CXX_COMPILER_FLAG("-std=c++0x" compilerFlag)
+
+			if(compilerFlag)
+				set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+			else()
+				message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+			endif()
+		endif()
+	endif()
 else()
 	message(FATAL_ERROR "only MSVC and GCC compilers are supported")
 endif()
