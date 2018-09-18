@@ -24,7 +24,8 @@ def installPackages():
 	if platform.system() == "Windows":
 		packages.extend([
 			"c99-to-c89/1.0.3",
-			"MSYS2/2016.10.25"
+			"MSYS2/2016.10.25",
+			"StackWalker/2014.12.28"
 		])
 	
 	packages.extend([
@@ -38,7 +39,6 @@ def installPackages():
 		"POCO/1.6.1",
 		"RapidJSON/1.0.2",
 		"SQLite/3.15.1",
-		"StackWalker/2014.12.28",
 		"zlib/1.2.11"
 	])
 	

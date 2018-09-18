@@ -22,9 +22,14 @@ class ConnectedVision(ConanFile):
 		("OpenSSL/1.0.2g@covi/stable"),
 		("POCO/1.6.1@covi/stable"),
 		("RapidJSON/1.0.2@covi/stable"),
-		("StackWalker/2014.12.28@covi/stable"),
 		("SQLite/3.15.1@covi/stable"),
 		("zlib/1.2.11@covi/stable"))
+
+
+
+	def requirements(self):
+		if self.settings.compiler == "Visual Studio":
+			self.requires("StackWalker/2014.12.28@covi/stable")
 
 
 

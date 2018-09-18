@@ -48,10 +48,13 @@ set(CONNECTED_VISION_CONAN_PACKAGES_DEFAULT
 	OpenSSL/1.0.2g@covi/stable
 	POCO/1.6.1@covi/stable
 	RapidJSON/1.0.2@covi/stable
-	StackWalker/2014.12.28@covi/stable
 	SQLite/3.15.1@covi/stable
 	zlib/1.2.11@covi/stable
 )
+
+if(MSVC)
+	list(APPEND CONNECTED_VISION_CONAN_PACKAGES_DEFAULT StackWalker/2014.12.28@covi/stable)
+endif()
 
 
 
