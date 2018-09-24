@@ -49,11 +49,9 @@ createItemListPath = os.path.normpath(os.path.join(os.path.dirname(__file__), os
 print("")
 print("CreateItemList.js")
 print("-----------------")
-returnCode = subprocess.call(["node", createItemListPath, moduleDir, connectedVisionDir, settingsFile, verboseSuffix])
+subprocess.check_call(["node", createItemListPath, moduleDir, connectedVisionDir, settingsFile, verboseSuffix])
 print("")
 
-if returnCode > 0:
-	raise Exception("\n\nthe return code (" + str(returnCode) + ") of the command is greater than zero")
 
 codeFromTemplatePath = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir, "CodeFromTemplate.js"))
 globalJson = os.path.join(moduleDir, "global.json")
@@ -62,35 +60,29 @@ artefactsJson = os.path.join(moduleDir, "artefacts.json")
 print("")
 print("CodeFromTemplate.js - DATA items")
 print("--------------------------------")
-returnCode = subprocess.call(["node", codeFromTemplatePath, globalJson, os.path.join(moduleDir, "items_data.json"), verboseSuffix])
+subprocess.check_call(["node", codeFromTemplatePath, globalJson, os.path.join(moduleDir, "items_data.json"), verboseSuffix])
 print("")
 
-if int(returnCode) > 0:
-	raise Exception("\n\nthe return code (" + str(returnCode) + ") of the command is greater than zero")
 
 print("")
 print("CodeFromTemplate.js - COMPUTATION items")
 print("--------------------------------")
-returnCode = subprocess.call(["node", codeFromTemplatePath, globalJson, os.path.join(moduleDir, "items_computation.json"), artefactsJson, verboseSuffix])
+subprocess.check_call(["node", codeFromTemplatePath, globalJson, os.path.join(moduleDir, "items_computation.json"), artefactsJson, verboseSuffix])
 print("")
 
-if int(returnCode) > 0:
-	raise Exception("\n\nthe return code (" + str(returnCode) + ") of the command is greater than zero")
 
 print("")
 print("CodeFromTemplate.js - BUILD items")
 print("--------------------------------")
-returnCode = subprocess.call(["node", codeFromTemplatePath, globalJson, os.path.join(moduleDir, "items_build.json"), artefactsJson, verboseSuffix])
+subprocess.check_call(["node", codeFromTemplatePath, globalJson, os.path.join(moduleDir, "items_build.json"), artefactsJson, verboseSuffix])
 print("")
 
-if int(returnCode) > 0:
-	raise Exception("\n\nthe return code (" + str(returnCode) + ") of the command is greater than zero")
 
 if not args.verbose:
 	print("clean up")
 	print("--------")
-	os.unlink(os.path.join(moduleDir, "global.json"))
-	os.unlink(os.path.join(moduleDir, "items_data.json"))
-	os.unlink(os.path.join(moduleDir, "items_computation.json"))
-	os.unlink(os.path.join(moduleDir, "items_build.json"))
-	os.unlink(os.path.join(moduleDir, "artefacts.json"))
+	os.remove(os.path.join(moduleDir, "global.json"))
+	os.remove(os.path.join(moduleDir, "items_data.json"))
+	os.remove(os.path.join(moduleDir, "items_computation.json"))
+	os.remove(os.path.join(moduleDir, "items_build.json"))
+	os.remove(os.path.join(moduleDir, "artefacts.json"))
