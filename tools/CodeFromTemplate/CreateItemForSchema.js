@@ -31,7 +31,11 @@ for( var i in process.argv ) {
 		settings.logLevel = 'error';	
 }
 //global scope for log!
-log = new (winston.Logger)({ transports: [ new (winston.transports.Console)({ level: settings.logLevel }) ] });
+log = winston.createLogger({
+	format: winston.format.printf(info => { return `${info.message}`; }),
+	transports: [new winston.transports.Console({ level: settings.logLevel })]
+});
+
 log.info('[CreateItemForSchema] create items list ...');
 
 var pre_global = {};
