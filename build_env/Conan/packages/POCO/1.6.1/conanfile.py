@@ -1,6 +1,7 @@
 import os
 import shutil
-from conans import CMake, ConanFile, tools
+import subprocess
+from conans import CMake, ConanFile, model, tools
 
 
 
@@ -11,6 +12,7 @@ class POCO(ConanFile):
 	url = "https://pocoproject.org"
 	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	generator = "cmake"
+	exports_sources = "PocoMacros.cmake.patch"
 	options = {
 		"POCO_STATIC": [True, False],
 		"ENABLE_XML": [True, False],
@@ -88,7 +90,12 @@ POCO_UNBUNDLED=False
 		tools.download("https://github.com/pocoproject/poco/archive/poco-" + self.version + "-release.zip", zip_name, retry=3, retry_wait=10)
 		tools.unzip(zip_name)
 		shutil.move("poco-poco-" + self.version + "-release", self.name)
-		os.unlink(zip_name)
+		os.remove(zip_name)
+		
+		if self.settings.compiler == "Visual Studio" and model.version.Version(str(self.settings.compiler.version)) > "10":
+			patchFile = os.path.join(self.source_folder, "PocoMacros.cmake.patch")
+			subprocess.check_call(["git", "apply", "--ignore-space-change", patchFile], cwd=os.path.join(self.name, "cmake"))
+			os.remove(patchFile)
 
 
 
@@ -143,7 +150,7 @@ POCO_UNBUNDLED=False
 		self.output.info("")
 		
 		installDir = os.path.join(self.name, "build_conan", "install")
-	
+		
 		self.copy("*", dst="include", src=os.path.join(installDir, "include"))
 		self.copy("*.*", dst="lib", src=os.path.join(installDir, "lib"))
 		
