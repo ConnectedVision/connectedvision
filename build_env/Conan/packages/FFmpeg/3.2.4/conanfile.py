@@ -39,7 +39,7 @@ class FFmpeg(ConanFile):
 		else:
 			tools.unzip(result["filename"], directory)
 		
-		os.unlink(result["filename"])
+		os.remove(result["filename"])
 		
 		return result
 
@@ -62,7 +62,7 @@ class FFmpeg(ConanFile):
 
 	def prepareDownload(self, url, label):
 		self.output.info("")
-		self.output.info("processing " + label + " ...")
+		self.output.info("downloading " + label + " from " + url)
 		filename = os.path.basename(url)
 		name = os.path.splitext(filename)[0]
 		extension = os.path.splitext(filename)[1]
@@ -77,8 +77,11 @@ class FFmpeg(ConanFile):
 		
 		if self.settings.os == "Windows":
 			self.build_requires("MSYS2/2016.10.25@covi/stable")
-		if self.getMsinttypesFlag():
-			self.build_requires("c99-to-c89/1.0.3@covi/stable")
+		
+			if self.getMsinttypesFlag():
+				self.build_requires("c99-to-c89/1.0.3@covi/stable")
+		else:
+			self.build_requires("NASM/2.13.02@covi/stable")
 
 
 
@@ -88,7 +91,7 @@ class FFmpeg(ConanFile):
 		self.output.info("")
 		
 		url = "https://ffmpeg.org/releases/ffmpeg-" + self.version + ".tar.bz2"
-		result = self.getIntoFolder(url, self.name, False)
+		self.getIntoFolder(url, self.name, False)
 		
 		dirnames = self.getSubdirectories(".")
 		
@@ -115,11 +118,6 @@ class FFmpeg(ConanFile):
 		
 		if self.settings.compiler == "Visual Studio":
 			self.output.info("runtime   : " + str(self.settings.compiler.runtime))
-		
-		if self.settings.os == "Linux":
-			cmdStr = "sudo apt-get install -y yasm"
-			self.output.warn("yasm is required for building " + self.name + ". If requested, please enter the sudo password for executing the following command \"" + cmdStr + "\"")
-			self.run(cmdStr)
 		
 		ffmpegInstallDir = self.getInstallDir()
 		
@@ -148,8 +146,7 @@ class FFmpeg(ConanFile):
 			params += " --enable-debug"
 		
 		if self.settings.compiler == "Visual Studio": 
-			# use --disable-encoder=ffv1 flag at least for Visual Studio 2010 to avoid make compilation loop
-			# other Visual Studio versions than 2010 have not been tested
+			# use --disable-encoder=ffv1 flag for Visual Studio 2010 to avoid make compilation loop
 			if self.settings.compiler.version == "10":
 				params += " --disable-encoder=ffv1"
 			

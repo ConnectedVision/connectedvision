@@ -31,6 +31,8 @@ def installPackages():
 			"MSYS2/2016.10.25",
 			"StackWalker/2014.12.28"
 		])
+	else:
+		packages.append("NASM/2.13.02")
 	
 	packages.extend([
 		"zlib/1.2.11",
