@@ -1534,8 +1534,8 @@ exports.checkTestSuiteConfig = function(configIn)
 	var config = clone(configIn);
 	
 	expect(argv).to.have.property("rootdir");
+	expect(argv).to.have.property("executable");
 	expect(argv).to.have.property("architecture");
-	expect(argv).to.have.property("buildconfig");
 	
 	// check the application architecture
 	if(!config.hasOwnProperty("architecture"))
@@ -1553,20 +1553,8 @@ exports.checkTestSuiteConfig = function(configIn)
 	config.modulesDir = path.resolve(config.modulesDir);
 	expect(fs.existsSync(config.modulesDir), "modules directory does not exist: " + config.modulesDir).to.be.true;
 	
-	// check the startup directory
-	expect(config).to.have.property("startupDir");
-	config.startupDir = config.startupDir.replace("<rootdir>", argv.rootdir);
-	config.startupDir = config.startupDir.replace("<architecture>", config.architecture);
-	config.startupDir = config.startupDir.replace("<buildconfig>", argv.buildconfig);
-	config.startupDir = path.resolve(config.startupDir);
-	expect(fs.existsSync(config.startupDir), "startup directory does not exist: " + config.startupDir).to.be.true;
-	
 	// check the server exe file
-	expect(config).to.have.property("serverExeFile");
-	config.serverExeFile = config.serverExeFile.replace("<rootdir>", argv.rootdir);
-	config.serverExeFile = config.serverExeFile.replace("<architecture>", config.architecture);
-	config.serverExeFile = config.serverExeFile.replace("<buildconfig>", argv.buildconfig);
-	config.serverExeFile = path.resolve(config.serverExeFile);
+	config.serverExeFile = path.resolve(argv.executable);
 	expect(fs.existsSync(config.serverExeFile), "server exe file does not exist: " + config.serverExeFile).to.be.true;
 	
 	// optional flag that indicates if server output should be displayed on console
@@ -2379,10 +2367,9 @@ exports.startServer = function(config, callback)
 	var spawn = require("child_process").spawn;
 	
 	var serverExeFile = path.resolve(config.serverExeFile);
-	var startupDir = path.resolve(config.startupDir);
 	
 	// start the server
-	var server = spawn(serverExeFile, [], { cwd: startupDir });
+	var server = spawn(serverExeFile, [], { cwd: path.dirname(serverExeFile) });
 	
 	// handle the case of the server failing to start
 	server.on("error", function(error)

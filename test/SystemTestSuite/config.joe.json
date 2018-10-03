@@ -1,8 +1,6 @@
 {
 	"serverUrl": "http://localhost:2020",
 	"modulesDir": "<rootdir>/modules",
-	"startupDir": "<rootdir>/bin/VS2010/<architecture>/<buildconfig>",
-	"serverExeFile": "<rootdir>/bin/VS2010/<architecture>/<buildconfig>/SystemTestServer.exe",
 	"serverOutputDisplayFlag": true,
 	"tests": [
 		{ "setup": {} },

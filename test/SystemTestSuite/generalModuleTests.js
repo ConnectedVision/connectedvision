@@ -51,7 +51,7 @@ var async = require("async");
 var jsonValidator = require("is-my-json-valid")
 var	expect = require("chai").expect;
 var	requestJson = require("request-json");
-var tools = require("./tools.js");
+var tools = require("./Tools.js");
 
 /**
  * perform HTTP GET request
