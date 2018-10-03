@@ -2,9 +2,9 @@
 
 ## Build on Windows (x86/x86_64) with Visual Studio
 1. install [Git](https://git-scm.com/download/win)
-2. install [CMake](https://cmake.org/download) (version >= 3.0.0)
-3. install [Python](https://www.python.org/downloads/windows) including `pip`
-4. `pip install conan` (from console with administrator rights)
+2. install [CMake](https://cmake.org/download) (3.x)
+3. install [Python](https://www.python.org/downloads/windows) (3.x) including `pip`
+4. `pip3 install conan` (from console with administrator rights)
 5. `conan search`
 6. `conan remote add covi https://api.bintray.com/conan/covi/ConnectedVision`
 7. build the Connected Vision Conan package
@@ -16,13 +16,14 @@
 ## Build on Linux (x86/x86_64) with GCC
 1. `sudo apt-get install git`
 2. `sudo apt-get install build-essential`
-3. `sudo apt-get install cmake` (version >= 3.0.0)
-4. `sudo apt-get install python-pip`
+3. `sudo apt-get install cmake` (CMake 3.x required)
+4. `python3 --version` (verify that Python 3.x is installed)
+5. `sudo apt-get install python-pip`
 	
-	`sudo pip install --upgrade pip` (only necessary if pip is already installed but too old)
-5. `sudo pip install conan`
+	`sudo pip3 install --upgrade pip` (only necessary if a corresponding error occurs)
+5. `sudo pip3 install conan`
 	
-	`sudo pip install setuptools` (only necessary if a corresponding Conan error occurs)
+	`sudo pip3 install --upgrade setuptools` (only necessary if a corresponding error occurs)
 6. `conan search`
 7. `conan remote add covi https://api.bintray.com/conan/covi/ConnectedVision`
 8. build the Connected Vision Conan package
