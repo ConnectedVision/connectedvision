@@ -1,58 +1,67 @@
+#!/usr/bin/env python3
+
 import os
 import platform
 import re
 import shutil
 import subprocess
 import sys
+import urllib.request
 
+def compareRecipesWithBintray(raiseException=True):
+	"""
+	Compares the recipes from the current checkout with the recipes hosted on Bintray and throws an exception if a mismatch was detected and the raiseException flag is True.
+	Differences regarding newline encoding (LF vs. CRLF) are deliberatly ignored.
+	This method is supposed to be used by the build server for detecting mismatches between the two instances of the same recipe when accidentally not updating one of the two recipe storage locations.
 
-# conditionally import modules and define methods based on the installed Python version
-if sys.version_info > (3, 0, 0):
-	import urllib.request
+	Args:
+		raiseException: If an exception occurs and the value is
+			True: the exception is not caught using try-catch
+			False: it is caught using try-catch and printed to stdout
+	"""
+	
+	rootDir = os.path.join(os.getcwd(), "packages")
+	
+	for packageName in sorted([d for d in os.listdir(rootDir) if os.path.isdir(os.path.join(rootDir, d))]):
+		packageDir = os.path.join(rootDir, packageName)
 		
-	def compareRecipeWithBintray():
-		"""
-		Compares the recipe from the current checkout with the recipe hosted on Bintray and throws an exception if a mismatch was detected.
-		Differences regarding newline encoding (LF vs. CRLF) are deliberatly ignored.
-		This method is supposed to be used by the build server for detecting mismatches between the two instances of the same recipe when accidentally not updating one of the two recipe storage locations.
-		"""
-		
-		rootDir = os.path.join(os.getcwd(), "packages")
-		
-		for packageName in [d for d in os.listdir(rootDir) if os.path.isdir(os.path.join(rootDir, d))]:
-			packageDir = os.path.join(rootDir, packageName)
+		for packageVersion in [d for d in os.listdir(packageDir) if os.path.isdir(packageDir)]:
+			recipeCheckoutFilePath = os.path.join(packageDir, packageVersion, "conanfile.py")
 			
-			for packageVersion in [d for d in os.listdir(packageDir) if os.path.isdir(packageDir)]:
-				recipeCheckoutFilePath = os.path.join(packageDir, packageVersion, "conanfile.py")
+			if not os.path.exists(recipeCheckoutFilePath):
+				continue
+			
+			with open(recipeCheckoutFilePath, "r") as f:
+				recipeCheckoutContent = f.read()
+			
+			# make sure that line endings are LF
+			recipeCheckoutContent = recipeCheckoutContent.replace("\r\n", "\n")
+			
+			url = "https://dl.bintray.com/covi/ConnectedVision/covi/" + packageName + "/" + packageVersion + "/stable/export/conanfile.py"
+			
+			recipeBintrayContent = ""
+			
+			try:
+				with urllib.request.urlopen(url) as response:
+					encoding = response.headers.get_content_charset("utf-8")
+					recipeBintrayContent = response.read().decode(encoding)
+			except:
+				print("\nerror: failed to obtain Conan package recipe " + packageName + " " + packageVersion + " from " + url + "\n")
 				
-				if not os.path.exists(recipeCheckoutFilePath):
-					continue
-				
-				with open(recipeCheckoutFilePath, "r") as f:
-					recipeCheckoutContent = f.read()
-				
-				# make sure that line endings are LF
-				recipeCheckoutContent = recipeCheckoutContent.replace("\r\n", "\n")
-				
-				url = "https://dl.bintray.com/covi/ConnectedVision/covi/" + packageName + "/" + packageVersion + "/stable/export/conanfile.py"
-				
-				try:
-					with urllib.request.urlopen(url) as response:
-						encoding = response.headers.get_content_charset("utf-8")
-						recipeBintrayContent = response.read().decode(encoding)
-				except:
-					print("\nerror: failed to obtain Conan package recipe " + packageName + " " + packageVersion + " from " + url + "\n")
+				if raiseException:
 					raise
-				
-				# make sure that line endings are LF
-				recipeBintrayContent = recipeBintrayContent.replace("\r\n", "\n")
-				
-				s = "comparing " + packageName + " " + packageVersion + " ... "
-				
-				if(recipeCheckoutContent != recipeBintrayContent):
-					print(s + "ERROR")
+			
+			# make sure that line endings are LF
+			recipeBintrayContent = recipeBintrayContent.replace("\r\n", "\n")
+			
+			s = "comparing " + packageName + " " + packageVersion + " ... "
+			
+			if recipeCheckoutContent != recipeBintrayContent:
+				print(s + "ERROR")
+
+				if raiseException:
 					raise Exception("Conan package recipe " + packageName + " " + packageVersion + " from checkout does not match recipe on Bintray")
-				
+			else:
 				print(s + "OK")
 
 
@@ -157,10 +166,10 @@ def compareRecipesWithCache(diffTool=""):
 				continue
 		
 			with open(repoFile, "r") as f:
-						repoFileContent = f.read()
+				repoFileContent = f.read()
 			
 			with open(cacheFile, "r") as f:
-						cacheFileContent = f.read()
+				cacheFileContent = f.read()
 		
 			repoFileRelative = os.path.relpath(repoFile, repoRoot)
 			cmd = ["git", "diff", "--quiet", "--exit-code", "HEAD", repoFileRelative]
@@ -201,8 +210,16 @@ def compareRecipesWithCache(diffTool=""):
 
 
 def deleteDirectory(dirPath, message):
+	"""
+	Workaround for the "conan remove" command to explicitly delete the build and package directory from the Conan cache (and not just mark it as "deprecated" as Conan 0.x does) when the package recipe has changed.
+	
+	Args:
+		dirPath: the path of the directory to be deleted
+		message: message to be printed before trying to delete the directory
+	"""
+
 	# check if the package directory exists
-	if not os.path.isdir(dirPath) or not os.path.exists(dirPath):
+	if not os.path.isdir(dirPath):
 		return
 	
 	print(message + ": " + dirPath)
@@ -218,7 +235,7 @@ def deleteDirectory(dirPath, message):
 
 def deleteCacheDirectories(exportCommandOutput):
 	"""
-	Workaround to explicitly delete the build and package directories from the Conan cache (and not just mark them as "deprecated" as Conan does) when the package recipe has changed.
+	Workaround for the "conan remove" command to explicitly delete the build and package directories from the Conan cache (and not just mark them as "deprecated" as Conan 0.x does) when the package recipe has changed.
 	
 	Args:
 		exportCommandOutput: console output as (multi line) string from Conan export command
@@ -267,6 +284,14 @@ def deleteCacheDirectories(exportCommandOutput):
 
 
 def exportPackage(packagePath, user, channel):
+	"""
+	Exports the specified Conan package recipe to the Conan cache.
+
+	Args:
+		user: Conan package user (part of Conan package reference)
+		channel: Conan package channel (part of Conan package reference)
+	"""
+
 	cmd = ("conan export -k " + packagePath + " " + user + "/" + channel).split(" ")
 	
 	# it sometimes occurred that a previously exported recipe and other files in the Conan cache export directory were empty (file size zero) on a Linux Jenkins installation
@@ -339,7 +364,7 @@ def generateVisualStudioPropertySheet(arch, config, srcDir):
 	else:
 		raise Exception("invalid architecture: " + arch)
 	
-	namespaces = { "default": "http://schemas.microsoft.com/developer/msbuild/2003" }
+	namespaces = {"default": "http://schemas.microsoft.com/developer/msbuild/2003"}
 	
 	ET.register_namespace("", namespaces["default"])
 	

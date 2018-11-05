@@ -1,23 +1,32 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
 import argparse
 import os
 import platform
 import subprocess
-import sys
-import tools as customTools
 import traceback
+import tools as customTools
 
 
 
 def installPackages():
+	"""
+	Installs the Conan packages of the Connected Vision dependencies (but not the Connected Vision Conan package itself).
+
+	If --arch and --config are not specified, then only export package recipies to the Conan cache.
+	Otherwise export the recipies to the Conan cache and build them using the specified build architecture and build config.
+
+	If --remote is specfied, then the Conan Bintray repository is used as source for exporting the Conan package recipes.
+	Otherwise, the recipes from the "packages" subdirectory are exported.
+	"""
+	
 	parser = argparse.ArgumentParser(description="Installer for for Conan packages. By default, i.e. if no command line arguments are specified, it only exports the local Conan package recipes to the Conan cache. If architectures and configs are specified, it also builds the packages for these settings.")
 	parser.add_argument("-a", "--arch", help="system architectures", nargs="+", type=str, required=False, default=[""], choices=["x86", "x86_64"])
 	parser.add_argument("-c", "--config", help="configurations", nargs="+", type=str, required=False, default=[""], choices=["Debug", "Release"])
 	parser.add_argument("-r", "--remote", help="use remote package recipe from Conan package repository instead of exporting the local recipe", required=False, action="store_true")
 	args = parser.parse_args()
 	
-	if args.remote and ((type(args.arch) is list and "" in args.arch) or (type(args.config) is list and "" in args.config)):
+	if args.remote and ((isinstance(args.arch, list) and "" in args.arch) or (isinstance(args.config, list) and "" in args.config)):
 		raise Exception("when using the -r/--remote parameter, the specification of the -a/--arch and -c/--config parameters is mandatory")
 	
 	user = "covi"
@@ -67,6 +76,15 @@ def installPackages():
 
 
 def installPackage(name, version, user, channel, arch="", config="", runtime="", remote=False):
+	"""
+	Installs a single Conan package specified by name, version, user and channel.
+	
+	Args:
+		name + version + user + channel: The combination of 4 arguments forms the standard conan package reference: <name>/<version>@<user>/<channel>
+		arch + cofnig: same as in installPackages()
+		runtime (only required for Visual Studio build): Visual Studio C++ runtime (automatically assigned by installPackages())
+	"""
+
 	# export recipe to the Conan cache using the local file instead of the file from the Connected Vision Conan repository on bintray.com
 	if not remote:
 		filePath = os.path.join(os.path.dirname(__file__), "packages", name, version, "conanfile.py")
