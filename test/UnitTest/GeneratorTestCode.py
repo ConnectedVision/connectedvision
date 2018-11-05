@@ -28,8 +28,8 @@ subprocess.check_call(["node", os.path.join(toolsDir, "CodeFromTemplate", "CodeF
 
 print("")
 print("Clean Up")
-subprocess.call(["rm", "-f", globalJson])
-subprocess.call(["rm", "-f", itemsJson])
-subprocess.call(["rm", "-f", os.path.join(targetDir, "artefacts.json")])
+os.remove(globalJson)
+os.remove(itemsJson)
+os.remove(os.path.join(targetDir, "artefacts.json"))
 
 print("OK")
