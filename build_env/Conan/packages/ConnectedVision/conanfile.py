@@ -7,7 +7,7 @@ from conans import CMake, ConanFile, tools
 
 class ConnectedVision(ConanFile):
 	name = "ConnectedVision"
-	version = "2.3.0"
+	version = "dev"
 	license = "MIT"
 	url = "https://github.com/ConnectedVision"
 	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
