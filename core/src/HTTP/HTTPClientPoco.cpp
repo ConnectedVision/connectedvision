@@ -34,7 +34,20 @@ void HTTPClientPoco::performRequest(const HTTPClientRequest &request, ConnectedV
 	{
 		// Initialize session
 		Poco::URI uri(request.getUri());
-		Poco::Net::HTTPClientSession client_session(uri.getHost(), uri.getPort());
+		Poco::Net::SocketAddress server;
+		
+		// after updating from POCO 1.6.1 to 1.9.0 trying to send a new config to the server resulted in a "connection refused" error when using localhost instead of 127.0.0.1 in the config moduleURI
+		// explicitly using the IPv4 address family for localhost solved the problem
+		if(uri.getHost() == "localhost")
+		{
+			server = Poco::Net::SocketAddress{Poco::Net::AddressFamily::IPv4, uri.getHost(), uri.getPort()};
+		}
+		else
+		{
+			server = Poco::Net::SocketAddress{uri.getHost(), uri.getPort()};
+		}
+		
+		Poco::Net::HTTPClientSession client_session{server};
 
 		// Prepare and send request
 		std::string path(uri.getPathAndQuery());
