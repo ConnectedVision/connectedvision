@@ -17,8 +17,8 @@ class ConnectedVision(ConanFile):
 	requires = (("Boost/1.58.0@covi/2.3.0"),
 		("FFmpeg/3.2.4@covi/2.3.0"),
 		("Node.js/7.9.0@covi/2.3.0"),
-		("OpenCV/3.1.0@covi/2.3.0"),
-		("POCO/1.6.1@covi/2.3.0"),
+		("POCO/1.6.1@covi/stable"),
+		("OpenCV/3.4.3@covi/dev"),
 		("RapidJSON/1.0.2@covi/2.3.0"),
 		("SQLite/3.15.1@covi/2.3.0"))
 
@@ -36,7 +36,7 @@ class ConnectedVision(ConanFile):
 		self.output.info("")
 		
 		self.run("git clone https://github.com/ConnectedVision/connectedvision.git " + self.name)
-		
+
 		with tools.chdir(self.name):
 			self.run("git checkout " + self.version)
 

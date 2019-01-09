@@ -169,9 +169,9 @@ target_link_libraries(${PROJECT_NAME}
 	ConnectedVisionCore
 	CONAN_PKG::Boost
 	CONAN_PKG::CppUTest
+	CONAN_PKG::POCO
 	CONAN_PKG::libcurl
 	CONAN_PKG::OpenCV
-	CONAN_PKG::POCO
 	CONAN_PKG::SQLite
 )
 

@@ -58,8 +58,8 @@ def installPackages():
 		for a in args.arch:
 			for c in args.config:
 				installPackage(package, a, c, args.remote)
-
-
+				
+				
 
 def installPackage(name, arch="", config="", remote=False):
 	"""
@@ -69,7 +69,7 @@ def installPackage(name, arch="", config="", remote=False):
 		name: package name
 		arch + config: architecture and build type (same as in installPackages())
 	"""
-	
+
 	user = "covi"
 	
 	packageInfo = customTools.getPackageInfo(name)
@@ -78,9 +78,9 @@ def installPackage(name, arch="", config="", remote=False):
 	if not remote:
 		customTools.exportPackage(packageInfo["filePath"], user, packageInfo["channel"])
 		
-	# if no architecture or config were specified, then skip the Conan install step
-	if not arch or not config:
-		return
+		# if no architecture or config were specified, then skip the Conan install step
+		if not arch or not config:
+			return
 	
 	reference = name + "/" + packageInfo["version"] + "@" + user + "/" + packageInfo["channel"]
 	
@@ -102,7 +102,7 @@ def installPackage(name, arch="", config="", remote=False):
 	
 	# use check_call without try-except to raise an exception if the command fails and as a result terminate the execution of the parent installPackages() method
 	subprocess.check_call(cmd, universal_newlines=True)
-
+	
 
 
 if __name__ == "__main__":
