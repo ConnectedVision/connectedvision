@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import urllib.request
+from distutils.version import LooseVersion
 
 def compareRecipesWithBintray(raiseException=True):
 	"""
@@ -20,49 +21,48 @@ def compareRecipesWithBintray(raiseException=True):
 			False: it is caught using try-catch and printed to stdout
 	"""
 	
-	rootDir = os.path.join(os.getcwd(), "packages")
+	packagesDir = os.path.join(os.path.dirname(__file__), "packages")
+	packageNames = [name for name in os.listdir(packagesDir) if isGitDir(os.path.join(packagesDir, name))]
+	packageNames = sorted(packageNames, key=str.lower)
 	
-	for packageName in sorted([d for d in os.listdir(rootDir) if os.path.isdir(os.path.join(rootDir, d))]):
-		packageDir = os.path.join(rootDir, packageName)
-		
-		for packageVersion in [d for d in os.listdir(packageDir) if os.path.isdir(packageDir)]:
-			recipeCheckoutFilePath = os.path.join(packageDir, packageVersion, "conanfile.py")
-			
-			if not os.path.exists(recipeCheckoutFilePath):
-				continue
-			
-			with open(recipeCheckoutFilePath, "r") as f:
-				recipeCheckoutContent = f.read()
-			
-			# make sure that line endings are LF
-			recipeCheckoutContent = recipeCheckoutContent.replace("\r\n", "\n")
-			
-			url = "https://dl.bintray.com/covi/ConnectedVision/covi/" + packageName + "/" + packageVersion + "/stable/export/conanfile.py"
-			
-			recipeBintrayContent = ""
-			
-			try:
-				with urllib.request.urlopen(url) as response:
-					encoding = response.headers.get_content_charset("utf-8")
-					recipeBintrayContent = response.read().decode(encoding)
-			except:
-				print("\nerror: failed to obtain Conan package recipe " + packageName + " " + packageVersion + " from " + url + "\n")
+	for packageName in packageNames:
+		packageInfo = getPackageInfo(packageName)
+		packageVersion = packageInfo["version"]
+		packageChannel = packageInfo["channel"]
+		recipeCheckoutFilePath = packageInfo["filePath"]
 				
-				if raiseException:
-					raise
-			
-			# make sure that line endings are LF
-			recipeBintrayContent = recipeBintrayContent.replace("\r\n", "\n")
-			
-			s = "comparing " + packageName + " " + packageVersion + " ... "
-			
-			if recipeCheckoutContent != recipeBintrayContent:
-				print(s + "ERROR")
+		with open(recipeCheckoutFilePath, "r") as f:
+			recipeCheckoutContent = f.read()
+		
+		# make sure that line endings are LF
+		recipeCheckoutContent = recipeCheckoutContent.replace("\r\n", "\n")
 
-				if raiseException:
-					raise Exception("Conan package recipe " + packageName + " " + packageVersion + " from checkout does not match recipe on Bintray")
-			else:
-				print(s + "OK")
+		url = "https://dl.bintray.com/covi/ConnectedVision/covi/" + packageName + "/" + packageVersion + "/" + packageChannel + "/export/conanfile.py"
+		
+		recipeBintrayContent = ""
+		
+		try:
+			with urllib.request.urlopen(url) as response:
+				encoding = response.headers.get_content_charset("utf-8")
+				recipeBintrayContent = response.read().decode(encoding)
+		except:
+			print("\nerror: failed to obtain Conan package recipe " + packageName + "/" + packageVersion + "@covi/" + packageChannel + " from " + url + "\n")
+			
+			if raiseException:
+				raise
+		
+		# make sure that line endings are LF
+		recipeBintrayContent = recipeBintrayContent.replace("\r\n", "\n")
+		
+		s = "comparing " + packageName + "/" + packageVersion + "@covi/" + packageChannel + " ... "
+		
+		if recipeCheckoutContent != recipeBintrayContent:
+			print(s + "ERROR")
+
+			if raiseException:
+				raise Exception("Conan package recipe " + packageName + "/" + packageVersion + "@covi/" + packageChannel + " from checkout does not match recipe on Bintray")
+		else:
+			print(s + "OK")
 
 
 
@@ -149,63 +149,62 @@ def compareRecipesWithCache(diffTool=""):
 	print(f1.format("checkout") + "|" + f2.format("HEAD") + "|" + f3.format("") + "|" + f4.format(""))
 	print(str("{:-^" + str(n1 + n2 + n3 + n4 + 3) + "}").format(""))
 	
-	for name in os.listdir(repoPackagesRoot):
-		nameDir = os.path.join(repoPackagesRoot, name)
+	packageNames = [name for name in os.listdir(repoPackagesRoot) if isGitDir(os.path.join(repoPackagesRoot, name))]
+	packageNames = sorted(packageNames, key=str.lower)
+	
+	for packageName in packageNames:
+		packageInfo = getPackageInfo(packageName)
+		repoFile = packageInfo["filePath"]
 		
-		if not os.path.isdir(nameDir):
+		cacheFile = os.path.join(conanDataDir, packageName, packageInfo["version"], "covi", packageInfo["channel"], "export", "conanfile.py")
+		
+		if not os.path.exists(repoFile):
+			raise Exception("something is wrong with this comparison script")
+		
+		if not os.path.exists(cacheFile):
 			continue
 		
-		for version in os.listdir(nameDir):
-			repoFile = os.path.join(repoPackagesRoot, name, version, "conanfile.py")
-			cacheFile = os.path.join(conanDataDir, name, version, "covi", "stable", "export", "conanfile.py")
+		with open(repoFile, "r") as f:
+			repoFileContent = f.read()
 		
-			if not os.path.exists(repoFile):
-				raise Exception("something is wrong with this comparison script")
+		with open(cacheFile, "r") as f:
+			cacheFileContent = f.read()
 		
-			if not os.path.exists(cacheFile):
-				continue
+		repoFileRelative = os.path.relpath(repoFile, repoRoot)
+		cmd = ["git", "diff", "--quiet", "--exit-code", "HEAD", repoFileRelative]
+		exitCode = subprocess.call(cmd, universal_newlines=True, cwd=repoRoot)
 		
-			with open(repoFile, "r") as f:
-				repoFileContent = f.read()
-			
-			with open(cacheFile, "r") as f:
-				cacheFileContent = f.read()
-		
-			repoFileRelative = os.path.relpath(repoFile, repoRoot)
-			cmd = ["git", "diff", "--quiet", "--exit-code", "HEAD", repoFileRelative]
-			exitCode = subprocess.call(cmd, universal_newlines=True, cwd=repoRoot)
-			
-			if repoFileContent == cacheFileContent:
-				if exitCode == 0:
-					v1 = " "
-					v2 = " "
-				else:
-					v1 = " "
-					v2 = "x"
-					
-					if diffTool:
-						subprocess.call(["git", "difftool", repoFileRelative], universal_newlines=True, cwd=repoRoot)
+		if repoFileContent == cacheFileContent:
+			if exitCode == 0:
+				v1 = " "
+				v2 = " "
 			else:
-				if exitCode == 0:
-					v1 = "x"
-					v2 = " "
-					
-					if diffTool:
-						os.system("\"" + diffTool + "\" " + cacheFile + " " + repoFile)
-				else:
-					v1 = "x"
-					v2 = "x"
-					
-					if diffTool:
-						with tempfile.NamedTemporaryFile(delete=True) as f:
-							tf = f.name + ".txt"
-							
-							# replace backslashes with forward slashes as the Git command below would not work otherwise (at least for Git 2.18.0 on Windows 10)
-							repoFileRelativeSlash = repoFileRelative.replace("\\", "/")
-							
-							os.system("git show HEAD:" + repoFileRelativeSlash + " > \"" + tf + "\" && \"" + diffTool + "\" \"" + tf + "\" " + cacheFile + " " + repoFile)
-			
-			print(f1.format(v1) + "|" + f2.format(v2) + "|" + f3d.format(" " + name) + "|" + f4d.format(" " + version))
+				v1 = " "
+				v2 = "x"
+				
+				if diffTool:
+					subprocess.call(["git", "difftool", repoFileRelative], universal_newlines=True, cwd=repoRoot)
+		else:
+			if exitCode == 0:
+				v1 = "x"
+				v2 = " "
+				
+				if diffTool:
+					os.system("\"" + diffTool + "\" " + cacheFile + " " + repoFile)
+			else:
+				v1 = "x"
+				v2 = "x"
+				
+				if diffTool:
+					with tempfile.NamedTemporaryFile(delete=True) as f:
+						tf = f.name + ".txt"
+						
+						# replace backslashes with forward slashes as the Git command below would not work otherwise (at least for Git 2.18.0 on Windows 10)
+						repoFileRelativeSlash = repoFileRelative.replace("\\", "/")
+						
+						os.system("git show HEAD:" + repoFileRelativeSlash + " > \"" + tf + "\" && \"" + diffTool + "\" \"" + tf + "\" " + cacheFile + " " + repoFile)
+		
+		print(f1.format(v1) + "|" + f2.format(v2) + "|" + f3d.format(" " + packageName) + "|" + f4d.format(" " + packageInfo["version"]))
 
 
 
@@ -243,6 +242,7 @@ def deleteCacheDirectories(exportCommandOutput):
 	
 	# check if a new conanfile.py file was exported
 	p = re.compile("^([^/]+/[^@]+@[^/]+/[^:]+): A new conanfile.py version was exported.*")
+	packageReference = ""
 	
 	for line in exportCommandOutput.splitlines():
 		m = p.match(line)
@@ -251,8 +251,12 @@ def deleteCacheDirectories(exportCommandOutput):
 			packageReference = m.group(1)
 			break
 	
+	if not packageReference:
+		return
+	
 	# extract the recipe export directory
 	p = re.compile(".* Folder: (.*)$")
+	exportDir = ""
 	
 	for line in exportCommandOutput.splitlines():
 		m = p.match(line)
@@ -260,13 +264,6 @@ def deleteCacheDirectories(exportCommandOutput):
 		if m and m.group(1):
 			exportDir = m.group(1)
 			break
-	
-	exportDir = ""
-	
-	if not m or not m.group(1):
-		return
-	
-	exportDir = m.group(1)
 	
 	# check if the export directory candidate exists
 	if not exportDir or not os.path.isdir(exportDir) or not os.path.exists(exportDir):
@@ -334,7 +331,7 @@ def exportPackage(packagePath, user, channel):
 
 
 def generateVisualStudioPropertySheet(arch, config, srcDir):
-	"""Visual Studio property sheet generator. It reads property sheets generated by Conan for one specific combination of system architecture and configuration (e.g. x86 Debug) and merges them in a single multi-config property sheet.")
+	"""Visual Studio property sheet generator. It reads property sheets generated by Conan for one specific combination of system architecture and configuration (e.g. x86 Debug) and merges them in a single multi-config property sheet.)
 
 	Args:
 		arch: list of system architectures ["x86", "x86_64"]
@@ -399,3 +396,92 @@ def generateVisualStudioPropertySheet(arch, config, srcDir):
 	# delete the source property sheet build artifact
 	# for a situation of a failing subsequent build this measure is supposed to avoid accidental reuse of the wrong property sheet with possibly the wrong architecture
 	os.remove(src)
+
+
+
+def isGitDir(dirPath):
+	"""Checks if the specified directory is a (sub-) directory of a Git repository.
+	The verification is done by checking the output of the log command for this directory.
+
+	Args:
+		dirPath: the path of the directory to check
+		
+	Return: True if the specified directory is a (sub-) directory of a Git repository, otherwise False.
+	"""
+	if not os.path.isdir(dirPath):
+		return False
+	
+	output = ""
+	
+	output = subprocess.check_output(["git", "log", "."], cwd=dirPath, universal_newlines=True)
+	
+	return bool(output)
+
+
+
+def getPackageInfo(name, version=""):
+	"""
+	Returns package information for a specific package.
+	
+	Args:
+		name: package name
+		version (optional): specific package version
+	
+	return:
+		{ "version": <version>, "channel": <channel>, "filePath": <file-path> }
+	"""
+	
+	packageDir = os.path.abspath(os.path.join(os.path.dirname(__file__), "packages", name))
+	
+	branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], universal_newlines=True).rstrip()
+	
+	if name == "ConnectedVision":
+		filePath = os.path.join(packageDir, "conanfile.py")
+		
+		m = re.match("master|release/.+", branch)
+		
+		if m:
+			sys.path.insert(0, os.path.dirname(filePath))
+			from conanfile import ConnectedVision
+			version = ConnectedVision.version
+			del ConnectedVision
+			sys.path.remove(os.path.dirname(filePath))
+			channel = "stable"
+		else:
+			version = re.sub("/", "-", branch)
+			channel = version
+	else:
+		if not version:
+			version = getVersionDirNames(packageDir)[0]
+			packageDir = os.path.join(packageDir, version)
+		
+		filePath = os.path.join(packageDir, "conanfile.py")
+		
+		if os.path.isfile(filePath):
+			channel = re.sub("/", "-", branch)
+		else:
+			channel = getVersionDirNames(packageDir)[0]
+			filePath = os.path.join(packageDir, channel, os.path.basename(filePath))
+	
+	return {"version": version, "channel": channel, "filePath": filePath}
+
+
+
+def getVersionDirNames(dirPath):
+	"""
+	Interprets the subdirectories of a directory as version strings and returns the list of sorted directory names.
+	
+	Args:
+		dirPath: the root directory path
+		
+	return: list of directory names interpreted as version strings and sorted descending
+	"""
+	
+	names = [d for d in os.listdir(dirPath) if isGitDir(os.path.join(dirPath, d))]
+	
+	if not names:
+		raise Exception("no sortable dirs found in " + dirPath)
+	
+	names.sort(key=LooseVersion, reverse=True)
+	
+	return names

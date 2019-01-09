@@ -41,16 +41,16 @@ endif()
 include(${CMAKE_CURRENT_LIST_DIR}/conan.cmake)
 
 set(CONNECTED_VISION_CONAN_PACKAGES_DEFAULT
-	Boost/1.58.0@covi/stable
-	FFmpeg/3.2.4@covi/stable
-	OpenCV/3.1.0@covi/stable
-	POCO/1.6.1@covi/stable
-	RapidJSON/1.0.2@covi/stable
-	SQLite/3.15.1@covi/stable
+	Boost/1.58.0@covi/2.3.0
+	FFmpeg/3.2.4@covi/2.3.0
+	OpenCV/3.1.0@covi/2.3.0
+	POCO/1.6.1@covi/2.3.0
+	RapidJSON/1.0.2@covi/2.3.0
+	SQLite/3.15.1@covi/2.3.0
 )
 
 if(MSVC)
-	list(APPEND CONNECTED_VISION_CONAN_PACKAGES_DEFAULT StackWalker/2014.12.28@covi/stable)
+	list(APPEND CONNECTED_VISION_CONAN_PACKAGES_DEFAULT StackWalker/2014.12.28@covi/2.3.0)
 endif()
 
 

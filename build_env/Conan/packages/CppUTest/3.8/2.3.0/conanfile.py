@@ -8,25 +8,19 @@ class CppUTest(ConanFile):
 	url = "https://cpputest.github.io"
 	settings = "os", "compiler", "arch", "build_type"
 	exports = ["CppUTest.patch"]
-
-	def getOrigName(self):
-		return "CppUTest"
 	
-	def getSrcDirName(self):
-		return self.getOrigName().lower()
 	
-	def getBuildDirName(self):
-		return self.getOrigName() + "Build"
 	
 	def source(self):
 		self.output.info("")
 		self.output.info("---------- source ----------")
 		self.output.info("")
 		
-		self.run("git clone --branch v%s https://github.com/cpputest/%s.git" % (self.version, self.getSrcDirName()))
-		os.rename(self.getSrcDirName(), "src")
-		self.run("git apply < %s.patch --whitespace=nowarn --directory=src" % self.getOrigName())
-
+		self.run("git clone --branch v" + self.version + " https://github.com/" + self.name.lower() + "/" + self.name.lower() + ".git " + self.name)
+		self.run("git apply --ignore-space-change --whitespace=nowarn --directory=" + self.name + " " + self.name + ".patch")
+	
+	
+	
 	def build(self):
 		self.output.info("")
 		self.output.info("---------- build ----------")
@@ -41,22 +35,25 @@ class CppUTest(ConanFile):
 		cmake = CMake(self)
 		
 		opts = dict()
-		opts["CMAKE_INSTALL_PREFIX"] = "install"
+		opts["CMAKE_INSTALL_PREFIX"] = os.path.abspath(os.path.join(self.build_folder, self.name, "install"))
 		opts["TESTS"] = False
 		
-		cmake.configure(defs=opts, source_dir=os.pardir, build_dir=os.path.join("src", self.getBuildDirName()))
+		cmake.configure(defs=opts, source_folder=os.path.join(self.build_folder, self.name), build_folder=os.path.join(self.build_folder, self.name, self.name + "Build"))
 		
 		cmake.build(target="install")
-		
+	
+	
 		
 	def package(self):
 		self.output.info("")
 		self.output.info("---------- package ----------")
 		self.output.info("")
 		
-		self.copy("*", dst=".", src=os.path.join("src", self.getBuildDirName(), "install"))
-		self.copy("*", dst=os.path.join("include", "Platforms"), src=os.path.join("src", "include", "Platforms"))
-
+		self.copy("*", dst=".", src=os.path.join(self.build_folder, self.name, "install"))
+		self.copy("*", dst=os.path.join("include", "Platforms"), src=os.path.join(self.build_folder, self.name, "include", "Platforms"))
+	
+	
+	
 	def package_info(self):
 		self.output.info("")
 		self.output.info("---------- package_info ----------")

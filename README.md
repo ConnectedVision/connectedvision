@@ -9,7 +9,7 @@
 6. `conan remote add covi https://api.bintray.com/conan/covi/ConnectedVision`
 7. build the Connected Vision Conan package
 	
-	- either explicitly by executing `conan install ConnectedVision/0.0.1@covi/stable -b outdated`
+	- either explicitly by executing `conan install ConnectedVision/2.3.0@covi/stable -b outdated`
 	
 	- or implicitly by referencing it from within another project as done in the [Connected Vision Demo Server](https://github.com/ConnectedVision/connectedvision-apps/tree/master/DemoServer/build/cmake)
 
@@ -28,7 +28,7 @@
 7. `conan remote add covi https://api.bintray.com/conan/covi/ConnectedVision`
 8. build the Connected Vision Conan package
 	
-	- either explicitly by executing `conan install ConnectedVision/0.0.1@covi/stable -b outdated`
+	- either explicitly by executing `conan install ConnectedVision/2.3.0@covi/stable -b outdated`
 	
 	- or implicitly by referencing it from within another project as done in the [Connected Vision Demo Server](https://github.com/ConnectedVision/connectedvision-apps/tree/master/DemoServer/build/cmake)
 
@@ -44,7 +44,7 @@ The cross-compilation described in the following was tested with the [Raspberry 
 6. update the `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` variables of the CMake toolchain file accordingly (similar to step 3)
 7. build the Connected Vision Conan package using the updated CMake toolchain file from step 6
 	
-	either explicitly by executing `conan install ConnectedVision/0.0.1@covi/stable -b outdated -o ConnectedVision:toolchain=<path/of/toolchain_armv7hf.cmake>`
+	either explicitly by executing `conan install ConnectedVision/2.3.0@covi/stable -b outdated -o ConnectedVision:toolchain=<path/of/toolchain_armv7hf.cmake>`
 	
 	or implicitly by referencing it from within another project as done in the [Connected Vision Demo Server](https://github.com/ConnectedVision/connectedvision-apps/tree/master/DemoServer/build/cmake) and building it using `cmake [...] -DCMAKE_TOOLCHAIN_FILE=<path/of/toolchain_armv7hf.cmake>`
 
@@ -76,11 +76,11 @@ Try to replace the existing file with a version from [GitHub](https://raw.github
 It might occur that the build of a Conan package fails or is manually interrupted. When trying to execute the build again, it may happen that Conan is unable to delete the build or package directories of the preceding build attempt. If it then tries to create files or directories which already exist, it fails with the following errors:
 ```
 ERROR: [WinError 183] Cannot create a file when that file already exists:
-'C:\\Users\\auto\\.conan\\data\\PackageX\\1.0\\\covi\\stable\\build\\1234567890abcdef1234567890abcdef1234567'
+'C:\\Users\\auto\\.conan\\data\\PackageX\\1.0\\\covi\\channelY\\build\\1234567890abcdef1234567890abcdef1234567'
 ```
 ```
 ERROR: [WinError 145] The directory is not empty:
-'C:\\Users\\auto\\.conan\\data\\PackageX\\1.0\\covi\\stable\\package\\1234567890abcdef1234567890abcdef1234567'
+'C:\\Users\\auto\\.conan\\data\\PackageX\\1.0\\covi\\channelY\\package\\1234567890abcdef1234567890abcdef1234567'
 ```
  
 Manually delete both the corresponding build and package directories and restart the build.
@@ -89,7 +89,7 @@ Manually delete both the corresponding build and package directories and restart
 On Windows there are different limits regarding the maximum directory and file path length. These limits depend on the method which is used to create/rename/delete files or directories. Calling `mkdir` or `rmdir` from the command line for directory paths longer than 248 characters fails. Extracting a zip archive with a deeper directory structure works, but handling those existing directory structures afterwards causes problems. This fuzzy behavior regarding path lengths may sometimes result in misleading errors  such as the following:
 ```
 ERROR: The file is a broken symlink, verify that you are packaging the needed destination files:
-'C:\\Users\\auto\\.conan\\data\\PackageX\\1.0\\covi\\stable\\package\\1234567890abcdef1234567890abcdef1234567\\[..]\\path\\with\\more\\than\\250\\characters.txt'
+'C:\\Users\\auto\\.conan\\data\\PackageX\\1.0\\covi\\channelY\\package\\1234567890abcdef1234567890abcdef1234567\\[..]\\path\\with\\more\\than\\250\\characters.txt'
 ```
 If rebuilding the Conan package does not work, then manually delete the corresponding Conan build and package directories and try to rebuild.
 

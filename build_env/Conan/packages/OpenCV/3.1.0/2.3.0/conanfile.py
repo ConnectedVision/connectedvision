@@ -198,7 +198,7 @@ WITH_XINE=False
 		self.output.info("")
 		
 		if self.settings.os == "Linux":
-			self.requires("zlib/1.2.11@covi/stable", private=False)
+			self.requires("zlib/1.2.11@covi/2.3.0", private=False)
 
 
 

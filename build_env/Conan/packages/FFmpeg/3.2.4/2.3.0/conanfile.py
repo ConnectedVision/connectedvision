@@ -76,12 +76,12 @@ class FFmpeg(ConanFile):
 		self.output.info("")
 		
 		if self.settings.os == "Windows":
-			self.build_requires("MSYS2/2016.10.25@covi/stable")
+			self.build_requires("MSYS2/2016.10.25@covi/2.3.0")
 		
 			if self.getMsinttypesFlag():
-				self.build_requires("c99-to-c89/1.0.3@covi/stable")
+				self.build_requires("c99-to-c89/1.0.3@covi/2.3.0")
 		else:
-			self.build_requires("NASM/2.13.02@covi/stable")
+			self.build_requires("NASM/2.13.02@covi/2.3.0")
 
 
 

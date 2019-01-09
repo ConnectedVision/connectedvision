@@ -7,26 +7,26 @@ from conans import CMake, ConanFile, tools
 
 class ConnectedVision(ConanFile):
 	name = "ConnectedVision"
-	version = "0.0.1"
+	version = "2.3.0"
 	license = "MIT"
 	url = "https://github.com/ConnectedVision"
 	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	generators = "cmake"
 	options = { "toolchain": "ANY" }
 	default_options = "toolchain=None"
-	requires = (("Boost/1.58.0@covi/stable"),
-		("FFmpeg/3.2.4@covi/stable"),
-		("Node.js/7.9.0@covi/stable"),
-		("OpenCV/3.1.0@covi/stable"),
-		("POCO/1.6.1@covi/stable"),
-		("RapidJSON/1.0.2@covi/stable"),
-		("SQLite/3.15.1@covi/stable"))
+	requires = (("Boost/1.58.0@covi/2.3.0"),
+		("FFmpeg/3.2.4@covi/2.3.0"),
+		("Node.js/7.9.0@covi/2.3.0"),
+		("OpenCV/3.1.0@covi/2.3.0"),
+		("POCO/1.6.1@covi/2.3.0"),
+		("RapidJSON/1.0.2@covi/2.3.0"),
+		("SQLite/3.15.1@covi/2.3.0"))
 
 
 
 	def requirements(self):
 		if self.settings.compiler == "Visual Studio":
-			self.requires("StackWalker/2014.12.28@covi/stable")
+			self.requires("StackWalker/2014.12.28@covi/2.3.0")
 
 
 
@@ -36,6 +36,9 @@ class ConnectedVision(ConanFile):
 		self.output.info("")
 		
 		self.run("git clone https://github.com/ConnectedVision/connectedvision.git " + self.name)
+		
+		with tools.chdir(self.name):
+			self.run("git checkout " + self.version)
 
 
 
