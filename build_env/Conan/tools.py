@@ -208,7 +208,7 @@ def compareRecipesWithCache(diffTool=""):
 
 
 
-def deleteDirectory(dirPath, message):
+def deleteDirectory(dirPath, message=""):
 	"""
 	Workaround for the "conan remove" command to explicitly delete the build and package directory from the Conan cache (and not just mark it as "deprecated" as Conan 0.x does) when the package recipe has changed.
 	
@@ -221,18 +221,28 @@ def deleteDirectory(dirPath, message):
 	if not os.path.isdir(dirPath):
 		return
 	
-	print(message + ": " + dirPath)
+	if message:
+		print(message)
 	
 	try:
 		shutil.rmtree(dirPath)
+
+		# in some cases the directory content is only partially deleted and repeated execution deletes it entirely
+		if os.path.isdir(dirPath):
+			shutil.rmtree(dirPath)
+
+			if os.path.isdir(dirPath):
+				shutil.rmtree(dirPath)
 	except:
-		# if shutil.rmtree failed (which sometimes happens on Windows) then try to use the Windows rmdir command
-		if platform.system() == "Windows":
-			os.system("rmdir /q /s \"" + dirPath + "\"")
+		pass
+	
+	# if shutil.rmtree failed (either error or directory simply still exists after shutil.rmtree) which sometimes happens on Windows, then try to use the rmdir command
+	if os.path.isdir(dirPath) and platform.system() == "Windows":
+		os.system("rmdir /q /s \"" + dirPath + "\"")
 
 
 
-def deleteCacheDirectories(exportCommandOutput):
+def deleteCacheDirectoriesAfterExport(exportCommandOutput):
 	"""
 	Workaround for the "conan remove" command to explicitly delete the build and package directories from the Conan cache (and not just mark them as "deprecated" as Conan 0.x does) when the package recipe has changed.
 	
@@ -240,33 +250,20 @@ def deleteCacheDirectories(exportCommandOutput):
 		exportCommandOutput: console output as (multi line) string from Conan export command
 	"""
 	
-	# check if a new conanfile.py file was exported
-	p = re.compile("^([^/]+/[^@]+@[^/]+/[^:]+): A new conanfile.py version was exported.*")
-	packageReference = ""
-	
-	for line in exportCommandOutput.splitlines():
-		m = p.match(line)
-		
-		if m and m.group(1):
-			packageReference = m.group(1)
-			break
-	
-	if not packageReference:
-		return
-	
 	# extract the recipe export directory
-	p = re.compile(".* Folder: (.*)$")
+	r = re.compile(".* Folder: (.*)$")
+	
 	exportDir = ""
 	
 	for line in exportCommandOutput.splitlines():
-		m = p.match(line)
+		m = r.match(line)
 		
 		if m and m.group(1):
 			exportDir = m.group(1)
 			break
 	
 	# check if the export directory candidate exists
-	if not exportDir or not os.path.isdir(exportDir) or not os.path.exists(exportDir):
+	if not exportDir or not os.path.isdir(exportDir):
 		return
 	
 	rootDir, foldername = os.path.split(exportDir)
@@ -275,8 +272,11 @@ def deleteCacheDirectories(exportCommandOutput):
 	if foldername != "export":
 		return
 	
-	deleteDirectory(os.path.join(rootDir, "package"), "deleting outdated package directory")
-	deleteDirectory(os.path.join(rootDir, "build"), "deleting outdated build directory")
+	dirPath = os.path.join(rootDir, "package")
+	deleteDirectory(dirPath, "deleting outdated package directory " + dirPath)
+
+	dirPath = os.path.join(rootDir, "build")
+	deleteDirectory(dirPath, "deleting outdated build directory " + dirPath)
 
 
 
@@ -326,7 +326,7 @@ def exportPackage(packagePath, user, channel):
 	
 	print(output)
 	
-	deleteCacheDirectories(str(output))
+	deleteCacheDirectoriesAfterExport(str(output))
 
 
 
