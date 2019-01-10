@@ -109,7 +109,7 @@ class POCO(ConanFile):
 		content = os.listdir(dst)
 		
 		if not subdir and len(content) == 1 and os.path.isdir(os.path.join(dst, content[0])):
-			tempDir = os.path.join(dst, os.pardir, self.name + "Temp")
+			tempDir = os.path.join(os.path.dirname(dst), self.name + "Temp")
 			os.rename(os.path.join(dst, content[0]), tempDir)
 			
 			if os.path.isdir(dst):
@@ -128,7 +128,7 @@ class POCO(ConanFile):
 		
 		if self.options.ENABLE_NETSSL or self.options.ENABLE_CRYPTO or self.options.FORCE_OPENSSL:
 			self.output.info("enabled OpenSSL dependency")
-			self.requires.add("OpenSSL/1.0.2g@covi/2.3.0", private=False)
+			self.requires.add("OpenSSL/1.0.2g@covi/dev", private=False)
 			self.options["OpenSSL"].shared = not self.options.POCO_STATIC
 		else:
 			if "OpenSSL" in self.requires:

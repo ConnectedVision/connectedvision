@@ -13,52 +13,54 @@ class OpenSSLConan(ConanFile):
 	url = "https://www.openssl.org"
 	settings = {"os": ["Windows", "Linux", "Macos"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	# https://github.com/openssl/openssl/blob/OpenSSL_1_0_2c/INSTALL
-	options = {"no_threads": [True, False],
-				"no_electric_fence": [True, False],
-				"no_zlib": [True, False],
-				"zlib_dynamic": [True, False],
-				"shared": [True, False],
-				"no_asm": [True, False],
-				"386": [True, False],
-				"no_sse2": [True, False],
-				"no_bf": [True, False],
-				"no_cast": [True, False],
-				"no_des": [True, False],
-				"no_dh": [True, False],
-				"no_dsa": [True, False],
-				"no_hmac": [True, False],
-				"no_md2": [True, False],
-				"no_md5": [True, False],
-				"no_mdc2": [True, False],
-				"no_rc2": [True, False],
-				"no_rc4": [True, False],
-				"no_rc5": [True, False],
-				"no_rsa": [True, False],
-				"no_sha": [True, False]}
-	default_options = '''
-no_threads=False
-no_electric_fence=True
-no_zlib=False
-zlib_dynamic=False
-shared=False
-no_asm=False
-386=False
-no_sse2=False
-no_bf=False
-no_cast=False
-no_des=False
-no_dh=False
-no_dsa=False
-no_hmac=False
-no_md2=False
-no_md5=False
-no_mdc2=False
-no_rc2=False
-no_rc4=False
-no_rc5=False
-no_rsa=False
-no_sha=False
-'''
+	options = {
+		"no_threads": [True, False],
+		"no_electric_fence": [True, False],
+		"no_zlib": [True, False],
+		"zlib_dynamic": [True, False],
+		"shared": [True, False],
+		"no_asm": [True, False],
+		"386": [True, False],
+		"no_sse2": [True, False],
+		"no_bf": [True, False],
+		"no_cast": [True, False],
+		"no_des": [True, False],
+		"no_dh": [True, False],
+		"no_dsa": [True, False],
+		"no_hmac": [True, False],
+		"no_md2": [True, False],
+		"no_md5": [True, False],
+		"no_mdc2": [True, False],
+		"no_rc2": [True, False],
+		"no_rc4": [True, False],
+		"no_rc5": [True, False],
+		"no_rsa": [True, False],
+		"no_sha": [True, False]
+	}
+	default_options = {
+		"no_threads": False,
+		"no_electric_fence": True,
+		"no_zlib": False,
+		"zlib_dynamic": False,
+		"shared": False,
+		"no_asm": False,
+		"386": False,
+		"no_sse2": False,
+		"no_bf": False,
+		"no_cast": False,
+		"no_des": False,
+		"no_dh": False,
+		"no_dsa": False,
+		"no_hmac": False,
+		"no_md2": False,
+		"no_md5": False,
+		"no_mdc2": False,
+		"no_rc2": False,
+		"no_rc4": False,
+		"no_rc5": False,
+		"no_rsa": False,
+		"no_sha": False
+	}
 
 	exports = ("win_bin/*", "readme.txt", "FindOpenSSL.cmake")
 
@@ -94,6 +96,19 @@ no_sha=False
 		if self.settings.os == "Windows":
 			self.requires("MSYS2/2016.10.25@covi/2.3.0", private=False)
 		
+			# The OpenSSL build pipeline for the Windows 64 Bit build creates a file named "NUL".
+			# This file cannot be removed with regular delete commands (not from the command line, Windows Explorer, etc.).
+			# This issue poses a problem in case a rebuild is attempted (e.g. after interruption of the build process).
+			# The attempted rebuild fails as Conan cannot delete the corresponding build subdirectory (containing the problematic file)
+			# The self.build_folder variable is not available during the Conan configure step. Instead, the __file__ variable is used as basis for a workaround to obtain the Conan cache export directory.
+			# The usage of the short_paths option is not supported/tested.
+			# The path specified after the del command needs to be prefixed with "\\?\" in order to delete the file.
+			# The command is executed directly without checking the existance of the file since the function os.path.exists() always returns false for this special file.
+			buildDir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "build"))
+			
+			if os.path.isdir(buildDir):
+				self.run("rmdir /q /s \\\\?\\" + buildDir + " 2> nul")
+
 		try: # Try catch can be removed when conan 0.8 is released
 			del self.settings.compiler.libcxx
 		except:
@@ -171,10 +186,12 @@ no_sha=False
 				config_options_string += " %s" % option_name.replace("_", "-")
 
 		def run_in_src(command, show_output=False):
-			command = 'cd openssl-%s && %s' % (self.version, command)
 			if not show_output and self.settings.os != "Windows":
 				command += ' | while read line; do echo -n "."; done'
-			self.run(command)
+			
+			with tools.chdir(os.path.join(self.build_folder, "openssl-" + str(self.version))):
+				self.run(command)
+			
 			self.output.writeln(" ")
 
 		def unix_make(config_options_string):
@@ -243,12 +260,17 @@ no_sha=False
 				run_in_src(os.path.join("ms", "do_win64a"))
 			else:
 				run_in_src(os.path.join("ms", "do_ms"))
+			
 			runtime = self.settings.compiler.runtime
+			
 			# Replace runtime in ntdll.mak and nt.mak
-			replace_in_file("./openssl-%s/ms/ntdll.mak" % self.version, "/MD ", "/%s " % runtime, False)
-			replace_in_file("./openssl-%s/ms/nt.mak" % self.version, "/MT ", "/%s " % runtime, False)
-			replace_in_file("./openssl-%s/ms/ntdll.mak" % self.version, "/MDd ", "/%s " % runtime, False)
-			replace_in_file("./openssl-%s/ms/nt.mak" % self.version, "/MTd ", "/%s " % runtime, False)
+			rootDir = os.path.join(self.build_folder, "openssl-" + str(self.version))
+			
+			runtimeStr = "/" + str(runtime) + " "
+			replace_in_file(os.path.join(rootDir, "ms", "nt.mak"), "/MT ", runtimeStr, False)
+			replace_in_file(os.path.join(rootDir, "ms", "nt.mak"), "/MTd ", runtimeStr, False)
+			replace_in_file(os.path.join(rootDir, "ms", "ntdll.mak"), "/MD ", runtimeStr, False)
+			replace_in_file(os.path.join(rootDir, "ms", "ntdll.mak"), "/MDd ", runtimeStr, False)
 
 			self.output.warn(os.curdir)
 			
@@ -257,7 +279,7 @@ no_sha=False
 			if self.settings.compiler == "Visual Studio":
 				make_command = tools.vcvars_command(self.settings) + " && "
 			
-			make_command += "nmake -f " + os.path.join("ms", "ntdll.mak") if self.options.shared else "nmake -f " + os.path.join("ms", "nt.mak")
+			make_command += "nmake -f " + os.path.join("ms", "ntdll.mak") if self.options.shared else "nmake -f " + os.path.join(rootDir, "ms", "nt.mak")
 			self.output.warn("----------MAKE OPENSSL %s-------------" % self.version)
 			run_in_src(make_command)
 			run_in_src("%s install" % make_command)
@@ -268,11 +290,6 @@ no_sha=False
 				if os.path.exists(old):
 					os.rename(old, new)
 			
-			# the OpenSSL build pipeline for the Windows 64 Bit build creates a file with name "NUL" which cannot be removed with regular delete commands (not from CMD, explorer etc.)
-			# the file path specified after the del command needs to be prefixed with "\\?\" in order to delete the file
-			# the command is executed directly without checking the existance of the file since the function os.path.exists() always returns false for this special file
-			self.run("del \\\\?\\" + os.path.join(os.getcwd(), "openssl-" + self.version, "NUL") + " 2> nul")
-
 		if self.settings.os == "Linux" or self.settings.os == "Macos":
 			if self.settings.compiler == "gcc" and self.settings.arch == "armv7hf" and not re.match("arm.*", platform.machine()):
 				arm_make(config_options_string)
@@ -282,7 +299,6 @@ no_sha=False
 			windows_make(config_options_string)
 
 		self.output.info("----------BUILD END-------------")
-		return
 
 	def package(self):
 		self.output.info("")
