@@ -23,7 +23,7 @@
 #endif
 
 // disable warnings about ignored exception specification up to the latest tested Visual Studio version
-#if (_MSC_VER <= 1900)
+#if (_MSC_VER <= 1915)
 #pragma warning( disable : 4290 )
 #endif
 
