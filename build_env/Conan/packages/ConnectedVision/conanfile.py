@@ -15,7 +15,7 @@ class ConnectedVision(ConanFile):
 	options = { "toolchain": "ANY" }
 	default_options = "toolchain=None"
 	requires = (("Boost/1.68.0@covi/dev"),
-		("FFmpeg/3.2.4@covi/2.3.0"),
+		("FFmpeg/4.1@covi/dev"),
 		("Node.js/7.9.0@covi/2.3.0"),
 		("OpenCV/3.4.3@covi/dev"),
 		("POCO/1.9.0@covi/dev"),
@@ -48,7 +48,13 @@ class ConnectedVision(ConanFile):
 		self.output.info("")
 		self.output.info("os        : " + str(self.settings.os))
 		self.output.info("arch      : " + str(self.settings.arch))
-		self.output.info("build_type: " + str(self.settings.build_type))
+		self.output.info("compiler  : " + str(self.settings.compiler) + " " + str(self.settings.compiler.version))
+		self.output.info("build type: " + str(self.settings.build_type))
+
+		if self.settings.compiler == "Visual Studio":
+			self.output.info("runtime   : " + str(self.settings.compiler.runtime))
+		else:
+			self.output.info("libcxx    : " + str(self.settings.compiler.libcxx))
 		
 		if self.settings.compiler == "Visual Studio" and not self.settings.compiler.runtime in ["MDd", "MD"]:
 			raise Exception("only the dynamic runtime MD(d) is supported")

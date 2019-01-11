@@ -201,7 +201,7 @@ WITH_ZLIB=True
 			if self.settings.os == "Windows":
 				raise Exception("compililation on Windows with Visual Studio using FFmpeg as Conan package is not supported")
 		
-			self.requires("FFmpeg/3.2.4@covi/2.3.0", private=False)
+			self.requires("FFmpeg/4.1@covi/dev", private=False)
 		
 		if not self.options.BUILD_ZLIB:
 			self.requires("zlib/1.2.11@covi/2.3.0", private=False)
@@ -261,7 +261,7 @@ WITH_ZLIB=True
 		
 		if opts["WITH_FFMPEG"] == "True":
 			# generate a CMake file for the find_package method
-			self.run("conan install FFmpeg/3.2.4@covi/2.3.0 -g cmake_find_package")
+			self.run("conan install FFmpeg/4.1@covi/dev -g cmake_find_package")
 			r = re.compile(r"find.*ffmpeg.*\.cmake", re.I)
 			
 			# determine the path of the generated file

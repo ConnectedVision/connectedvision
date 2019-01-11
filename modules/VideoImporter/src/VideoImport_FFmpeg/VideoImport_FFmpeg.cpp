@@ -558,8 +558,8 @@ void VideoImport_FFmpeg::Decoder::initFilters()
 
     char args[512];
     int ret;
-    AVFilter *buffersrc  = avfilter_get_by_name("buffer");
-    AVFilter *buffersink = avfilter_get_by_name("buffersink");
+    const AVFilter *buffersrc  = avfilter_get_by_name("buffer");
+	const AVFilter *buffersink = avfilter_get_by_name("buffersink");
 	//enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE };
     AVBufferSinkParams *buffersink_params;
     this->pFilterGraph = avfilter_graph_alloc();
@@ -596,7 +596,7 @@ void VideoImport_FFmpeg::Decoder::initFilters()
 
 	AVFilterContext *filterContextDeinterlace;
 	// Find the deinterlacing filter
-	AVFilter *filterDeinterlace = avfilter_get_by_name("w3fdif");
+	const AVFilter *filterDeinterlace = avfilter_get_by_name("w3fdif");
 	if (!filterDeinterlace)
 	{
 		freeFilters();
