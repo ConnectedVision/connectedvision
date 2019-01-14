@@ -435,21 +435,42 @@ def getPackageInfo(name, version=""):
 	
 	branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], universal_newlines=True).rstrip()
 	
+	# handle detached head state
+	# use the "dev" branch instead of the actual branch name
+	# this avoids the necessity of updating the Conan package reference in other files when branching away from dev and a second time when merging a branch back into dev
+	if branch == "HEAD":
+		statusOutput = subprocess.check_output(["git", "status"], universal_newlines=True).rstrip()
+		
+		for line in statusOutput.splitlines():
+			m = re.match(r"HEAD detached at ([^\s]+)", line)
+			
+			if m and m.group(1):
+				branches = subprocess.check_output(["git", "for-each-ref", "--format=\"%(objectname:short) %(refname:short)\""], universal_newlines=True).rstrip()
+				
+				r = re.compile("\"" + m.group(1) + r" (?:refs/)?(?:remotes/)?(?:origin/)?([^\s]+)\"")
+				
+				for branchLine in branches.splitlines():
+					branchMatch = r.match(branchLine)
+					
+					if branchMatch and branchMatch.group(1):
+						branch = branchMatch.group(1)
+						break
+				
+				break
+	
+	if not re.match("master|release/.+", branch):
+		branch = "dev"
+		
 	if name == "ConnectedVision":
 		filePath = os.path.join(packageDir, "conanfile.py")
 		
-		m = re.match("master|release/.+", branch)
+		sys.path.insert(0, os.path.dirname(filePath))
+		from conanfile import ConnectedVision
+		version = ConnectedVision.version
+		del ConnectedVision
+		sys.path.remove(os.path.dirname(filePath))
 		
-		if m:
-			sys.path.insert(0, os.path.dirname(filePath))
-			from conanfile import ConnectedVision
-			version = ConnectedVision.version
-			del ConnectedVision
-			sys.path.remove(os.path.dirname(filePath))
-			channel = "stable"
-		else:
-			version = re.sub("/", "-", branch)
-			channel = version
+		channel = "stable"
 	else:
 		if not version:
 			version = getVersionDirNames(packageDir)[0]
