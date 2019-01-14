@@ -1,6 +1,7 @@
 import glob
 import os
 import re
+import subprocess
 from conans import CMake, ConanFile, tools
 
 
@@ -11,6 +12,7 @@ class OpenCV(ConanFile):
 	license = "3-clause BSD License, http://opencv.org/license.html"
 	url = "http://opencv.org"
 	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
+	exports = ["VideoIO_CMakeLists.txt.patch"]
 	options = {
 		"BUILD_DOCS": [True, False],
 		"BUILD_EXAMPLES": [True, False],
@@ -29,6 +31,7 @@ class OpenCV(ConanFile):
 		"WITH_CUDA": [True, False],
 		"WITH_CUFFT": [True, False],
 		"WITH_DIRECTX": [True, False],
+		"WITH_DSHOW": [True, False],
 		"WITH_EIGEN": [True, False],
 		"WITH_FFMPEG": [True, False],
 		"WITH_GDAL": [True, False],
@@ -47,6 +50,7 @@ class OpenCV(ConanFile):
 		"WITH_JASPER": [True, False],
 		"WITH_JPEG": [True, False],
 		"WITH_MATLAB": [True, False],
+		"WITH_MSMF": [True, False],
 		"WITH_NVCUVID": [True, False],
 		"WITH_OPENCL": [True, False],
 		"WITH_OPENCLAMDBLAS": [True, False],
@@ -67,74 +71,78 @@ class OpenCV(ConanFile):
 		"WITH_UNICAP": [True, False],
 		"WITH_VA": [True, False],
 		"WITH_VA_INTEL": [True, False],
+		"WITH_VFW": [True, False],
 		"WITH_VTK": [True, False],
 		"WITH_WEBP": [True, False],
 		"WITH_XIMEA": [True, False],
 		"WITH_XINE": [True, False],
 		"WITH_ZLIB": [True, False]
 	}
-	default_options = '''
-BUILD_DOCS=False
-BUILD_EXAMPLES=False
-BUILD_JASPER=True
-BUILD_JPEG=True
-BUILD_opencv_apps=False
-BUILD_PERF_TESTS=False
-BUILD_PNG=True
-BUILD_TESTS=False
-BUILD_TIFF=True
-BUILD_ZLIB=False
-WITH_1394=False
-WITH_CLP=False
-WITH_CSTRIPES=False
-WITH_CUBLAS=False
-WITH_CUDA=False
-WITH_CUFFT=False
-WITH_DIRECTX=False
-WITH_EIGEN=False
-WITH_FFMPEG=False
-WITH_GDAL=False
-WITH_GIGEAPI=False
-WITH_GPHOTO2=False
-WITH_GSTREAMER=False
-WITH_GSTREAMER_0_10=False
-WITH_GTK=False
-WITH_GTK_2_X=False
-WITH_IMGCODEC_HDR=True
-WITH_IMGCODEC_SUNRASTER=True
-WITH_IMGCODEC_PXM=True
-WITH_INF_ENGINE=False
-WITH_INTELPERC=False
-WITH_IPP=False
-WITH_JASPER=True
-WITH_JPEG=True
-WITH_MATLAB=False
-WITH_NVCUVID=False
-WITH_OPENCL=True
-WITH_OPENCLAMDBLAS=False
-WITH_OPENCLAMDFFT=False
-WITH_OPENCL_SVM=False
-WITH_OPENEXR=False
-WITH_OPENGL=False
-WITH_OPENMP=False
-WITH_OPENNI2=False
-WITH_OPENVX=False
-WITH_OPENNI=False
-WITH_PNG=True
-WITH_PVAPI=False
-WITH_PROTOBUF=True
-WITH_QT=False
-WITH_TBB=False
-WITH_TIFF=True
-WITH_UNICAP=False
-WITH_VA=False
-WITH_VA_INTEL=False
-WITH_VTK=False
-WITH_WEBP=True
-WITH_XIMEA=False
-WITH_XINE=False
-WITH_ZLIB=True
-'''
+	default_options = {
+		"BUILD_DOCS": False,
+		"BUILD_EXAMPLES": False,
+		"BUILD_JASPER": True,
+		"BUILD_JPEG": True,
+		"BUILD_opencv_apps": False,
+		"BUILD_PERF_TESTS": False,
+		"BUILD_PNG": True,
+		"BUILD_TESTS": False,
+		"BUILD_TIFF": True,
+		"BUILD_ZLIB": False,
+		"WITH_1394": False,
+		"WITH_CLP": False,
+		"WITH_CSTRIPES": False,
+		"WITH_CUBLAS": False,
+		"WITH_CUDA": False,
+		"WITH_CUFFT": False,
+		"WITH_DIRECTX": False,
+		"WITH_DSHOW": False,
+		"WITH_EIGEN": False,
+		"WITH_FFMPEG": True,
+		"WITH_GDAL": False,
+		"WITH_GIGEAPI": False,
+		"WITH_GPHOTO2": False,
+		"WITH_GSTREAMER": False,
+		"WITH_GSTREAMER_0_10": False,
+		"WITH_GTK": False,
+		"WITH_GTK_2_X": False,
+		"WITH_IMGCODEC_HDR": True,
+		"WITH_IMGCODEC_SUNRASTER": True,
+		"WITH_IMGCODEC_PXM": True,
+		"WITH_INF_ENGINE": False,
+		"WITH_INTELPERC": False,
+		"WITH_IPP": False,
+		"WITH_JASPER": True,
+		"WITH_JPEG": True,
+		"WITH_MATLAB": False,
+		"WITH_MSMF": False,
+		"WITH_NVCUVID": False,
+		"WITH_OPENCL": True,
+		"WITH_OPENCLAMDBLAS": False,
+		"WITH_OPENCLAMDFFT": False,
+		"WITH_OPENCL_SVM": False,
+		"WITH_OPENEXR": False,
+		"WITH_OPENGL": False,
+		"WITH_OPENMP": False,
+		"WITH_OPENNI2": False,
+		"WITH_OPENVX": False,
+		"WITH_OPENNI": False,
+		"WITH_PNG": True,
+		"WITH_PVAPI": False,
+		"WITH_PROTOBUF": True,
+		"WITH_QT": False,
+		"WITH_TBB": False,
+		"WITH_TIFF": True,
+		"WITH_UNICAP": False,
+		"WITH_VA": False,
+		"WITH_VA_INTEL": False,
+		"WITH_VFW": False,
+		"WITH_VTK": False,
+		"WITH_WEBP": True,
+		"WITH_XIMEA": False,
+		"WITH_XINE": False,
+		"WITH_ZLIB": True
+	}
 
 
 
@@ -198,9 +206,6 @@ WITH_ZLIB=True
 		self.output.info("")
 		
 		if self.options.WITH_FFMPEG == "True":
-			if self.settings.os == "Windows":
-				raise Exception("compililation on Windows with Visual Studio using FFmpeg as Conan package is not supported")
-		
 			self.requires("FFmpeg/4.1@covi/dev", private=False)
 		
 		if not self.options.BUILD_ZLIB:
@@ -219,16 +224,19 @@ WITH_ZLIB=True
 
 
 
-	def build(self): 
+	def build(self):
 		self.output.info("")
 		self.output.info("---------- build ----------")
 		self.output.info("")
 		self.output.info("os        : " + str(self.settings.os))
 		self.output.info("arch      : " + str(self.settings.arch))
-		self.output.info("build_type: " + str(self.settings.build_type))
-		
+		self.output.info("compiler  : " + str(self.settings.compiler) + " " + str(self.settings.compiler.version))
+		self.output.info("build type: " + str(self.settings.build_type))
+
 		if self.settings.compiler == "Visual Studio":
 			self.output.info("runtime   : " + str(self.settings.compiler.runtime))
+		else:
+			self.output.info("libcxx    : " + str(self.settings.compiler.libcxx))
 		
 		# create options dict for CMake command
 		opts = dict()
@@ -261,7 +269,17 @@ WITH_ZLIB=True
 		
 		if opts["WITH_FFMPEG"] == "True":
 			# generate a CMake file for the find_package method
-			self.run("conan install FFmpeg/4.1@covi/dev -g cmake_find_package")
+			cmd = ["conan", "install", "FFmpeg/4.1@covi/dev", "-s", "build_type=" + str(self.settings.build_type)]
+			
+			if self.settings.compiler == "Visual Studio":
+				cmd.extend(["-s", "compiler.runtime=" + str(self.settings.compiler.runtime)])
+			else:
+				cmd.extend(["-s", "compiler.libcxx=" + str(self.settings.compiler.libcxx)])
+				
+			cmd.extend(["-g", "cmake_find_package"])
+			
+			subprocess.check_call(cmd)
+			
 			r = re.compile(r"find.*ffmpeg.*\.cmake", re.I)
 			
 			# determine the path of the generated file
@@ -294,12 +312,18 @@ WITH_ZLIB=True
 			opts["OPENCV_FFMPEG_USE_FIND_PACKAGE"] = "FFmpeg"
 			os.rename(ffmpegFindFileSrc, "FFmpegConfig.cmake")
 			opts["FFmpeg_DIR"] = self.build_folder
-			
-			# TODO: implement Windows Visual Studio build with Conan FFmpeg package
-			# building FFmpeg detection test application (cmake\OpenCVFindLibsVideo.cmake -> cmake\checks\ffmpeg_test.cpp) during setup stage of OpenCV succeeds
-			# actual OpenCV build fails:
-			# - either: [...]\modules\videoio\src\ffmpeg_codecs.hpp(63) [...] Cannot open include file: 'libavformat/avformat.h'
-			# - or when explicitly injecting the FFmpeg include directory in the corresponding videoio module CMakeLists: [...]\modules\videoio\src\cap_ffmpeg_impl.hpp(1610): error C4576: a parenthesized type followed by an initializer list is a non-standard explicit type conversion syntax
+
+			# OpenCV 3.4.3 with FFmpeg on Windows is only supported using the prebuilt FFmpeg DLL from OpenCV
+			# integrating the static libs from the Conan package requires some adaptions
+			if self.settings.compiler == "Visual Studio":
+				cmd = ["git", "apply", "--ignore-space-change", "--whitespace=nowarn", os.path.join(self.build_folder, "VideoIO_CMakeLists.txt.patch")]
+				subprocess.check_call(cmd, cwd=os.path.join(self.name, "modules", "videoio"))
+
+				with open(os.path.join(self.name, "modules", "videoio", "src", "cap_ffmpeg_impl.hpp"), "r+") as f:
+					content = f.read()
+					f.seek(0)
+					f.truncate()
+					f.write(content.replace("st->avg_frame_rate = (AVRational){frame_rate, frame_rate_base};", "st->avg_frame_rate = AVRational{frame_rate, frame_rate_base};"))
 		
 		if self.settings.compiler == "Visual Studio":
 			opts["BUILD_WITH_STATIC_CRT"] = self.settings.compiler.runtime in ["MT", "MTd"]
@@ -322,7 +346,9 @@ WITH_ZLIB=True
 		installDir = os.path.join(self.name, "build", "install")
 
 		self.copy(pattern="*.h*", dst="include", src=os.path.join(installDir, "include"), keep_path=True)
-
+		
+		self.copy(pattern="**/CMakeVars.txt", keep_path=False)
+		
 		if self.settings.os == "Windows":
 			self.copy(pattern="*.lib", dst="lib", src=installDir, keep_path=False)
 		else:
@@ -337,30 +363,44 @@ WITH_ZLIB=True
 		
 		libDir = os.path.join(self.package_folder, self.cpp_info.libdirs[0])
 		
-		with tools.chdir(libDir):
-			if self.settings.os == "Windows":
+		if self.settings.os == "Windows":
+			with tools.chdir(libDir):
 				self.cpp_info.libs = glob.glob("*.lib")
-			else:
-				libsAllUnsorted = glob.glob("*.a")
+			
+			with open("CMakeVars.txt", "r", errors="ignore") as f:
+				r = re.compile("HAVE_VFW=(.*)")
+				vfwFlag = False
+			
+				for line in f.readlines():
+					m = r.match(line)
+					
+					if m and m.group(1).lower() == "true":
+						vfwFlag = True
 				
-				# separate OpenCV libs from 3rd-party libs
-				libsCv = []
-				libs3rd = []
-				r = re.compile(r"lib(opencv_.*)\.a")
+				if vfwFlag:
+					self.cpp_info.libs.append("Vfw32")
+		else:
+			with tools.chdir(libDir):
+				libsAllUnsorted = libsAllUnsorted = glob.glob("*.a")
+			
+			# separate OpenCV libs from 3rd-party libs
+			libsCv = []
+			libs3rd = []
+			r = re.compile(r"lib(opencv_.*)\.a")
 
-				for f in libsAllUnsorted:
-					if re.match(r, f):
-						libsCv.append(re.match(r, f).group(1))
-					else:
-						libs3rd.append(re.match(r"lib(.*)\.a", f).group(1))
-				
-				# essential OpenCV libs which need to be at the end of the (OpenCV lib) list
-				libsCvSubsetSorted = ["opencv_imgproc", "opencv_core"]
+			for lib in libsAllUnsorted:
+				if r.match(lib):
+					libsCv.append(r.match(lib).group(1))
+				else:
+					libs3rd.append(re.match(r"lib(.*)\.a", lib).group(1))
+			
+			# essential OpenCV libs which need to be at the end of the (OpenCV lib) list
+			libsCvSubsetSorted = ["opencv_imgproc", "opencv_core"]
 
-				for lib in libsCvSubsetSorted:
-					if lib in libsCv:
-						libsCv.remove(lib)
-						libsCv.append(lib)
-				
-				# move OpenCV libs to the beginning of the list and 3rd-party libs to the end
-				self.cpp_info.libs = libsCv + libs3rd
+			for lib in libsCvSubsetSorted:
+				if lib in libsCv:
+					libsCv.remove(lib)
+					libsCv.append(lib)
+			
+			# move OpenCV libs to the beginning of the list and 3rd-party libs to the end
+			self.cpp_info.libs = libsCv + libs3rd
