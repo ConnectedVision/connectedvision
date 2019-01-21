@@ -7,18 +7,18 @@ from conans import CMake, ConanFile, tools
 
 class ConnectedVision(ConanFile):
 	name = "ConnectedVision"
-	version = "dev"
+	version = "2.4.0-rc.1"
 	license = "MIT"
 	url = "https://github.com/ConnectedVision"
 	settings = {"os": ["Windows", "Linux"], "compiler": ["Visual Studio", "gcc"], "arch": ["x86", "x86_64", "armv7hf"], "build_type": ["Debug", "Release"]}
 	generators = "cmake"
 	options = { "toolchain": "ANY" }
 	default_options = "toolchain=None"
-	requires = (("Boost/1.68.0@covi/dev"),
-		("FFmpeg/4.1@covi/dev"),
+	requires = (("Boost/1.68.0@covi/2.4.0-rc.1"),
+		("FFmpeg/4.1@covi/2.4.0-rc.1"),
 		("Node.js/7.9.0@covi/2.3.0"),
-		("OpenCV/3.4.3@covi/dev"),
-		("POCO/1.9.0@covi/dev"),
+		("OpenCV/3.4.3@covi/2.4.0-rc.1"),
+		("POCO/1.9.0@covi/2.4.0-rc.1"),
 		("RapidJSON/1.0.2@covi/2.3.0"),
 		("SQLite/3.15.1@covi/2.3.0"))
 

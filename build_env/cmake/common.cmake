@@ -41,10 +41,10 @@ endif()
 include(${CMAKE_CURRENT_LIST_DIR}/conan.cmake)
 
 set(CONNECTED_VISION_CONAN_PACKAGES_DEFAULT
-	Boost/1.68.0@covi/dev
-	FFmpeg/4.1@covi/dev
-	OpenCV/3.4.3@covi/dev
-	POCO/1.9.0@covi/dev
+	Boost/1.68.0@covi/2.4.0-rc.1
+	FFmpeg/4.1@covi/2.4.0-rc.1
+	OpenCV/3.4.3@covi/2.4.0-rc.1
+	POCO/1.9.0@covi/2.4.0-rc.1
 	RapidJSON/1.0.2@covi/2.3.0
 	SQLite/3.15.1@covi/2.3.0
 )

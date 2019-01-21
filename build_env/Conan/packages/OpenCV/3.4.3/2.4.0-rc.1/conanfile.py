@@ -206,7 +206,7 @@ class OpenCV(ConanFile):
 		self.output.info("")
 		
 		if self.options.WITH_FFMPEG == "True":
-			self.requires("FFmpeg/4.1@covi/dev", private=False)
+			self.requires("FFmpeg/4.1@covi/2.4.0-rc.1", private=False)
 		
 		if not self.options.BUILD_ZLIB:
 			self.requires("zlib/1.2.11@covi/2.3.0", private=False)
@@ -269,7 +269,7 @@ class OpenCV(ConanFile):
 		
 		if opts["WITH_FFMPEG"] == "True":
 			# generate a CMake file for the find_package method
-			cmd = ["conan", "install", "FFmpeg/4.1@covi/dev", "-s", "build_type=" + str(self.settings.build_type)]
+			cmd = ["conan", "install", "FFmpeg/4.1@covi/2.4.0-rc.1", "-s", "build_type=" + str(self.settings.build_type)]
 			
 			if self.settings.compiler == "Visual Studio":
 				cmd.extend(["-s", "compiler.runtime=" + str(self.settings.compiler.runtime)])

@@ -9,7 +9,7 @@
 6. `conan remote add covi https://api.bintray.com/conan/covi/ConnectedVision`
 7. build the Connected Vision Conan package
 	
-	- either explicitly by executing `conan install ConnectedVision/2.3.0@covi/stable -b outdated`
+	- either explicitly by executing `conan install ConnectedVision/2.4.0-rc.1@covi/stable -b outdated`
 	
 	- or implicitly by referencing it from within another project as done in the [Connected Vision Demo Server](https://github.com/ConnectedVision/connectedvision-apps/tree/master/DemoServer/build/cmake)
 
@@ -28,7 +28,7 @@
 7. `conan remote add covi https://api.bintray.com/conan/covi/ConnectedVision`
 8. build the Connected Vision Conan package
 	
-	- either explicitly by executing `conan install ConnectedVision/2.3.0@covi/stable -b outdated`
+	- either explicitly by executing `conan install ConnectedVision/2.4.0-rc.1@covi/stable -b outdated`
 	
 	- or implicitly by referencing it from within another project as done in the [Connected Vision Demo Server](https://github.com/ConnectedVision/connectedvision-apps/tree/master/DemoServer/build/cmake)
 
@@ -44,7 +44,7 @@ The cross-compilation described in the following was tested with the [Raspberry 
 6. update the `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` variables of the CMake toolchain file accordingly (similar to step 3)
 7. build the Connected Vision Conan package using the updated CMake toolchain file from step 6
 	
-	either explicitly by executing `conan install ConnectedVision/2.3.0@covi/stable -b outdated -o ConnectedVision:toolchain=<path/of/toolchain_armv7hf.cmake>`
+	either explicitly by executing `conan install ConnectedVision/2.4.0-rc.1@covi/stable -b outdated -o ConnectedVision:toolchain=<path/of/toolchain_armv7hf.cmake>`
 	
 	or implicitly by referencing it from within another project as done in the [Connected Vision Demo Server](https://github.com/ConnectedVision/connectedvision-apps/tree/master/DemoServer/build/cmake) and building it using `cmake [...] -DCMAKE_TOOLCHAIN_FILE=<path/of/toolchain_armv7hf.cmake>`
 

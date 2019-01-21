@@ -128,7 +128,7 @@ class POCO(ConanFile):
 		
 		if self.options.ENABLE_NETSSL or self.options.ENABLE_CRYPTO or self.options.FORCE_OPENSSL:
 			self.output.info("enabled OpenSSL dependency")
-			self.requires.add("OpenSSL/1.0.2g@covi/dev", private=False)
+			self.requires.add("OpenSSL/1.0.2g@covi/2.4.0-rc.1", private=False)
 			self.options["OpenSSL"].shared = not self.options.POCO_STATIC
 		else:
 			if "OpenSSL" in self.requires:
