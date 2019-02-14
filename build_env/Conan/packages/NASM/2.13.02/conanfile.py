@@ -24,7 +24,16 @@ class NASM(ConanFile):
 		filename = "nasm-" + self.version + ".tar.bz2"
 		url = "http://www.nasm.us/pub/nasm/releasebuilds/" + self.version + "/" + filename
 		self.output.info("downloading " + url)
-		tools.download(url, filename, retry=3, retry_wait=10)
+		
+		try:
+			tools.download(url, filename, retry=3, retry_wait=10)
+		except:
+			self.output.warn("download failed")
+			
+			url = "https://mirror.sobukus.de/files/src/nasm/" + filename
+			self.output.info("trying download from alternative " + url)
+			tools.download(url, filename, retry=3, retry_wait=10)
+		
 		tools.unzip(filename, self.source_folder)
 
 		dirnames = self.getSubdirectories(self.source_folder)
