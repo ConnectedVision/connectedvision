@@ -19,6 +19,7 @@ class OpenCV(ConanFile):
 		"BUILD_JASPER": [True, False],
 		"BUILD_JPEG": [True, False],
 		"BUILD_opencv_apps": [True, False],
+		"BUILD_opencv_extra": [True, False],
 		"BUILD_PERF_TESTS": [True, False],
 		"BUILD_PNG": [True, False],
 		"BUILD_TESTS": [True, False],
@@ -85,6 +86,7 @@ class OpenCV(ConanFile):
 		"BUILD_JASPER": True,
 		"BUILD_JPEG": True,
 		"BUILD_opencv_apps": False,
+		"BUILD_opencv_extra": False,
 		"BUILD_PERF_TESTS": False,
 		"BUILD_PNG": True,
 		"BUILD_TESTS": False,
@@ -148,12 +150,13 @@ class OpenCV(ConanFile):
 
 
 
-	def download(self, url, dst="", subdir=False, sha256=""):
+	def download(self, url, filename="", dst="", subdir=False, sha256=""):
 		"""
 		Downloads an archive file from the specified URL, optionaly compares its SHA256 to the specified value and extracts the archive.
 		
 		Args:
 		- url: source URL
+		- filename: destination filename. If empty, then the filename is derived from the part after the last slash of the url.
 		- dst: destination directory. If empty, then a directory name derived from the download link is used.
 		- subdir: If False and the archive contains only a single root directory, then the content of that directory is extracted into the destination directory.
 		- sha256: The expected SHA256 hash of the downloaded file to be compared to the actual file hash. If empty, then the check is omitted.
@@ -162,10 +165,15 @@ class OpenCV(ConanFile):
 		self.output.info("")
 		self.output.info("downloading " + url + " ...")
 		
-		filename = os.path.basename(url)
+		if not filename:
+			filename = os.path.basename(url)
+		
 		extension = os.path.splitext(filename)[1]
 		
-		tools.download(url, filename, retry=3, retry_wait=10)
+		if not self.settings.os == "Linux" or not tools.which("aria2c"):
+			tools.download(url, filename, retry=3, retry_wait=10)
+		else:
+			self.run("aria2c -x 16 -s 16 " + url)
 		
 		if sha256:
 			sha256File = tools.sha256sum(filename)
@@ -221,9 +229,11 @@ class OpenCV(ConanFile):
 		self.output.info("")
 		
 		url = "https://github.com/opencv/opencv/archive/" + self.version + ".zip"
-		
-		self.download(url, sha256="37C7D8C3B9807902AD11B9181BBDE61DCB3898A78A563130494752F46FE8CC5F")
+		self.download(url, filename="opencv-3.4.3.zip", sha256="37C7D8C3B9807902AD11B9181BBDE61DCB3898A78A563130494752F46FE8CC5F")
 
+		if self.options.BUILD_opencv_extra:
+			url = "https://github.com/opencv/opencv_contrib/archive/" + self.version + ".zip"
+			self.download(url, filename="opencv_contrib-3.4.3.zip", sha256="0F5472FD05ADD4538C45C91AF8320FF2D9B901BDFE000CD3A593E3A0A2890C48", dst=os.path.join(self.source_folder, "opencv_contrib"))
 
 
 	def build(self):
@@ -330,6 +340,14 @@ class OpenCV(ConanFile):
 		if self.settings.compiler == "Visual Studio":
 			opts["BUILD_WITH_STATIC_CRT"] = self.settings.compiler.runtime in ["MT", "MTd"]
 		
+		if self.options.BUILD_opencv_extra:
+			extraModulesDir = os.path.join(self.build_folder, "opencv_contrib", "modules")
+			
+			if not os.path.isdir(extraModulesDir):
+				raise Exception("OpenCV extra modules (opencv_contrib) was not found @ " + extraModulesDir + ". Try removing and re-downloading sources again before rebuilding by calling conan conan remove -s " + self.name + "/" + self.version + "@" + self.user + "/" + self.channel)
+			
+			opts["OPENCV_EXTRA_MODULES_PATH"] = os.path.join(self.build_folder, "opencv_contrib", "modules")
+
 		opts["CMAKE_INSTALL_PREFIX"] = "install"
 
 		buildDir = os.path.join(self.name, "build")
@@ -397,7 +415,7 @@ class OpenCV(ConanFile):
 					libs3rd.append(re.match(r"lib(.*)\.a", lib).group(1))
 			
 			# essential OpenCV libs which need to be at the end of the (OpenCV lib) list
-			libsCvSubsetSorted = ["opencv_imgproc", "opencv_core"]
+			libsCvSubsetSorted = ["opencv_tracking", "opencv_dnn", "opencv_imgproc", "opencv_core"]
 
 			for lib in libsCvSubsetSorted:
 				if lib in libsCv:
