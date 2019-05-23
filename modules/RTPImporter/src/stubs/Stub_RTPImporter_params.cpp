@@ -30,6 +30,8 @@ Stub_RTPImporter_params::Stub_RTPImporter_params(const Stub_RTPImporter_params& 
 	// url
 	if ( other.url ) 
 		url = boost::make_shared<std::string>(*other.url);
+	// preferTcp
+	preferTcp = other.preferTcp;
 	// configID
 	configID = other.configID;
 	// timestamp
@@ -51,6 +53,8 @@ Stub_RTPImporter_params& Stub_RTPImporter_params::operator =(Stub_RTPImporter_pa
 {
 	// url
     std::swap(url, other.url);
+	// preferTcp
+    std::swap(preferTcp, other.preferTcp);
 	// configID
     std::swap(configID, other.configID);
 	// timestamp
@@ -89,6 +93,7 @@ Stub_RTPImporter_params::~Stub_RTPImporter_params()
 void Stub_RTPImporter_params::clear()
 {
 	this->url.reset( new std::string("") );
+	this->preferTcp = static_cast<bool>(false);
 	this->configID = "";
 	this->timestamp = 0;
 }
@@ -142,6 +147,11 @@ void Stub_RTPImporter_params::parseJson(const rapidjson::Value& value)
 	else
 		throw ConnectedVision::runtime_error( "required member is missing: 'url'");
 
+	// preferTcp
+	if ((value.HasMember("preferTcp")) && value["preferTcp"].IsBool())
+	{
+		set_preferTcp( value["preferTcp"].GetBool() );
+	}
 }
 
 // --> Do NOT EDIT <--
@@ -172,6 +182,9 @@ rapidjson::Value& Stub_RTPImporter_params::toJson(rapidjson::Value& node, rapidj
 	{ // url
 		node.AddMember("url", rapidjson::Value().SetString( get_url()->c_str(), allocator), allocator);
 	}
+	{ // preferTcp
+		node.AddMember("preferTcp", rapidjson::Value().SetBool( get_preferTcp() ), allocator);
+	}
 	return node;
 }
 
@@ -191,6 +204,24 @@ const boost::shared_ptr<const std::string> Stub_RTPImporter_params::getconst_url
 void Stub_RTPImporter_params::set_url(boost::shared_ptr<std::string> value)
 {
 	this->url = value;
+}
+
+// --> Do NOT EDIT <--
+bool Stub_RTPImporter_params::get_preferTcp() const
+{
+	return( this->preferTcp );
+}
+
+// --> Do NOT EDIT <--
+const bool Stub_RTPImporter_params::getconst_preferTcp() const
+{
+	return( this->preferTcp );
+}
+
+// --> Do NOT EDIT <--
+void Stub_RTPImporter_params::set_preferTcp(bool value)
+{
+	this->preferTcp = value;
 }
 
 // --> Do NOT EDIT <--

@@ -199,8 +199,15 @@ void RTPImporterWorker::run()
 			throw std::runtime_error("invalid RTSP URL (needs to start with lower case rtsp://)" + *params.getconst_url());
 		}
 
+		AVDictionary *options = NULL;
+
+		if(params.getconst_preferTcp())
+		{
+			av_dict_set(&options, "rtsp_flags", "prefer_tcp", 1);
+		}
+
 		// open input file (or rtsp url in our case)
-		if(avformat_open_input(&this->formatCtx, params.getconst_url()->c_str(), NULL, NULL) != 0){
+		if(avformat_open_input(&this->formatCtx, params.getconst_url()->c_str(), NULL, &options) != 0){
 			throw std::runtime_error("failed to open RTSP URL " + *params.getconst_url());
 		}
 

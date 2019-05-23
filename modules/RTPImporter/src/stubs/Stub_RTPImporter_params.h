@@ -55,6 +55,11 @@ public:
 	virtual void set_url(boost::shared_ptr<std::string> value);
 	virtual void set_url(const std::string &value) { boost::shared_ptr<std::string> ptr = boost::make_shared<std::string>(value); set_url(ptr); };
 
+	/* preferTcp - Prefer TCP over UDP for the transmission of the video stream. Sets the FFmpeg::avformat_open_input([...] rtsp_flags::prefer_tcp [...]) to 1. This helped at least in one case where tearing/smearing artifacts repeatedly started to appear in the lower half of the frames with increasing artifact strength. They abruptly disappeared after some time, but not exactly at the I-frame positions in order to repeat the process some time later. Simply changing the camera stream configuration parameters such as codec (H.264, H.265), resolution, frame rate, I-/key-frame distance/interval, bitrate, etc. did not have an influence on the effect. */
+	virtual bool get_preferTcp() const;
+	virtual const bool getconst_preferTcp() const;
+	virtual void set_preferTcp(bool value);
+
 	/* configID - virtual config id */
 	virtual ConnectedVision::id_t get_configID() const;
 	virtual const ConnectedVision::id_t getconst_configID() const;
@@ -74,6 +79,9 @@ protected:
 
 	/** RTP multicast/unicast address (URL) */
 	boost::shared_ptr<std::string> url;
+	
+	/** Prefer TCP over UDP for the transmission of the video stream. Sets the FFmpeg::avformat_open_input([...] rtsp_flags::prefer_tcp [...]) to 1. This helped at least in one case where tearing/smearing artifacts repeatedly started to appear in the lower half of the frames with increasing artifact strength. They abruptly disappeared after some time, but not exactly at the I-frame positions in order to repeat the process some time later. Simply changing the camera stream configuration parameters such as codec (H.264, H.265), resolution, frame rate, I-/key-frame distance/interval, bitrate, etc. did not have an influence on the effect. */
+	bool preferTcp;
 	
 	/** virtual config id */
 	ConnectedVision::id_t configID;

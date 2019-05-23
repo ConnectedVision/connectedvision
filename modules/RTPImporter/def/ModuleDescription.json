@@ -20,6 +20,12 @@
 				"description": "RTP multicast/unicast address (URL)",
 				"required": true,
 				"type": "string"
+			},
+			"preferTcp": {
+				"description": "Prefer TCP over UDP for the transmission of the video stream. Sets the FFmpeg::avformat_open_input([...] rtsp_flags::prefer_tcp [...]) to 1. This helped at least in one case where tearing/smearing artifacts repeatedly started to appear in the lower half of the frames with increasing artifact strength. They abruptly disappeared after some time, but not exactly at the I-frame positions in order to repeat the process some time later. Simply changing the camera stream configuration parameters such as codec (H.264, H.265), resolution, frame rate, I-/key-frame distance/interval, bitrate, etc. did not have an influence on the effect.",
+				"type": "boolean",
+				"required": false,
+				"default": false
 			}
 		}	
 	}
