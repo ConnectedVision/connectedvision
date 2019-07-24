@@ -204,10 +204,10 @@ void DummyBoundingBoxesWorker::run()
 			status->set_estimatedFinishTime( -1 );
 			statusStore->save_copy(status);
 		}
-	catch (...)
-	{
-			// what can we do now???
-	}
+		catch (...)
+		{
+				// what can we do now???
+		}
 	}
 
 

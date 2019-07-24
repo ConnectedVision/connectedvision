@@ -3,6 +3,8 @@
 * MIT License
 */
 
+#define USE_RINGBUFFER
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -20,8 +22,13 @@
 #include "DummyBoundingBoxesModule.h"
 #include "DummyBoundingBoxesWorker.h"
 
+#ifdef USE_RINGBUFFER
+#include "Store_Manager_Ringbuffer_DummyBoundingBoxes_output_Detections.h"
+#include "Store_Manager_Ringbuffer_DummyBoundingBoxes_output_ObjectData.h"
+#else
 #include "Store_Manager_SQLite_DummyBoundingBoxes_output_Detections.h"
 #include "Store_Manager_SQLite_DummyBoundingBoxes_output_ObjectData.h"
+#endif
 
 #include "InputPin_DummyBoundingBoxes_input_Trigger.h"
 
@@ -83,9 +90,24 @@ void DummyBoundingBoxesModule::prepareStores()
 {
 	LOG_SCOPE;
 
+#ifdef USE_RINGBUFFER
+	int bufferSize = 100;
+	int parallelJobs = 10;
+	this->detectionsStoreManager = ConnectedVision::make_shared<DataHandling::Store_Manager_Ringbuffer_DummyBoundingBoxes_output_Detections>(
+		parallelJobs,			// number of stores in manager
+		bufferSize,		// number of element slots in ringbuffer
+		bufferSize * parallelJobs + 1		// total number of available objects (for all ring buffers)
+		);
+	this->objectsStoreManager = ConnectedVision::make_shared<DataHandling::Store_Manager_Ringbuffer_DummyBoundingBoxes_output_ObjectData>(
+		parallelJobs,			// number of stores in manager
+		bufferSize,		// number of element slots in ringbuffer
+		bufferSize * parallelJobs + 1		// total number of available objects (for all ring buffers)
+		);
+#else
 	// module specific stores
 	this->detectionsStoreManager = ConnectedVision::make_shared<DataHandling::Store_Manager_SQLite_DummyBoundingBoxes_output_Detections>( this->getDB() );
 	this->objectsStoreManager = ConnectedVision::make_shared<DataHandling::Store_Manager_SQLite_DummyBoundingBoxes_output_ObjectData>( this->getDB() );
+#endif
 }
 
 /**
