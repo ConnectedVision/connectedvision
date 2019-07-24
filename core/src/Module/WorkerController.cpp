@@ -383,15 +383,25 @@ void WorkerController::workerThreadFunction()
 						// make sure that workerThread / Cleanup is not interrupted (-> boost::this_thread::disable_interruption di;)
 						boost::this_thread::disable_interruption interrupt_disabler;
 
-						module.deleteAllData( this->configID );	// one thread (workerThread) is writing / deleting data
-						
 						// reset status message and progress
 						auto status = this->getStatus()->copy();
 						status->set_message("");
 						status->set_progress(0.0);
+
+						// delete result data
+						try
+						{
+							module.deleteAllData(this->configID);	// one thread (workerThread) is writing / deleting data
+						}
+						catch (...)	// ignore exceptions while deleting data
+						{}
+						status->resetStableResults();
+
+						// save status
 						auto statusConst = this->statusStore->make_const( status );
 						this->statusStore->save_const( statusConst );
 
+						// reset progress to init
 						progress = WorkerThreadProgress::Init; this->workerThreadProgress.reset(progress); // update internal progress and (re)set workerThreadProgress
 					}
 					break;
