@@ -3758,7 +3758,8 @@ ConnectedVision::shared_ptr<WorkerController> Module_BaseClass::getWorkerControl
 
 			if ( !workerController )
 			{
-				throw std::runtime_error("CORE PANIC: cannot create worker controller");
+				std::cout << "CORE PANIC: cannot create worker controller";
+				exit(1);
 			}
 	}
 

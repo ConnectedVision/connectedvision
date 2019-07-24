@@ -262,7 +262,7 @@ void WorkerController::controllerThreadFunction()
 		// terminate to worker
 		this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
 		this->workerThread.interrupt();
-		return;
+		exit(1);
 	}
 }
 
@@ -372,7 +372,7 @@ void WorkerController::workerThreadFunction()
 
 						// terminate
 						this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
-						return;
+						exit(1);
 					}
 					break;
 
@@ -417,7 +417,7 @@ void WorkerController::workerThreadFunction()
 				default:
 					std::cout << "CORE PANIC: [worker thread] unexpected worker progress in thread loop: " << progress;
 					this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
-					return;
+					exit(1);
 			}
 
 			// wait on change of worker progress (must be interruptable!)
@@ -432,7 +432,7 @@ void WorkerController::workerThreadFunction()
 		// terminate to worker
 		this->workerThreadProgress.reset(WorkerThreadProgress::Terminated);
 		this->workerThread.interrupt();
-		return;
+		exit(1);
 	}
 }
 
