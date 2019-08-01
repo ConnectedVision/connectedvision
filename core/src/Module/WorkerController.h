@@ -78,7 +78,7 @@ namespace WorkerCommand {
 	public:
 		CommandReset(
 			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress>& workerThreadProgress,	///< reference to thread safe worker progress
-			const ConnectedVision::shared_ptr<CommandStop> &stopCmd				///< stop command
+			const ConnectedVision::shared_ptr<CommandStop> stopCmd				///< stop command
 		) :	workerThreadProgress(workerThreadProgress), stopCmd(stopCmd) {}
 		virtual ~CommandReset() {}
 		virtual void execute();
@@ -112,7 +112,7 @@ namespace WorkerCommand {
 		CommandTerminate(
 			thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> &workerThreadProgress,	///< reference to thread safe worker progress
 			boost::atomic<WorkerThreadProgress::WorkerThreadProgress> &progressBeforeTermination, ///< reference to progress before terminate in worker controller
-			const ConnectedVision::shared_ptr<CommandStop> &stopCmd										///< stop command
+			const ConnectedVision::shared_ptr<CommandStop> stopCmd										///< stop command
 		) : workerThreadProgress(workerThreadProgress), progressBeforeTermination(progressBeforeTermination), stopCmd(stopCmd) {}
 		virtual ~CommandTerminate() {}
 		virtual void execute();
@@ -219,6 +219,13 @@ public:
 	*/
 	const id_t getConfigID() const { return this->configID; }
 
+	/**
+	* test if command is currently executed
+	*
+	* @returns true if controller thread is executing a command (and/or has commands in queue)
+	*/
+	bool commandActive() const { return this->commandExecuting || !this->commandQueue.empty(); }
+
 
 	/**
 	* get shared pointer to active worker
@@ -306,6 +313,7 @@ protected:
 	WorkerCommand::CommandQueue commandQueue;
 	boost::thread controllerThread;
 	boost::shared_ptr<boost::thread_guard<boost::interrupt_and_join_if_joinable>> controllerThreadGuard;
+	std::atomic<bool> commandExecuting;
 
 	// worker
 	thread_safe_progress<WorkerThreadProgress::WorkerThreadProgress> workerThreadProgress;

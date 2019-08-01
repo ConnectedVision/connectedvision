@@ -453,6 +453,12 @@ protected:
 	*/
 	ConnectedVision::thread_safe_map<id_t, std::string> mapCachedConfigParameters;
 
+	/**
+	* configID map to syncronize set & delete config per configID
+	*/
+	std::map<id_t, ConnectedVision::shared_ptr<std__mutex>> mapLockedConfigs;
+	std__mutex mapLockedConfigsMutex;
+
 	ConnectedVision::thread_safe_map<id_t, bool> runningSuccessorList; ///< list which config ids of all running successor modules (used to manage control/stop control/reset mechanism when several processing chains that share sub-chains are involved
 
 	std::map< pinID_t, boost::shared_ptr<InputPinPool_t> > inputPinsPool; // TODO: synchronization mechanism needed for initialization

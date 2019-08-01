@@ -1449,19 +1449,62 @@ int Module_BaseClass::deleteConfigOnlyThis(const id_t configID, ConnectedVisionR
 	{
 		// get config from Store
 		boost::shared_ptr<const Class_generic_config> config( this->configStore->getByID(resolvedConfigID) );
-		if ( config )
+		if (config)
 		{
-			// delete DB results
-			this->deleteAllData( resolvedConfigID );
+			// lock config while deleting
+			ConnectedVision::shared_ptr<std__mutex> configMutex;
 
-			// delete status
-			this->statusStore->deleteByID( resolvedConfigID );
+			{
+				std__unique_lock lockMap(this->mapLockedConfigsMutex);
+				configMutex = mapLockedConfigs.emplace(configID, new std__mutex()).first->second;
+			}
+			if (!configMutex)
+			{
+				std::cout << "CORE PANIC: mapLockedConfigs returned NULL pointer" << std::endl;
+				exit(1);
+			}
 
-			// delete config
-			this->configStore->deleteByID( resolvedConfigID );
-			
-			// delete worker cache
-			this->mapWorkerControllers.erase(resolvedConfigID);
+			// scope of config delete lock
+			{
+				std__unique_lock lock(*configMutex);
+
+				// test for active worker controller for this config
+				try
+				{
+					auto workerController = mapWorkerControllers.at(configID);
+
+					// send stop command
+					workerController->stop();
+
+					// wait for commandQueue to be empty
+					while (workerController->commandActive())
+					{
+						sleep_ms(100);
+					}
+				}
+				catch (...) {}
+				
+				// delete worker cache
+				this->mapWorkerControllers.erase(resolvedConfigID);
+
+				// delete DB results
+				this->deleteAllData(resolvedConfigID);
+
+				// delete status
+				this->statusStore->deleteByID(resolvedConfigID);
+
+				// delete config
+				this->configStore->deleteByID(resolvedConfigID);
+
+				// remove mutex from map
+				{
+					std__unique_lock lockMap(this->mapLockedConfigsMutex);
+					// make sure to remove mutex from map ONLY if it is not referenced somewhere else!
+					if ( configMutex.use_count() <= 2 )
+						this->mapLockedConfigs.erase(configID);
+				}
+
+			}
 
 
 			// return JSON string
@@ -2409,21 +2452,63 @@ int Module_BaseClass::setConfig(const id_t configIDConst, const std::string& con
 
 		updateAliasIDs(config);
 
-		// save config
-		config->set_id( configID );
-		auto constConfig = this->configStore->make_const( config );
-		this->configStore->save_const( constConfig );
 
-		// set initial status
-		auto constStatus = statusStore->getByID(configID);
-		if ( !constStatus )
+
+		// lock config while setting config
+		ConnectedVision::shared_ptr<std__mutex> configMutex;
+
 		{
-			// create new status
-			ConnectedVision::shared_ptr<Class_generic_status> status( new Class_generic_status( constConfig->get_id(), constConfig->get_moduleID(), *constConfig->get_moduleURI(), this->getOutputPinIDs() ) );
-			status->set_id( configID );
-			this->statusStore->save_move( status );
+			std__unique_lock lockMap(this->mapLockedConfigsMutex);
+			configMutex = mapLockedConfigs.emplace(configID, new std__mutex()).first->second;
+		}
+		if (!configMutex)
+		{
+			std::cout << "CORE PANIC: mapLockedConfigs returned NULL pointer" << std::endl;
+			exit(1);
 		}
 
+		// scope of setting config lock
+		{
+			std__unique_lock lock(*configMutex);
+
+
+			// test for active worker controller for this config
+			try
+			{
+				auto workerController = mapWorkerControllers.at(configID);
+
+				// wait for commandQueue to be empty
+				while ( workerController->commandActive() )
+				{
+					sleep_ms(100);
+				}
+			}
+			catch (...)	{}
+
+			// save config
+			config->set_id( configID );
+			auto constConfig = this->configStore->make_const( config );
+			this->configStore->save_const( constConfig );
+
+			// set initial status
+			auto constStatus = statusStore->getByID(configID);
+			if ( !constStatus )
+			{
+				// create new status
+				ConnectedVision::shared_ptr<Class_generic_status> status( new Class_generic_status( constConfig->get_id(), constConfig->get_moduleID(), *constConfig->get_moduleURI(), this->getOutputPinIDs() ) );
+				status->set_id( configID );
+				this->statusStore->save_move( status );
+			}
+
+			// remove mutex from map
+			{
+				std__unique_lock lockMap(this->mapLockedConfigsMutex);
+				// make sure to remove mutex from map ONLY if it is not referenced somewhere else!
+				if (configMutex.use_count() <= 2)
+					this->mapLockedConfigs.erase(configID);
+			}
+
+		}
 
 		// return config
 		return getConfig(configID, response);

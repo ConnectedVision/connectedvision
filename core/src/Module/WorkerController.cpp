@@ -251,7 +251,9 @@ void WorkerController::controllerThreadFunction()
 			auto cmd = this->commandQueue.pop_wait();
 
 			// execute command
+			this->commandExecuting = true;
 			cmd->execute();
+			this->commandExecuting = false;
 		}
 	}
 	catch (std::exception &e)
@@ -473,6 +475,7 @@ void WorkerController::init(id_t configID)
 {
 	// intentional set to error: if progressBeforeTermination is used in getStatusFromProgress() before it is set in CommandTerminate execute()
 	progressBeforeTermination = WorkerThreadProgress::Error;
+	commandExecuting = false;
 
 	// get config
 	this->configID = configID;
